@@ -33,7 +33,7 @@
     "framer-motion": "^12.34.0",
     "idb-keyval": "^6.2.2",
     "jose": "^5.9.0",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^0.564.0",
     "postgres": "^3.4.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
