@@ -75,6 +75,7 @@ export interface ChatWebSocketMessage extends WebSocketMessage {
     content: string;
     intent?: string;
     messageId?: string;
+    listId?: string | null;
   };
 }
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
-import type { ListEditorUI } from "../../../server/ws";
+import type { ListEditorUI } from "@/types/websocket";
 
 interface Props {
   data: ListEditorUI;

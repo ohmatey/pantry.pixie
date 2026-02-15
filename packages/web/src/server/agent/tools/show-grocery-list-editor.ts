@@ -3,7 +3,7 @@ import { z } from "zod";
 import * as groceryListsService from "../../services/grocery-lists";
 import type { ListEditorUI } from "../../ws";
 
-export function createShowGroceryListEditorTool(homeId: string) {
+export function createShowGroceryListEditorTool(homeId: string, scopedListId?: string | null) {
   return tool({
     description:
       "Show a specific grocery list with full editing capabilities (add, remove, edit, toggle items). " +
@@ -17,7 +17,7 @@ export function createShowGroceryListEditorTool(homeId: string) {
     execute: async ({ listId, listName }) => {
       let list;
 
-      // Find list by ID or name
+      // Find list by ID or name (priority: explicit ID > explicit name > scoped list > default)
       if (listId) {
         list = await groceryListsService.getList(homeId, listId);
       } else if (listName) {
@@ -32,6 +32,9 @@ export function createShowGroceryListEditorTool(homeId: string) {
           };
         }
         list = await groceryListsService.getList(homeId, found.id);
+      } else if (scopedListId) {
+        // Use scoped list from chat context
+        list = await groceryListsService.getList(homeId, scopedListId);
       } else {
         // Default to default list
         list = await groceryListsService.getOrCreateDefaultList(homeId);

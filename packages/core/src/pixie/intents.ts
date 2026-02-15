@@ -18,6 +18,21 @@ export interface IntentPattern {
  */
 export const intentPatterns: IntentPattern[] = [
   {
+    intent: "add_to_list",
+    keywords: ["shopping list", "grocery list", "to my list", "on my list", "to the list"],
+    patterns: [
+      /add\s+(.+)\s+to\s+(my|the)?\s*(shopping|grocery)?\s*list/i,
+      /put\s+(.+)\s+on\s+(my|the)?\s*list/i,
+      /ingredients?\s+for\s+(.+)/i,
+    ],
+    examples: [
+      "add milk to my shopping list",
+      "put eggs on my list",
+      "add all ingredients for green curry to my list",
+      "add 500g chicken breast to shopping list",
+    ],
+  },
+  {
     intent: "add_item",
     keywords: ["add", "bought", "got", "new", "picked up", "acquired"],
     patterns: [
@@ -172,6 +187,11 @@ export function getIntentInfo(intent: PixieIntent): {
     PixieIntent,
     { name: string; description: string; category: "action" | "query" | "meta" }
   > = {
+    add_to_list: {
+      name: "Add to List",
+      description: "User wants to add items to a shopping/grocery list",
+      category: "action",
+    },
     add_item: {
       name: "Add Item",
       description: "User wants to add something to their pantry",

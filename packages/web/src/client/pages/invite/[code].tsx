@@ -93,7 +93,7 @@ export default function AcceptInvitePage() {
           <div className="flex justify-center mb-3">
             <PixieAvatar size="lg" animate />
           </div>
-          <CardTitle>Join a Kitchen</CardTitle>
+          <CardTitle>Join a Pantry</CardTitle>
         </CardHeader>
 
         <CardContent className="text-center space-y-3">
@@ -123,7 +123,7 @@ export default function AcceptInvitePage() {
         {inviteInfo && (
           <CardFooter className="flex flex-col gap-3">
             <Button onClick={handleAccept} className="w-full" disabled={accepting}>
-              {accepting ? "Joining..." : "Join Kitchen"}
+              {accepting ? "Joining..." : "Join Pantry"}
             </Button>
             <Button variant="ghost" onClick={() => navigate("/chat", { replace: true })} className="w-full">
               Cancel

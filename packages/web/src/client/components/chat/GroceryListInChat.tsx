@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ListItemRow } from "../list/ListItemRow";
-import type { SerializedUI } from "@/types/websocket";
+import { SimplifiedListItemRow } from "./SimplifiedListItemRow";
+import type { GroceryListUI } from "@/types/websocket";
 
 interface GroceryListInChatProps {
-  list: SerializedUI["data"];
+  list: GroceryListUI;
   onToggleItem: (listItemId: string) => void;
 }
 
@@ -47,28 +47,13 @@ export function GroceryListInChat({ list, onToggleItem }: GroceryListInChatProps
       {/* Items */}
       {list.items.length > 0 ? (
         <div className="divide-y divide-pixie-cream-100 dark:divide-pixie-dusk-300">
-          {list.items.map((item) => {
-            // Transform SerializedUI item to ListItemRow format
-            const listItem = {
-              id: item.id,
-              itemId: item.itemId,
-              quantity: item.quantity,
-              isCompleted: item.isCompleted,
-              item: {
-                id: item.itemId,
-                name: item.name,
-              },
-            };
-
-            return (
-              <ListItemRow
-                key={item.id}
-                listItem={listItem as any}
-                onToggle={() => onToggleItem(item.id)}
-                onRemove={() => {}} // No remove in chat view
-              />
-            );
-          })}
+          {list.items.map((item) => (
+            <SimplifiedListItemRow
+              key={item.id}
+              item={item}
+              onToggle={() => onToggleItem(item.id)}
+            />
+          ))}
         </div>
       ) : (
         <div className="px-4 py-6 text-center text-sm text-pixie-charcoal-100/60 dark:text-pixie-mist-300/60">

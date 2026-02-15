@@ -55,7 +55,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="text-3xl mb-2">✨</div>
           <CardTitle>Pantry Pixie</CardTitle>
-          <CardDescription>Sign in to your kitchen companion</CardDescription>
+          <CardDescription>Sign in to your pantry companion</CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>

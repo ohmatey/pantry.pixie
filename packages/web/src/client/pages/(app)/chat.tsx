@@ -5,6 +5,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { ChatBubbleWithUI } from "@/components/chat/ChatBubbleWithUI";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { StarterPrompts } from "@/components/chat/StarterPrompts";
+import { ListSelector } from "@/components/chat/ListSelector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -28,6 +29,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
   // Fetch or create a thread
   const { data: threadsData } = useQuery({
@@ -87,6 +89,8 @@ export default function ChatPage() {
   // WebSocket message handler
   const handleWSMessage = useCallback(
     (msg: any) => {
+      console.log("[Chat] Received WS message:", msg.type, msg.payload);
+
       if (msg.type === "message" && msg.payload?.threadId === activeThreadId) {
         setMessages((prev) => {
           // Avoid duplicates
@@ -107,6 +111,7 @@ export default function ChatPage() {
         setIsTyping(false);
       } else if (msg.type === "ui_message" && msg.payload?.threadId === activeThreadId) {
         const uiMsg = msg as UIWebSocketMessage;
+        console.log("[Chat] UI message:", { content: uiMsg.payload.content, ui: uiMsg.payload.ui, isStreaming: uiMsg.payload.isStreaming });
         setMessages((prev) => {
           // Find existing message by ID (for streaming updates)
           const existingIndex = prev.findIndex((m) => m.id === uiMsg.payload.messageId);
@@ -227,7 +232,7 @@ export default function ChatPage() {
     ]);
 
     setIsTyping(true);
-    sendChatMessage(activeThreadId, content);
+    sendChatMessage(activeThreadId, content, selectedListId);
   };
 
   // Mutation for toggling list items
@@ -386,6 +391,9 @@ export default function ChatPage() {
           )}
         </div>
       </ScrollArea>
+
+      {/* List Selector */}
+      <ListSelector selectedListId={selectedListId} onSelectList={setSelectedListId} />
 
       {/* Input */}
       <ChatInput onSend={handleSend} disabled={!isConnected || !activeThreadId} />

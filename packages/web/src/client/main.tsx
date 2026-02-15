@@ -5,7 +5,7 @@ import "./globals.css";
 
 // Performance monitoring with Web Vitals
 if (import.meta.env.DEV) {
-  import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
+  import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
     function sendToAnalytics(metric: any) {
       const { name, value, rating } = metric;
       console.log(`[Web Vitals] ${name}:`, {
@@ -14,8 +14,8 @@ if (import.meta.env.DEV) {
         target:
           name === 'LCP'
             ? '< 2500ms'
-            : name === 'FID'
-              ? '< 100ms'
+            : name === 'INP'
+              ? '< 200ms'
               : name === 'CLS'
                 ? '< 0.1'
                 : name === 'FCP'
@@ -25,7 +25,7 @@ if (import.meta.env.DEV) {
     }
 
     onCLS(sendToAnalytics);
-    onFID(sendToAnalytics);
+    onINP(sendToAnalytics);
     onFCP(sendToAnalytics);
     onLCP(sendToAnalytics);
     onTTFB(sendToAnalytics);

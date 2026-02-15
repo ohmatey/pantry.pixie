@@ -56,7 +56,8 @@ export async function sendMessage(
   threadId: string,
   homeId: string,
   userId: string,
-  content: string
+  content: string,
+  listId?: string | null
 ): Promise<SendMessageResult> {
   // Classify intent for metadata
   const intent = classifyIntent(content);
@@ -111,7 +112,8 @@ export async function sendMessage(
     assistantMessageId: assistantMessage.id,
     streamHandler: async (onChunk, onComplete) => {
       try {
-        const result = await createPixieResponse(homeId, agentMessages);
+        logger.info({ threadId, homeId, listId }, "Creating Pixie response");
+        const result = await createPixieResponse(homeId, agentMessages, undefined, listId);
 
         // Consume text stream (AI SDK returns ReadableStream<string>)
         let fullText = "";
@@ -120,12 +122,17 @@ export async function sendMessage(
           onChunk(chunk);
         }
 
+        logger.info({ threadId, fullTextLength: fullText.length }, "Text stream consumed");
+
         // Wait for tool results to extract UI data
         const toolResults = await result.toolResults;
+        logger.info({ threadId, toolResultsCount: toolResults.length }, "Tool results received");
         let uiData: SerializedUI | undefined;
 
         // Extract UI data from tool results
         for (const toolResult of toolResults) {
+          logger.info({ threadId, toolName: toolResult.toolName, hasResult: !!toolResult.result }, "Processing tool result");
+
           if (
             toolResult.result &&
             typeof toolResult.result === "object" &&
@@ -133,6 +140,7 @@ export async function sendMessage(
           ) {
             // New pattern: tools return { success, message, uiData }
             uiData = (toolResult.result as any).uiData;
+            logger.info({ threadId, uiType: uiData?.type }, "Extracted uiData");
             break;
           }
 
@@ -147,9 +155,12 @@ export async function sendMessage(
               type: "grocery-list",
               data: (toolResult.result as any).listData,
             };
+            logger.info({ threadId, uiType: "grocery-list" }, "Extracted listData from addToList");
             break;
           }
         }
+
+        logger.info({ threadId, fullText, hasUiData: !!uiData }, "Completing stream");
 
         // Update assistant message with final text
         await db

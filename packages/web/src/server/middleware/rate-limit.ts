@@ -12,6 +12,11 @@ const rateLimiter = new RateLimiterMemory({
 });
 
 export async function rateLimit(request: Request): Promise<Response | null> {
+  // Skip rate limiting in development
+  if (process.env.NODE_ENV !== 'production') {
+    return null;
+  }
+
   // Get IP from X-Forwarded-For header (reverse proxy) or fallback to connection
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';

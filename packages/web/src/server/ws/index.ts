@@ -79,6 +79,7 @@ export interface ChatWebSocketMessage extends WebSocketMessage {
     content: string;
     intent?: string;
     messageId?: string;
+    listId?: string | null;
   };
 }
 
@@ -183,7 +184,7 @@ export function handleWebSocketClose(ws: ServerWebSocket<WSData>): void {
 
 async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocketMessage): Promise<void> {
   const { userId, homeId } = ws.data;
-  const { threadId, content } = msg.payload;
+  const { threadId, content, listId } = msg.payload;
 
   if (!threadId || !content) {
     ws.send(
@@ -204,7 +205,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
   });
 
   try {
-    const result = await chatService.sendMessage(threadId, homeId, userId, content);
+    const result = await chatService.sendMessage(threadId, homeId, userId, content, listId);
 
     // Broadcast the user message to other clients
     broadcastToHome(

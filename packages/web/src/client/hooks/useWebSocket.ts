@@ -91,10 +91,10 @@ export function useWebSocket({ onMessage, onStatusChange }: UseWebSocketOptions 
   }, []);
 
   const sendChatMessage = useCallback(
-    (threadId: string, content: string) => {
+    (threadId: string, content: string, listId?: string | null) => {
       send({
         type: "message",
-        payload: { threadId, role: "user", content },
+        payload: { threadId, role: "user", content, listId },
         timestamp: new Date().toISOString(),
       });
     },

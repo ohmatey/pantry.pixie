@@ -40,7 +40,8 @@ export interface StreamedResponse {
 export async function createPixieResponse(
   homeId: string,
   messages: AgentMessage[],
-  userPreferences?: UserPreferences
+  userPreferences?: UserPreferences,
+  listId?: string | null
 ): Promise<StreamedResponse> {
   const systemPrompt = generateSystemPrompt(userPreferences);
 
@@ -54,9 +55,9 @@ export async function createPixieResponse(
     removeItem: createRemoveItemTool(homeId),
     checkItem: createCheckItemTool(homeId),
     setRecurring: createSetRecurringTool(homeId),
-    addToList: createAddToListTool(homeId),
+    addToList: createAddToListTool(homeId, listId),
     listGroceryLists: createListGroceryListsTool(homeId),
-    showGroceryListEditor: createShowGroceryListEditorTool(homeId),
+    showGroceryListEditor: createShowGroceryListEditorTool(homeId, listId),
   };
 
   const result = streamText({

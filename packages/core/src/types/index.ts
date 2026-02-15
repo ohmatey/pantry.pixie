@@ -113,6 +113,7 @@ export interface ListStats {
 export type MessageRole = "user" | "assistant";
 
 export type PixieIntent =
+  | "add_to_list"
   | "add_item"
   | "remove_item"
   | "set_recurring"

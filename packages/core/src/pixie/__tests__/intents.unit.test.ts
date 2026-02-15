@@ -11,6 +11,36 @@ import type { PixieIntent } from "../../types";
 // classifyIntent()
 // ============================================================================
 
+describe("classifyIntent() - add_to_list intent", () => {
+  it("should classify 'add milk to my shopping list' as add_to_list", () => {
+    expect(classifyIntent("add milk to my shopping list")).toBe("add_to_list");
+  });
+
+  it("should classify 'put eggs on my list' as add_to_list", () => {
+    expect(classifyIntent("put eggs on my list")).toBe("add_to_list");
+  });
+
+  it("should classify 'add all ingredients for green curry to my list' as add_to_list", () => {
+    expect(classifyIntent("add all ingredients for green curry to my list")).toBe("add_to_list");
+  });
+
+  it("should classify 'add 500g chicken breast to shopping list' as add_to_list", () => {
+    expect(classifyIntent("add 500g chicken breast to shopping list")).toBe("add_to_list");
+  });
+
+  it("should classify messages with 'shopping list' keyword as add_to_list", () => {
+    expect(classifyIntent("I need to update my shopping list")).toBe("add_to_list");
+  });
+
+  it("should classify messages with 'grocery list' keyword as add_to_list", () => {
+    expect(classifyIntent("put it on the grocery list")).toBe("add_to_list");
+  });
+
+  it("should classify 'ingredients for pasta carbonara' as add_to_list", () => {
+    expect(classifyIntent("ingredients for pasta carbonara")).toBe("add_to_list");
+  });
+});
+
 describe("classifyIntent() - add_item intent", () => {
   it("should classify 'I just bought milk' as add_item", () => {
     expect(classifyIntent("I just bought milk")).toBe("add_item");
@@ -239,6 +269,7 @@ describe("classifyIntent() - edge cases", () => {
 
 describe("getIntentInfo()", () => {
   const allIntents: PixieIntent[] = [
+    "add_to_list",
     "add_item",
     "remove_item",
     "set_recurring",
@@ -261,6 +292,7 @@ describe("getIntentInfo()", () => {
   });
 
   it("should categorize action intents correctly", () => {
+    expect(getIntentInfo("add_to_list").category).toBe("action");
     expect(getIntentInfo("add_item").category).toBe("action");
     expect(getIntentInfo("remove_item").category).toBe("action");
     expect(getIntentInfo("set_recurring").category).toBe("action");
@@ -301,12 +333,13 @@ describe("getIntentInfo()", () => {
 // ============================================================================
 
 describe("intentPatterns structure", () => {
-  it("should have 8 intent patterns", () => {
-    expect(intentPatterns.length).toBe(8);
+  it("should have 9 intent patterns", () => {
+    expect(intentPatterns.length).toBe(9);
   });
 
   it("should cover all action intents", () => {
     const intents = intentPatterns.map((p) => p.intent);
+    expect(intents).toContain("add_to_list");
     expect(intents).toContain("add_item");
     expect(intents).toContain("remove_item");
     expect(intents).toContain("set_recurring");

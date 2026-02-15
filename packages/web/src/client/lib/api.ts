@@ -2,6 +2,8 @@
  * Shared API fetch utility with auth token injection
  */
 
+import { useAuth } from "@/hooks/useAuth";
+
 export async function apiFetch<T = any>(
   path: string,
   token: string,
@@ -15,6 +17,13 @@ export async function apiFetch<T = any>(
       ...options?.headers,
     },
   });
+
+  if (res.status === 401) {
+    useAuth.getState().logout();
+    window.location.href = "/login";
+    throw new Error("Session expired");
+  }
+
   const json = await res.json() as { success: boolean; data?: T; error?: string; timestamp?: string };
   if (!json.success) {
     throw new Error(json.error || "Request failed");

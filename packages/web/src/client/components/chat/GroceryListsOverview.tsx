@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ShoppingCart, Check } from "lucide-react";
-import type { GroceryListsOverviewUI } from "../../../server/ws";
+import type { GroceryListsOverviewUI } from "@/types/websocket";
 
 interface Props {
   data: GroceryListsOverviewUI;

@@ -19,33 +19,33 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const [step, setStep] = useState(0);
-  const [kitchenName, setKitchenName] = useState(`${user?.name || "My"}'s Kitchen`);
+  const [pantryName, setPantryName] = useState(`${user?.name || "My"}'s Pantry`);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitedPeople, setInvitedPeople] = useState<InvitedPerson[]>([]);
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState("");
-  const [nameKitchenLoading, setNameKitchenLoading] = useState(false);
-  const [nameKitchenError, setNameKitchenError] = useState("");
+  const [namePantryLoading, setNamePantryLoading] = useState(false);
+  const [namePantryError, setNamePantryError] = useState("");
   const [finishLoading, setFinishLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  const handleNameKitchen = async () => {
-    if (!kitchenName.trim()) return;
+  const handleNamePantry = async () => {
+    if (!pantryName.trim()) return;
 
-    setNameKitchenLoading(true);
-    setNameKitchenError("");
+    setNamePantryLoading(true);
+    setNamePantryError("");
 
     try {
       if (token && user?.homeId) {
-        await apiPut(`/api/homes/${user.homeId}`, token, { name: kitchenName.trim() });
+        await apiPut(`/api/homes/${user.homeId}`, token, { name: pantryName.trim() });
       }
       setStep(2);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update kitchen name";
-      setNameKitchenError(message);
-      console.error("Name kitchen error:", error);
+      const message = error instanceof Error ? error.message : "Failed to update pantry name";
+      setNamePantryError(message);
+      console.error("Name pantry error:", error);
     } finally {
-      setNameKitchenLoading(false);
+      setNamePantryLoading(false);
     }
   };
 
@@ -182,10 +182,10 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-xl font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
-                  Hey! I'm Pixie, your kitchen sidekick ✨
+                  Hey! I'm Pixie, your pantry sidekick ✨
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 leading-relaxed">
-                  Think of me as your kitchen's quiet organizer. No judgment, no pressure — just a calm space to keep track of what you need.
+                  Think of me as your pantry's quiet organizer. No judgment, no pressure — just a calm space to keep track of what you need.
                 </p>
               </div>
               <Button onClick={() => handleStepChange(1)} className="w-full">
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 1: Name Your Kitchen */}
+          {/* Step 1: Name Your Pantry */}
           {step === 1 && (
             <motion.div
               key="step-1"
@@ -224,31 +224,31 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
-                  Let's set up your kitchen
+                  Let's set up your pantry
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
                   What should we call it?
                 </p>
                 <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400 }}>
                   <Input
-                    value={kitchenName}
-                    onChange={(e) => setKitchenName(e.target.value)}
+                    value={pantryName}
+                    onChange={(e) => setPantryName(e.target.value)}
                     className="text-center"
-                    placeholder="Smith Family Kitchen"
+                    placeholder="Smith Family Pantry"
                     autoFocus
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && kitchenName.trim()) {
-                        handleNameKitchen();
+                      if (e.key === "Enter" && pantryName.trim()) {
+                        handleNamePantry();
                       }
                     }}
                   />
                 </motion.div>
                 <p className="text-xs text-pixie-charcoal-100/60 dark:text-pixie-mist-300/60">
-                  e.g., "Smith Family", "Apartment 4B", "Main Kitchen"
+                  e.g., "Smith Family", "Apartment 4B", "Main Pantry"
                 </p>
               </div>
               <div className="space-y-2">
-                {nameKitchenError && (
+                {namePantryError && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
                     role="alert"
                   >
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{nameKitchenError}</span>
+                    <span>{namePantryError}</span>
                   </motion.div>
                 )}
                 {isOffline && (
@@ -271,11 +271,11 @@ export default function OnboardingPage() {
                   </motion.div>
                 )}
                 <Button
-                  onClick={handleNameKitchen}
+                  onClick={handleNamePantry}
                   className="w-full"
-                  disabled={!kitchenName.trim() || nameKitchenLoading}
+                  disabled={!pantryName.trim() || namePantryLoading}
                 >
-                  {nameKitchenLoading ? (
+                  {namePantryLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Saving...
@@ -321,7 +321,7 @@ export default function OnboardingPage() {
                   Want to invite your household?
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 leading-relaxed">
-                  Share your kitchen so everyone's on the same page. Add people by email — they'll get a link to join.
+                  Share your pantry so everyone's on the same page. Add people by email — they'll get a link to join.
                 </p>
               </div>
 

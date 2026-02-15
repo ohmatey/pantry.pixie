@@ -15,6 +15,11 @@ interface ChatBubbleProps {
 export const ChatBubble = memo(function ChatBubble({ role, content, intent, timestamp, isTyping }: ChatBubbleProps) {
   const isUser = role === "user";
 
+  // Don't render empty bubbles (but allow empty assistant bubbles during typing)
+  if (!content && !isTyping) {
+    return null;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, x: isUser ? 20 : -20, y: 10 }}
@@ -47,7 +52,7 @@ export const ChatBubble = memo(function ChatBubble({ role, content, intent, time
               : "bg-pixie-cream-100 text-pixie-charcoal-300 rounded-bl-md dark:bg-pixie-dusk-200 dark:text-pixie-mist-100"
           )}
         >
-          {content}
+          {content || (isTyping && "...")}
         </motion.div>
 
         {intent && intent !== "other" && !isUser && (

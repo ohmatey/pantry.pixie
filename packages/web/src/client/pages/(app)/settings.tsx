@@ -45,18 +45,18 @@ export default function SettingsPage() {
         Settings
       </h2>
 
-      {/* Your Kitchen */}
+      {/* Your Pantry */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
-            <CardTitle className="text-lg">Kitchen Settings</CardTitle>
+            <CardTitle className="text-lg">Pantry Settings</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-2 block">
-              Kitchen Name
+              Pantry Name
             </label>
             <div className="flex items-center gap-2">
               {editingName ? (

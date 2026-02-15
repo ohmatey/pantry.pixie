@@ -39,7 +39,7 @@ export function MemberList() {
       <div className="flex items-center gap-2">
         <Users className="w-4 h-4 text-pixie-sage-500 dark:text-pixie-glow-sage" />
         <h4 className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider">
-          Kitchen Members
+          Pantry Members
         </h4>
       </div>
 
