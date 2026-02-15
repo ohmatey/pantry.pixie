@@ -1,0 +1,167 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  BUN_VERSION: 1.3.9
+
+jobs:
+  # Validate PR title follows conventional commits
+  pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+
+  # Check for changes that need documentation updates
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if code changes need docs
+        run: |
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          # Check if any source files changed
+          SRC_CHANGED=$(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$' | grep -v '\.test\.' | grep -v '__tests__' || true)
+
+          # Check if docs were updated
+          DOCS_CHANGED=$(echo "$CHANGED_FILES" | grep -E '\.(md)$' || true)
+
+          if [ -n "$SRC_CHANGED" ] && [ -z "$DOCS_CHANGED" ]; then
+            echo "⚠️  Warning: Source code changed but no documentation updates found"
+            echo "Consider updating:"
+            echo "  - README.md"
+            echo "  - CLAUDE.md"
+            echo "  - API documentation"
+            echo ""
+            echo "This is just a reminder - not blocking the PR"
+          else
+            echo "✅ Documentation check passed"
+          fi
+
+  # Check bundle size impact
+  size-check:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build packages
+        run: bun run build
+
+      - name: Check bundle sizes
+        run: |
+          echo "📦 Bundle sizes:"
+          echo ""
+
+          # Check each package dist size
+          for pkg in core sdk cli web; do
+            if [ -d "packages/$pkg/dist" ]; then
+              SIZE=$(du -sh "packages/$pkg/dist" | cut -f1)
+              echo "  @pantry-pixie/$pkg: $SIZE"
+            fi
+          done
+
+          echo ""
+          echo "💡 Tip: Keep bundles small for better performance"
+
+  # Lint commit messages
+  commit-lint:
+    name: Lint Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          # Get commits in PR
+          COMMITS=$(git log --pretty=format:"%s" origin/${{ github.base_ref }}..HEAD)
+
+          echo "Checking commit messages..."
+          echo "$COMMITS" | while read -r commit; do
+            # Check if commit follows conventional format
+            if ! echo "$commit" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'; then
+              echo "⚠️  Warning: '$commit' doesn't follow conventional format"
+              echo "   Expected: type(scope): description"
+              echo "   Example: feat(auth): add login endpoint"
+            fi
+          done
+
+          echo ""
+          echo "✅ Commit message check complete"
+
+  # Summary comment on PR
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [pr-title, docs-check, size-check, commit-lint]
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment PR summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const checks = {
+              'PR Title': '${{ needs.pr-title.result }}',
+              'Documentation': '${{ needs.docs-check.result }}',
+              'Bundle Size': '${{ needs.size-check.result }}',
+              'Commit Messages': '${{ needs.commit-lint.result }}'
+            };
+
+            const emoji = {
+              'success': '✅',
+              'failure': '❌',
+              'skipped': '⏭️'
+            };
+
+            let body = '## PR Checks Summary\n\n';
+            for (const [check, result] of Object.entries(checks)) {
+              body += `${emoji[result] || '❓'} ${check}: ${result}\n`;
+            }
+
+            body += '\n---\n*Automated checks completed*';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

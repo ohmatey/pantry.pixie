@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "allowJs": false,
+    "checkJs": false,
+    "noEmit": false,
+    "paths": {
+      "@pixie/core": ["packages/core/src"],
+      "@pixie/core/*": ["packages/core/src/*"],
+      "@pixie/sdk": ["packages/sdk/src"],
+      "@pixie/sdk/*": ["packages/sdk/src/*"],
+      "@pixie/server": ["packages/server/src"],
+      "@pixie/server/*": ["packages/server/src/*"],
+      "@pixie/cli": ["packages/cli/src"],
+      "@pixie/cli/*": ["packages/cli/src/*"],
+      "@pixie/web": ["packages/web/src"],
+      "@pixie/web/*": ["packages/web/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,12 @@
+# Bun configuration for Pantry Pixie
+
+[bun]
+# preload = ["./bun.preload.ts"]
+
+[install]
+# Prefer online package resolution
+prefer = "online"
+
+[test]
+# Configure test runner
+timeout = 5000

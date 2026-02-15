@@ -1,0 +1,86 @@
+{
+  "name": "Pantry Pixie",
+  "short_name": "Pixie",
+  "description": "Your warm, witty kitchen companion. AI-powered grocery management that gets you.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#8FAF9D",
+  "background_color": "#F4EFE6",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screenshot-2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["productivity", "shopping"],
+  "screenshots_wide": [
+    {
+      "src": "/screenshots/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Add Item",
+      "short_name": "Add",
+      "description": "Quickly add an item to your pantry",
+      "url": "/app/add-item",
+      "icons": [
+        {
+          "src": "/icons/add-item.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Chat with Pixie",
+      "short_name": "Chat",
+      "description": "Open chat interface",
+      "url": "/app/chat",
+      "icons": [
+        {
+          "src": "/icons/chat.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
