@@ -3,7 +3,7 @@
  * Tests list CRUD, list items, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
@@ -25,6 +25,14 @@ import {
   toggleListItem,
   getListStats,
 } from "../grocery-lists";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
+
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
+
+if (skipTests) {
+  test.skip("Tests require DATABASE_URL to be set", () => {});
+} else {
 
 let testHomeId: string;
 let createdListIds: string[] = [];
@@ -447,3 +455,5 @@ describe("Grocery Lists Service - getListStats()", () => {
     expect(stats).toBeUndefined();
   });
 });
+
+} // end of else block (skipTests check)

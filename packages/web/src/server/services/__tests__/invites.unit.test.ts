@@ -3,7 +3,7 @@
  * Tests invite creation, acceptance, expiration, and home member management
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
@@ -19,6 +19,14 @@ import {
   getInviteInfo,
   getHomeMembers,
 } from "../invites";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
+
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
+
+if (skipTests) {
+  test.skip("Tests require DATABASE_URL to be set", () => {});
+} else {
 
 let testHomeId: string;
 let testUserId: string;
@@ -356,3 +364,5 @@ describe("Invite Service - Expired Invite Handling", () => {
     expect(invite2.code).not.toBe(invite3.code);
   });
 });
+
+} // end of else block (skipTests check)

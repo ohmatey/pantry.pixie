@@ -3,7 +3,7 @@
  * Tests thread creation, message retrieval, and AI agent integration
  */
 
-import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, mock , test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
@@ -12,6 +12,14 @@ import {
   chatMessagesTable,
 } from "@pantry-pixie/core";
 import { createThread, getThreads, getMessages, sendMessage } from "../chat";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
+
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
+
+if (skipTests) {
+  test.skip("Tests require DATABASE_URL to be set", () => {});
+} else {
 
 let testHomeId: string;
 let testUserId: string;
@@ -410,3 +418,5 @@ describe("Chat Service - Message History Context", () => {
     );
   }, 15000);
 });
+
+} // end of else block (skipTests check)

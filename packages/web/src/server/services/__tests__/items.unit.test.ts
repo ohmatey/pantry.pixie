@@ -3,7 +3,7 @@
  * Tests CRUD operations, filtering, search, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
 import { db, eq, itemsTable } from "@pantry-pixie/core";
 import {
@@ -18,6 +18,14 @@ import {
   type AddItemData,
   type UpdateItemData,
 } from "../items";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
+
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
+
+if (skipTests) {
+  test.skip("Tests require DATABASE_URL to be set", () => {});
+} else {
 
 let testHomeId: string;
 let createdItemIds: string[] = [];
@@ -469,3 +477,5 @@ describe("Items Service - getStats()", () => {
     expect(stats.byCategory.other.total).toBeGreaterThanOrEqual(1);
   });
 });
+
+} // end of else block (skipTests check)

@@ -1,33 +1,30 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  timestamp,
-  uuid,
-  varchar,
   integer,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { usersTable } from "./user";
 import { itemsTable } from "./item";
 import { groceryListsTable } from "./grocery-list";
 import { chatThreadsTable } from "./chat";
 
-export const homesTable = pgTable("homes", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const homesTable = sqliteTable("homes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description"),
-  ownerId: uuid("owner_id")
+  ownerId: text("owner_id")
     .notNull()
     .references(() => usersTable.id, { onDelete: "cascade" }),
   address: text("address"),
   city: text("city"),
-  state: varchar("state", { length: 2 }),
-  postalCode: varchar("postal_code", { length: 10 }),
-  timezone: varchar("timezone", { length: 50 }).default("UTC").notNull(),
-  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  state: text("state"),
+  postalCode: text("postal_code"),
+  timezone: text("timezone").default("UTC").notNull(),
+  currency: text("currency").default("USD").notNull(),
   monthlyBudget: integer("monthly_budget"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 export const homeRelations = relations(homesTable, ({ one, many }) => ({
@@ -41,16 +38,16 @@ export const homeRelations = relations(homesTable, ({ one, many }) => ({
   members: many(homeMembersTable),
 }));
 
-export const homeMembersTable = pgTable("home_members", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  homeId: uuid("home_id")
+export const homeMembersTable = sqliteTable("home_members", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  homeId: text("home_id")
     .notNull()
     .references(() => homesTable.id, { onDelete: "cascade" }),
-  userId: uuid("user_id")
+  userId: text("user_id")
     .notNull()
     .references(() => usersTable.id, { onDelete: "cascade" }),
-  role: varchar("role", { length: 20 }).default("member").notNull(), // owner, admin, member, viewer
-  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  role: text("role").default("member").notNull(), // owner, admin, member, viewer
+  joinedAt: integer("joined_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 export const homeMembersRelations = relations(homeMembersTable, ({ one }) => ({

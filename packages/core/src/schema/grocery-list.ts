@@ -1,52 +1,48 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  timestamp,
-  uuid,
   integer,
-  boolean,
-  numeric,
-  varchar,
-} from "drizzle-orm/pg-core";
+  real,
+} from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { homesTable } from "./home";
 import { itemsTable } from "./item";
 
-export const groceryListsTable = pgTable("grocery_lists", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  homeId: uuid("home_id")
+export const groceryListsTable = sqliteTable("grocery_lists", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  homeId: text("home_id")
     .notNull()
     .references(() => homesTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  completedAt: timestamp("completed_at"),
-  totalBudget: numeric("total_budget", { precision: 10, scale: 2 }),
-  estimatedCost: numeric("estimated_cost", { precision: 10, scale: 2 }),
-  recurringSchedule: varchar("recurring_schedule", { length: 20 }), // "weekly" | "biweekly" | "monthly" | null
+  isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer("completed_at", { mode: "timestamp" }),
+  totalBudget: real("total_budget"),
+  estimatedCost: real("estimated_cost"),
+  recurringSchedule: text("recurring_schedule"), // "weekly" | "biweekly" | "monthly" | null
   scheduleDayOfWeek: integer("schedule_day_of_week"), // 0=Sun..6=Sat
   scheduleDayOfMonth: integer("schedule_day_of_month"), // 1-28
-  nextResetAt: timestamp("next_reset_at"),
-  lastResetAt: timestamp("last_reset_at"),
+  nextResetAt: integer("next_reset_at", { mode: "timestamp" }),
+  lastResetAt: integer("last_reset_at", { mode: "timestamp" }),
   roundNumber: integer("round_number").default(0).notNull(),
-  isDefault: boolean("is_default").default(false).notNull(),
+  isDefault: integer("is_default", { mode: "boolean" }).default(false).notNull(),
 });
 
-export const listItemsTable = pgTable("list_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  listId: uuid("list_id")
+export const listItemsTable = sqliteTable("list_items", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  listId: text("list_id")
     .notNull()
     .references(() => groceryListsTable.id, { onDelete: "cascade" }),
-  itemId: uuid("item_id")
+  itemId: text("item_id")
     .notNull()
     .references(() => itemsTable.id, { onDelete: "cascade" }),
   quantity: integer("quantity").default(1).notNull(),
-  isCompleted: boolean("is_completed").default(false).notNull(),
-  addedAt: timestamp("added_at").defaultNow().notNull(),
-  completedAt: timestamp("completed_at"),
+  isCompleted: integer("is_completed", { mode: "boolean" }).default(false).notNull(),
+  addedAt: integer("added_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer("completed_at", { mode: "timestamp" }),
   notes: text("notes"),
-  estimatedPrice: numeric("estimated_price", { precision: 10, scale: 2 }),
+  estimatedPrice: real("estimated_price"),
 });
 
 export const groceryListRelations = relations(

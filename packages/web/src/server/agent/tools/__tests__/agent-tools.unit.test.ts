@@ -3,22 +3,29 @@
  * Tests tool structure and factory pattern (execution tested via E2E)
  */
 
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, it, expect, beforeAll, test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import { createAddItemTool } from "../add-item";
 import { createListItemsTool } from "../list-items";
 import { createRemoveItemTool } from "../remove-item";
 import { createCheckItemTool } from "../check-item";
 import { createSetRecurringTool } from "../set-recurring";
+import { shouldSkipDatabaseTests } from "../../../__tests__/test-helpers";
 
-let testHomeId: string;
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
 
-beforeAll(async () => {
-  const seed = await seedTestUser();
-  testHomeId = seed.home.id;
-});
+if (skipTests) {
+  test.skip("Agent tools tests require DATABASE_URL to be set", () => {});
+} else {
+  let testHomeId: string;
 
-describe("Agent Tools - Tool Structure", () => {
+  beforeAll(async () => {
+    const seed = await seedTestUser();
+    testHomeId = seed.home.id;
+  });
+
+  describe("Agent Tools - Tool Structure", () => {
   it("should create add-item tool with correct structure", () => {
     const tool = createAddItemTool(testHomeId);
 
@@ -180,3 +187,5 @@ describe("Agent Tools - Tool Descriptions", () => {
     ).toBe(true);
   });
 });
+
+} // end of else block (skipTests check)

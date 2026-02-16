@@ -3,7 +3,7 @@
  * Tests register, login, token verification, and auth middleware
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import {
   register,
   login,
@@ -19,26 +19,33 @@ import {
   homeMembersTable,
 } from "@pantry-pixie/core";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
 
-// Clean up test users after tests
-async function cleanupTestUsers(emails: string[]) {
-  for (const email of emails) {
-    const user = await db.query.usersTable.findFirst({
-      where: eq(usersTable.email, email),
-    });
-    if (user) {
-      // Delete homes owned by user
-      await db.delete(homesTable).where(eq(homesTable.ownerId, user.id));
-      // Delete user
-      await db.delete(usersTable).where(eq(usersTable.id, user.id));
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
+
+if (skipTests) {
+  test.skip("Auth tests require DATABASE_URL to be set", () => {});
+} else {
+  // Clean up test users after tests
+  async function cleanupTestUsers(emails: string[]) {
+    for (const email of emails) {
+      const user = await db.query.usersTable.findFirst({
+        where: eq(usersTable.email, email),
+      });
+      if (user) {
+        // Delete homes owned by user
+        await db.delete(homesTable).where(eq(homesTable.ownerId, user.id));
+        // Delete user
+        await db.delete(usersTable).where(eq(usersTable.id, user.id));
+      }
     }
   }
-}
 
-describe("Auth Service - register()", () => {
-  const testEmails: string[] = [];
+  describe("Auth Service - register()", () => {
+    const testEmails: string[] = [];
 
-  afterAll(async () => {
+    afterAll(async () => {
     await cleanupTestUsers(testEmails);
   });
 
@@ -407,3 +414,5 @@ describe("Auth Service - withAuth() middleware", () => {
     expect(body.value).toBe(42);
   });
 });
+
+} // end of else block (skipTests check)

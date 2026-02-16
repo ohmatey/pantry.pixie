@@ -1,34 +1,31 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  timestamp,
-  uuid,
-  varchar,
-  jsonb,
-} from "drizzle-orm/pg-core";
+  integer,
+} from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { homesTable } from "./home";
 
-export const chatThreadsTable = pgTable("chat_threads", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  homeId: uuid("home_id")
+export const chatThreadsTable = sqliteTable("chat_threads", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  homeId: text("home_id")
     .notNull()
     .references(() => homesTable.id, { onDelete: "cascade" }),
   title: text("title"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
-export const chatMessagesTable = pgTable("chat_messages", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  threadId: uuid("thread_id")
+export const chatMessagesTable = sqliteTable("chat_messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  threadId: text("thread_id")
     .notNull()
     .references(() => chatThreadsTable.id, { onDelete: "cascade" }),
-  role: varchar("role", { length: 20 }).notNull(), // "user" or "assistant"
+  role: text("role").notNull(), // "user" or "assistant"
   content: text("content").notNull(),
-  intent: varchar("intent", { length: 50 }), // classified intent: add_item, set_recurring, ask_status, budget_question, clarification_needed
-  metadata: jsonb("metadata"), // arbitrary metadata for the message
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  intent: text("intent"), // classified intent: add_item, set_recurring, ask_status, budget_question, clarification_needed
+  metadata: text("metadata", { mode: "json" }), // arbitrary metadata for the message
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 export const chatThreadRelations = relations(

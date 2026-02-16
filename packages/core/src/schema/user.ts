@@ -1,16 +1,16 @@
-import { pgTable, text, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { relations, sql } from "drizzle-orm";
 import { homesTable } from "./home";
 
-export const usersTable = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const usersTable = sqliteTable("users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text("email").unique().notNull(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
-  isVerified: boolean("is_verified").default(false).notNull(),
+  isVerified: integer("is_verified", { mode: "boolean" }).default(false).notNull(),
   preferredLanguage: text("preferred_language").default("en").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 export const usersRelations = relations(usersTable, ({ many }) => ({

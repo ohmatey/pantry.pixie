@@ -1,38 +1,34 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  timestamp,
-  uuid,
   integer,
-  numeric,
-  boolean,
-  varchar,
-} from "drizzle-orm/pg-core";
+  real,
+} from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { homesTable } from "./home";
 import { listItemsTable } from "./grocery-list";
 
-export const itemsTable = pgTable("items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  homeId: uuid("home_id")
+export const itemsTable = sqliteTable("items", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  homeId: text("home_id")
     .notNull()
     .references(() => homesTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  category: varchar("category", { length: 50 }),
+  category: text("category"),
   quantity: integer("quantity").default(1).notNull(),
-  unit: varchar("unit", { length: 20 }), // e.g., "pieces", "lbs", "liters"
-  location: varchar("location", { length: 100 }), // e.g., "pantry shelf 3", "freezer"
-  expiresAt: timestamp("expires_at"),
-  dateAdded: timestamp("date_added").defaultNow().notNull(),
-  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
-  isRecurring: boolean("is_recurring").default(false).notNull(),
-  recurringInterval: varchar("recurring_interval", { length: 20 }), // "daily", "weekly", "monthly"
-  recurringLastNotified: timestamp("recurring_last_notified"),
+  unit: text("unit"), // e.g., "pieces", "lbs", "liters"
+  location: text("location"), // e.g., "pantry shelf 3", "freezer"
+  expiresAt: integer("expires_at", { mode: "timestamp" }),
+  dateAdded: integer("date_added", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  lastUpdated: integer("last_updated", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  isRecurring: integer("is_recurring", { mode: "boolean" }).default(false).notNull(),
+  recurringInterval: text("recurring_interval"), // "daily", "weekly", "monthly"
+  recurringLastNotified: integer("recurring_last_notified", { mode: "timestamp" }),
   barcode: text("barcode"),
-  price: numeric("price", { precision: 10, scale: 2 }),
+  price: real("price"),
   notes: text("notes"),
-  isChecked: boolean("is_checked").default(false).notNull(),
+  isChecked: integer("is_checked", { mode: "boolean" }).default(false).notNull(),
 });
 
 export const itemsRelations = relations(itemsTable, ({ one, many }) => ({

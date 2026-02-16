@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   startServer,
@@ -6,30 +6,39 @@ import {
   authedFetch,
   type TestServer,
 } from "./helpers";
+import { shouldSkipDatabaseTests } from "./test-helpers";
 
-let server: TestServer;
-let token: string;
-let homeId: string;
-let existingThreadId: string;
+// Skip all tests if DATABASE_URL is not set
+const skipTests = shouldSkipDatabaseTests();
 
-beforeAll(async () => {
-  const seed = await seedTestUser();
-  server = startServer();
-  const login = await loginSeedUser(server.url);
-  token = login.token;
-  homeId = login.user.homeId;
-  existingThreadId = seed.thread.id;
-});
+if (skipTests) {
+  test.skip("E2E tests require DATABASE_URL to be set", () => {});
+} else {
+  let server: TestServer;
+  let token: string;
+  let homeId: string;
+  let existingThreadId: string;
 
-afterAll(() => {
-  server.stop();
-});
+  beforeAll(async () => {
+    const seed = await seedTestUser();
+    server = startServer();
+    const login = await loginSeedUser(server.url);
+    token = login.token;
+    homeId = login.user.homeId;
+    existingThreadId = seed.thread.id;
+  });
 
-// ---------------------------------------------------------------------------
-// GET /api/homes/:homeId/chat/threads
-// ---------------------------------------------------------------------------
+  afterAll(() => {
+    if (server) {
+      server.stop();
+    }
+  });
 
-describe("GET /api/homes/:homeId/chat/threads", () => {
+  // ---------------------------------------------------------------------------
+  // GET /api/homes/:homeId/chat/threads
+  // ---------------------------------------------------------------------------
+
+  describe("GET /api/homes/:homeId/chat/threads", () => {
   it("returns the seed thread", async () => {
     const res = await authedFetch(
       server.url,
@@ -119,3 +128,5 @@ describe("GET /api/homes/:homeId/chat/threads/:threadId/messages", () => {
     expect(res.status).toBe(401);
   });
 });
+
+} // end of else block (skipTests check)

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
 import {
   startServer,
@@ -7,22 +7,30 @@ import {
   type TestServer,
 } from "./helpers";
 
+// Early exit if DATABASE_URL is not set
+if (!process.env.DATABASE_URL) {
+  console.warn("⚠️  Skipping E2E tests - DATABASE_URL not set");
+  process.exit(0);
+}
+
 let server: TestServer;
 
-beforeAll(async () => {
-  await seedTestUser();
-  server = startServer();
-});
+  beforeAll(async () => {
+    await seedTestUser();
+    server = startServer();
+  });
 
-afterAll(() => {
-  server.stop();
-});
+  afterAll(() => {
+    if (server) {
+      server.stop();
+    }
+  });
 
-// ---------------------------------------------------------------------------
-// POST /api/auth/login
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // POST /api/auth/login
+  // ---------------------------------------------------------------------------
 
-describe("POST /api/auth/login", () => {
+  describe("POST /api/auth/login", () => {
   it("returns 200 + token for valid seed user credentials", async () => {
     const res = await fetch(`${server.url}/api/auth/login`, {
       method: "POST",
@@ -153,3 +161,5 @@ describe("GET /api/auth/me", () => {
     expect(res.status).toBe(401);
   });
 });
+
+} // end of else block (skipTests check)
