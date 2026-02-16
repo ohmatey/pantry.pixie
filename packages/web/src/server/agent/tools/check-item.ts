@@ -3,14 +3,15 @@ import { z } from "zod";
 import * as itemsService from "../../services/items";
 
 export function createCheckItemTool(homeId: string) {
+  const schema = z.object({
+    name: z.string().describe("Name of the item to check"),
+  });
+
   return tool({
     description:
       "Check if a specific item exists in the pantry and its status. Use when the user asks 'do I have...?' or 'how many...?' questions.",
-    parameters: z.object({
-      name: z.string().describe("Name of the item to check"),
-    }),
-    execute: async (params: { name: string }) => {
-      const { name } = params;
+    inputSchema: schema,
+    execute: async ({ name }: z.infer<typeof schema>) => {
       const items = await itemsService.listItems(homeId, { search: name });
 
       if (items.length === 0) {

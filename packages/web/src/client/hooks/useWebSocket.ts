@@ -20,7 +20,7 @@ export function useWebSocket({
 }: UseWebSocketOptions = {}) {
   const { token } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimerRef = useRef<number>();
   const [isConnected, setIsConnected] = useState(false);
   const mountedRef = useRef(true);
 

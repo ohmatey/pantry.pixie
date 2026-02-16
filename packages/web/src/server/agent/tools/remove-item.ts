@@ -3,14 +3,15 @@ import { z } from "zod";
 import * as itemsService from "../../services/items";
 
 export function createRemoveItemTool(homeId: string) {
+  const schema = z.object({
+    name: z.string().describe("Name of the item to remove"),
+  });
+
   return tool({
     description:
       "Remove an item from the pantry. Use when the user says they ran out of, used up, finished, or want to delete something.",
-    parameters: z.object({
-      name: z.string().describe("Name of the item to remove"),
-    }),
-    execute: async (params: { name: string }) => {
-      const { name } = params;
+    inputSchema: schema,
+    execute: async ({ name }: z.infer<typeof schema>) => {
       const item = await itemsService.findItemByName(homeId, name);
 
       if (!item) {

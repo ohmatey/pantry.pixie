@@ -7,19 +7,20 @@ export function createShowGroceryListEditorTool(
   homeId: string,
   scopedListId?: string | null,
 ) {
+  const schema = z.object({
+    listId: z.string().optional().describe("The ID of the list to show"),
+    listName: z
+      .string()
+      .optional()
+      .describe("The name of the list to show (alternative to listId)"),
+  });
+
   return tool({
     description:
       "Show a specific grocery list with full editing capabilities (add, remove, edit, toggle items). " +
       "Use when user wants to manage or view details of a specific list.",
-    parameters: z.object({
-      listId: z.string().optional().describe("The ID of the list to show"),
-      listName: z
-        .string()
-        .optional()
-        .describe("The name of the list to show (alternative to listId)"),
-    }),
-    execute: async (params: { listId?: string; listName?: string }) => {
-      const { listId, listName } = params;
+    inputSchema: schema,
+    execute: async ({ listId, listName }: z.infer<typeof schema>) => {
       let list;
 
       // Find list by ID or name (priority: explicit ID > explicit name > scoped list > default)

@@ -3,17 +3,18 @@ import { z } from "zod";
 import * as itemsService from "../../services/items";
 
 export function createSetRecurringTool(homeId: string) {
+  const schema = z.object({
+    name: z.string().describe("Name of the item to make recurring"),
+    interval: z
+      .enum(["daily", "weekly", "biweekly", "monthly"])
+      .describe("How often the item should be restocked"),
+  });
+
   return tool({
     description:
       "Set an item as recurring so the user gets reminded to restock. Use when they mention buying something regularly.",
-    parameters: z.object({
-      name: z.string().describe("Name of the item to make recurring"),
-      interval: z
-        .enum(["daily", "weekly", "biweekly", "monthly"])
-        .describe("How often the item should be restocked"),
-    }),
-    execute: async (params: { name: string; interval: "daily" | "weekly" | "biweekly" | "monthly" }) => {
-      const { name, interval } = params;
+    inputSchema: schema,
+    execute: async ({ name, interval }: z.infer<typeof schema>) => {
       const item = await itemsService.findItemByName(homeId, name);
 
       if (!item) {

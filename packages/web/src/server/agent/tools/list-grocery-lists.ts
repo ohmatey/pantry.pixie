@@ -4,19 +4,20 @@ import * as groceryListsService from "../../services/grocery-lists";
 import type { GroceryListsOverviewUI } from "../../ws";
 
 export function createListGroceryListsTool(homeId: string) {
+  const schema = z.object({
+    includeCompleted: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Include completed lists in the results"),
+  });
+
   return tool({
     description:
       "Show all grocery/shopping lists for the home. Use when user asks " +
       "'show my lists', 'what lists do I have', 'show all shopping lists', etc.",
-    parameters: z.object({
-      includeCompleted: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Include completed lists in the results"),
-    }),
-    execute: async (params: { includeCompleted?: boolean }) => {
-      const { includeCompleted = false } = params;
+    inputSchema: schema,
+    execute: async ({ includeCompleted = false }: z.infer<typeof schema>) => {
       const allLists = await groceryListsService.getLists(homeId);
 
       // Filter based on status

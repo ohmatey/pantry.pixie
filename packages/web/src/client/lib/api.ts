@@ -2,7 +2,7 @@
  * Shared API fetch utility with auth token injection
  */
 
-import { useAuth } from "../hooks/useAuth";
+import { useAuthStore } from "../hooks/useAuth";
 
 export async function apiFetch<T = any>(
   path: string,
@@ -19,7 +19,7 @@ export async function apiFetch<T = any>(
   });
 
   if (res.status === 401) {
-    useAuth.getState().logout();
+    useAuthStore.getState().logout();
     window.location.href = "/login";
     throw new Error("Session expired");
   }

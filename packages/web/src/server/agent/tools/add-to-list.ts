@@ -7,45 +7,43 @@ export function createAddToListTool(
   homeId: string,
   scopedListId?: string | null,
 ) {
+  const schema = z.object({
+    items: z
+      .array(
+        z.object({
+          name: z
+            .string()
+            .describe("Item name (e.g., 'chicken breast', 'jasmine rice')"),
+          quantity: z
+            .number()
+            .optional()
+            .describe("How many/much to buy (e.g., 2, 500)"),
+          unit: z
+            .string()
+            .optional()
+            .describe("Unit (e.g., 'g', 'kg', 'pieces', 'bunch', 'can')"),
+          notes: z
+            .string()
+            .optional()
+            .describe("Extra context (e.g., 'organic', 'for green curry')"),
+        }),
+      )
+      .describe(
+        "Items to add to the list with optional quantity, unit, and notes",
+      ),
+    listName: z
+      .string()
+      .optional()
+      .describe(
+        "Name of the list (optional, defaults to scoped list or 'Quick Items')",
+      ),
+  });
+
   return tool({
     description:
       "Add items to a grocery/shopping list. Supports structured items with quantity and unit. Use for: 'add X to my list', 'put X on my shopping list', 'add all ingredients for [dish] to my list'. For recipe requests, include all ingredients with appropriate quantities and units.",
-    parameters: z.object({
-      items: z
-        .array(
-          z.object({
-            name: z
-              .string()
-              .describe("Item name (e.g., 'chicken breast', 'jasmine rice')"),
-            quantity: z
-              .number()
-              .optional()
-              .describe("How many/much to buy (e.g., 2, 500)"),
-            unit: z
-              .string()
-              .optional()
-              .describe("Unit (e.g., 'g', 'kg', 'pieces', 'bunch', 'can')"),
-            notes: z
-              .string()
-              .optional()
-              .describe("Extra context (e.g., 'organic', 'for green curry')"),
-          }),
-        )
-        .describe(
-          "Items to add to the list with optional quantity, unit, and notes",
-        ),
-      listName: z
-        .string()
-        .optional()
-        .describe(
-          "Name of the list (optional, defaults to scoped list or 'Quick Items')",
-        ),
-    }),
-    execute: async (params: {
-      items: Array<{ name: string; quantity?: number; unit?: string }>;
-      listName?: string;
-    }) => {
-      const { items, listName } = params;
+    inputSchema: schema,
+    execute: async ({ items, listName }: z.infer<typeof schema>) => {
       // 1. Get or create list (we only need the id, so we don't need the full type)
       let listId: string;
       if (scopedListId) {

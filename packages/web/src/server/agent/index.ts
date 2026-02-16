@@ -75,13 +75,13 @@ export async function createPixieResponse(
   return {
     textStream: result.textStream,
     intent,
-    fullText: result.text.then((t) => t),
-    toolResults: result.response.then((r) =>
+    fullText: Promise.resolve(result.text).then((t) => t),
+    toolResults: Promise.resolve(result.response).then((r) =>
       r.messages
-        .filter((m) => m.role === 'assistant' && m.content)
+        .filter((m) => m.role === 'assistant' && Array.isArray(m.content))
         .flatMap((m) =>
           m.content
-            .filter((c) => c.type === 'tool-call')
+            .filter((c: any) => c.type === 'tool-call')
             .map((c: any) => ({
               toolName: c.toolName,
               result: c.result,
