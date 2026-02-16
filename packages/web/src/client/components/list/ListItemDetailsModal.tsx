@@ -35,7 +35,11 @@ export function ListItemDetailsModal({
   onRemove,
 }: ListItemDetailsModalProps) {
   const containerRef = useFocusTrap(isOpen);
-  const { data: itemDetails, isLoading, error } = useItemDetails(listItem?.item.id ?? null);
+  const {
+    data: itemDetails,
+    isLoading,
+    error,
+  } = useItemDetails(listItem?.item.id ?? null);
 
   // Close on Escape key
   useEffect(() => {
@@ -59,7 +63,8 @@ export function ListItemDetailsModal({
 
   // Check if expiring soon (within 7 days)
   const isExpiringSoon = itemDetails?.expiresAt
-    ? new Date(itemDetails.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000
+    ? new Date(itemDetails.expiresAt).getTime() - Date.now() <
+      7 * 24 * 60 * 60 * 1000
     : false;
 
   const formatDate = (dateString: string) => {
@@ -124,7 +129,8 @@ export function ListItemDetailsModal({
             {error && (
               <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-sm text-red-600 dark:text-red-400">
-                  Failed to load item details. The item may have been deleted from inventory.
+                  Failed to load item details. The item may have been deleted
+                  from inventory.
                 </p>
               </div>
             )}
@@ -178,7 +184,8 @@ export function ListItemDetailsModal({
                           In pantry
                         </p>
                         <p className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100">
-                          {itemDetails.quantity} {itemDetails.unit || "piece(s)"}
+                          {itemDetails.quantity}{" "}
+                          {itemDetails.unit || "piece(s)"}
                         </p>
                       </div>
                     </div>
@@ -197,7 +204,7 @@ export function ListItemDetailsModal({
                                 "text-sm font-medium",
                                 isExpiringSoon
                                   ? "text-orange-600 dark:text-orange-400"
-                                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100"
+                                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100",
                               )}
                             >
                               {formatDate(itemDetails.expiresAt)}
@@ -229,19 +236,20 @@ export function ListItemDetailsModal({
                     )}
 
                     {/* Recurring */}
-                    {itemDetails.isRecurring && itemDetails.recurringInterval && (
-                      <div className="flex items-start gap-3">
-                        <Repeat className="w-4 h-4 mt-0.5 text-pixie-charcoal-200 dark:text-pixie-mist-300 shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
-                            Recurring
-                          </p>
-                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full capitalize">
-                            {itemDetails.recurringInterval}
-                          </span>
+                    {itemDetails.isRecurring &&
+                      itemDetails.recurringInterval && (
+                        <div className="flex items-start gap-3">
+                          <Repeat className="w-4 h-4 mt-0.5 text-pixie-charcoal-200 dark:text-pixie-mist-300 shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                              Recurring
+                            </p>
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full capitalize">
+                              {itemDetails.recurringInterval}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Notes */}
                     {itemDetails.notes && (

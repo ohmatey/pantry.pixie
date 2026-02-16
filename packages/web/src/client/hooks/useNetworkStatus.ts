@@ -5,7 +5,7 @@
  * Handles edge cases like slow connections and intermittent connectivity.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface NetworkStatus {
   isOnline: boolean;
@@ -15,7 +15,7 @@ export interface NetworkStatus {
 
 export function useNetworkStatus(): boolean {
   const [isOnline, setIsOnline] = useState(() => {
-    if (typeof navigator !== 'undefined') {
+    if (typeof navigator !== "undefined") {
       return navigator.onLine;
     }
     return true; // Assume online in SSR
@@ -30,12 +30,12 @@ export function useNetworkStatus(): boolean {
       setIsOnline(false);
     }
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -44,7 +44,7 @@ export function useNetworkStatus(): boolean {
 
 export function useDetailedNetworkStatus(): NetworkStatus {
   const [status, setStatus] = useState<NetworkStatus>(() => ({
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
     wasOffline: false,
     effectiveType: null,
   }));
@@ -75,8 +75,8 @@ export function useDetailedNetworkStatus(): NetworkStatus {
       }));
     }
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     // Also listen to connection change events
     const connection =
@@ -85,17 +85,17 @@ export function useDetailedNetworkStatus(): NetworkStatus {
       (navigator as any).webkitConnection;
 
     if (connection) {
-      connection.addEventListener('change', updateNetworkInfo);
+      connection.addEventListener("change", updateNetworkInfo);
     }
 
     // Initial update
     updateNetworkInfo();
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
       if (connection) {
-        connection.removeEventListener('change', updateNetworkInfo);
+        connection.removeEventListener("change", updateNetworkInfo);
       }
     };
   }, []);

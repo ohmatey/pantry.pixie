@@ -5,7 +5,7 @@
 import { db, itemsTable, eq, and } from "@pantry-pixie/core";
 import { gte } from "drizzle-orm";
 
-export type TimePeriod = 'week' | 'month' | 'all-time';
+export type TimePeriod = "week" | "month" | "all-time";
 
 export interface CategorySpending {
   category: string;
@@ -29,19 +29,19 @@ export interface BudgetSummary {
  */
 function getPeriodStartDate(period: TimePeriod): Date | null {
   const now = new Date();
-  
+
   switch (period) {
-    case 'week':
+    case "week":
       const weekAgo = new Date(now);
       weekAgo.setDate(now.getDate() - 7);
       return weekAgo;
-      
-    case 'month':
+
+    case "month":
       const monthAgo = new Date(now);
       monthAgo.setMonth(now.getMonth() - 1);
       return monthAgo;
-      
-    case 'all-time':
+
+    case "all-time":
       return null; // No start date filter
   }
 }
@@ -51,14 +51,14 @@ function getPeriodStartDate(period: TimePeriod): Date | null {
  */
 export async function calculateSpending(
   homeId: string,
-  period: TimePeriod = 'month'
+  period: TimePeriod = "month",
 ): Promise<BudgetSummary> {
   const startDate = getPeriodStartDate(period);
   const endDate = new Date();
 
   // Build query conditions
   const conditions = [eq(itemsTable.homeId, homeId)];
-  
+
   if (startDate) {
     conditions.push(gte(itemsTable.dateAdded, startDate));
   }
@@ -81,14 +81,14 @@ export async function calculateSpending(
 
   for (const item of itemsWithCosts) {
     const cost = item.price ? parseFloat(item.price) : 0;
-    
+
     if (cost > 0) {
       total += cost;
 
       // Update category spending
-      const category = item.category || 'other';
+      const category = item.category || "other";
       const existing = categoryMap.get(category);
-      
+
       if (existing) {
         existing.total += cost;
         existing.itemCount += 1;
@@ -105,14 +105,14 @@ export async function calculateSpending(
 
   // Calculate averages for each category
   const byCategory: CategorySpending[] = Array.from(categoryMap.values())
-    .map(cat => ({
+    .map((cat) => ({
       ...cat,
       averagePerItem: cat.total / cat.itemCount,
     }))
     .sort((a, b) => b.total - a.total); // Sort by total spending (highest first)
 
   const itemsWithCostCount = itemsWithCosts.filter(
-    item => item.price && parseFloat(item.price) > 0
+    (item) => item.price && parseFloat(item.price) > 0,
   ).length;
 
   return {
@@ -129,27 +129,25 @@ export async function calculateSpending(
 /**
  * Get spending insights and recommendations
  */
-export async function getSpendingInsights(
-  homeId: string
-): Promise<{
+export async function getSpendingInsights(homeId: string): Promise<{
   topCategory: string | null;
   weeklyAverage: number;
   monthlyAverage: number;
-  trend: 'increasing' | 'decreasing' | 'stable';
+  trend: "increasing" | "decreasing" | "stable";
 }> {
   // Get current month and previous month spending
-  const currentMonth = await calculateSpending(homeId, 'month');
-  
+  const currentMonth = await calculateSpending(homeId, "month");
+
   // Calculate previous month (simplified - get all-time and subtract current month)
-  const allTime = await calculateSpending(homeId, 'all-time');
+  const allTime = await calculateSpending(homeId, "all-time");
   const previousMonthTotal = allTime.total - currentMonth.total;
 
   // Determine trend
-  let trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+  let trend: "increasing" | "decreasing" | "stable" = "stable";
   if (currentMonth.total > previousMonthTotal * 1.1) {
-    trend = 'increasing';
+    trend = "increasing";
   } else if (currentMonth.total < previousMonthTotal * 0.9) {
-    trend = 'decreasing';
+    trend = "decreasing";
   }
 
   return {
@@ -165,8 +163,8 @@ export async function getSpendingInsights(
  */
 export async function getBudgetSummary(homeId: string) {
   const [week, month] = await Promise.all([
-    calculateSpending(homeId, 'week'),
-    calculateSpending(homeId, 'month'),
+    calculateSpending(homeId, "week"),
+    calculateSpending(homeId, "month"),
   ]);
 
   return {

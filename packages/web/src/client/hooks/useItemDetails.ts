@@ -32,7 +32,7 @@ export function useItemDetails(itemId: string | null) {
     queryFn: async () => {
       const res = await apiGet<ItemDetails>(
         `/api/homes/${user!.homeId}/items/${itemId}`,
-        token!
+        token!,
       );
       return res.data;
     },

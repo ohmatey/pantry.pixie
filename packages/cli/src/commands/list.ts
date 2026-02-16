@@ -35,7 +35,7 @@ export const listCommand = new Command("list")
           console.error(chalk.red(`✗ Error creating list: ${error}`));
           process.exit(1);
         }
-      })
+      }),
   )
   .addCommand(
     new Command("view")
@@ -51,13 +51,13 @@ export const listCommand = new Command("list")
 
           console.log(chalk.blue("📋 Your grocery lists:"));
           console.log(
-            chalk.gray("(Run 'pixie list create' to create a new list)")
+            chalk.gray("(Run 'pixie list create' to create a new list)"),
           );
         } catch (error) {
           console.error(chalk.red(`✗ Error retrieving lists: ${error}`));
           process.exit(1);
         }
-      })
+      }),
   )
   .addCommand(
     new Command("add-item")
@@ -78,7 +78,7 @@ export const listCommand = new Command("list")
           console.error(chalk.red(`✗ Error adding item: ${error}`));
           process.exit(1);
         }
-      })
+      }),
   )
   .addCommand(
     new Command("sync")
@@ -97,5 +97,5 @@ export const listCommand = new Command("list")
           console.error(chalk.red(`✗ Error syncing list: ${error}`));
           process.exit(1);
         }
-      })
+      }),
   );

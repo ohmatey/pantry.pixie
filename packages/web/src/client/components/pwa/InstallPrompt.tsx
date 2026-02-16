@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, Download, Share } from 'lucide-react';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { X, Download, Share } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Toast-style prompt that appears when PWA can be installed.
@@ -66,7 +66,9 @@ export function InstallPrompt() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Download className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Install Pantry Pixie</h3>
+                  <h3 className="font-semibold text-sm">
+                    Install Pantry Pixie
+                  </h3>
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
@@ -75,7 +77,8 @@ export function InstallPrompt() {
 
                 <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4 list-decimal">
                   <li>
-                    Tap the <Share className="w-3 h-3 inline" /> Share button below
+                    Tap the <Share className="w-3 h-3 inline" /> Share button
+                    below
                   </li>
                   <li>Scroll down and tap "Add to Home Screen"</li>
                   <li>Tap "Add" to confirm</li>
@@ -111,7 +114,9 @@ export function InstallPrompt() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Download className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Install Pantry Pixie</h3>
+                  <h3 className="font-semibold text-sm">
+                    Install Pantry Pixie
+                  </h3>
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">

@@ -3,7 +3,15 @@
  * Used by both agent tools and API handlers.
  */
 
-import { db, eq, and, ilike, asc, itemsTable, type Item } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  and,
+  ilike,
+  asc,
+  itemsTable,
+  type Item,
+} from "@pantry-pixie/core";
 import { eventBus } from "./events";
 
 export interface AddItemData {
@@ -37,7 +45,10 @@ export interface ItemFilters {
   isChecked?: boolean;
 }
 
-export async function addItem(homeId: string, data: AddItemData): Promise<Item> {
+export async function addItem(
+  homeId: string,
+  data: AddItemData,
+): Promise<Item> {
   const [item] = await db
     .insert(itemsTable)
     .values({
@@ -57,7 +68,10 @@ export async function addItem(homeId: string, data: AddItemData): Promise<Item> 
   return item;
 }
 
-export async function listItems(homeId: string, filters?: ItemFilters): Promise<Item[]> {
+export async function listItems(
+  homeId: string,
+  filters?: ItemFilters,
+): Promise<Item[]> {
   let items = await db
     .select()
     .from(itemsTable)
@@ -80,7 +94,10 @@ export async function listItems(homeId: string, filters?: ItemFilters): Promise<
   return items;
 }
 
-export async function getItem(homeId: string, itemId: string): Promise<Item | undefined> {
+export async function getItem(
+  homeId: string,
+  itemId: string,
+): Promise<Item | undefined> {
   const [item] = await db
     .select()
     .from(itemsTable)
@@ -89,7 +106,11 @@ export async function getItem(homeId: string, itemId: string): Promise<Item | un
   return item;
 }
 
-export async function updateItem(homeId: string, itemId: string, data: UpdateItemData): Promise<Item | undefined> {
+export async function updateItem(
+  homeId: string,
+  itemId: string,
+  data: UpdateItemData,
+): Promise<Item | undefined> {
   const [item] = await db
     .update(itemsTable)
     .set({ ...data, lastUpdated: new Date() })
@@ -102,7 +123,10 @@ export async function updateItem(homeId: string, itemId: string, data: UpdateIte
   return item;
 }
 
-export async function removeItem(homeId: string, itemId: string): Promise<Item | undefined> {
+export async function removeItem(
+  homeId: string,
+  itemId: string,
+): Promise<Item | undefined> {
   const [item] = await db
     .delete(itemsTable)
     .where(and(eq(itemsTable.id, itemId), eq(itemsTable.homeId, homeId)))
@@ -114,16 +138,24 @@ export async function removeItem(homeId: string, itemId: string): Promise<Item |
   return item;
 }
 
-export async function findItemByName(homeId: string, name: string): Promise<Item | undefined> {
+export async function findItemByName(
+  homeId: string,
+  name: string,
+): Promise<Item | undefined> {
   const items = await db
     .select()
     .from(itemsTable)
-    .where(and(eq(itemsTable.homeId, homeId), ilike(itemsTable.name, `%${name}%`)));
+    .where(
+      and(eq(itemsTable.homeId, homeId), ilike(itemsTable.name, `%${name}%`)),
+    );
 
   return items[0];
 }
 
-export async function toggleItemCheck(homeId: string, itemId: string): Promise<Item | undefined> {
+export async function toggleItemCheck(
+  homeId: string,
+  itemId: string,
+): Promise<Item | undefined> {
   const existing = await getItem(homeId, itemId);
   if (!existing) return undefined;
 

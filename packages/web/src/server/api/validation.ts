@@ -141,10 +141,7 @@ export const addListItemSchema = z.object({
 });
 
 export const addListItemByNameSchema = z.object({
-  name: z
-    .string()
-    .min(1)
-    .max(VALIDATION.ITEM.MAX_NAME_LENGTH),
+  name: z.string().min(1).max(VALIDATION.ITEM.MAX_NAME_LENGTH),
   quantity: z.number().positive().optional(),
 });
 
@@ -169,7 +166,7 @@ export const sendMessageSchema = z.object({
 
 export function validateBody<T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): { success: true; data: T } | { success: false; response: Response } {
   const result = schema.safeParse(data);
   if (result.success) {
@@ -184,8 +181,12 @@ export function validateBody<T>(
   return {
     success: false,
     response: new Response(
-      JSON.stringify({ success: false, error: "Validation failed", details: errors }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: "Validation failed",
+        details: errors,
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
     ),
   };
 }

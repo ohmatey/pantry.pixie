@@ -1,11 +1,13 @@
 # Color Contrast Audit - WCAG AA Compliance
 
 ## WCAG AA Requirements
+
 - **Normal text** (<18pt / <14pt bold): 4.5:1 minimum
 - **Large text** (≥18pt / ≥14pt bold): 3.0:1 minimum
 - **UI components**: 3.0:1 minimum
 
 ## Methodology
+
 Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
 
 ---
@@ -13,6 +15,7 @@ Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
 ## Light Mode Combinations
 
 ### Body Text
+
 - **pixie-charcoal-300** (#2B2B2B) on **pixie-cream-50** (#FDFBF8)
   - Contrast: **14.8:1** ✅ PASS (AAA)
   - Usage: Primary body text, headings
@@ -26,6 +29,7 @@ Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
   - Usage: Secondary text, labels
 
 ### Interactive Elements
+
 - **pixie-sage-600** (#648474) on **pixie-cream-50** (#FDFBF8)
   - Contrast: **4.2:1** ⚠️ FAIL AA (4.5:1 required)
   - **FIX NEEDED**: Darken to pixie-sage-700 (#4f685c) → 5.9:1 ✅
@@ -46,6 +50,7 @@ Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
 ## Dark Mode Combinations
 
 ### Body Text
+
 - **pixie-mist-100** (#C9D3CE) on **pixie-dusk-50** (#1E2220)
   - Contrast: **9.5:1** ✅ PASS (AAA)
   - Usage: Primary text
@@ -59,6 +64,7 @@ Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
   - Usage: Tertiary text, placeholders
 
 ### Interactive Elements
+
 - **pixie-glow-sage** (#7FAF9B) on **pixie-dusk-50** (#1E2220)
   - Contrast: **4.9:1** ✅ PASS (AA)
   - Usage: Links, accents, focus rings
@@ -72,6 +78,7 @@ Used WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
 ## Required Fixes
 
 ### 1. Update Sage Color Palette (Light Mode)
+
 ```typescript
 sage: {
   // Increase contrast for text on light backgrounds
@@ -81,6 +88,7 @@ sage: {
 ```
 
 ### 2. Update Button Variant (Light Mode)
+
 ```typescript
 default: "bg-pixie-sage-600 text-white hover:bg-pixie-sage-700"
 // Was: bg-pixie-sage-500
@@ -88,12 +96,14 @@ default: "bg-pixie-sage-600 text-white hover:bg-pixie-sage-700"
 ```
 
 ### 3. Update Link/Accent Colors (Light Mode)
+
 All instances of `text-pixie-sage-500` or `text-pixie-sage-600` on light backgrounds
 should use `text-pixie-sage-700` for AA compliance.
 
 ---
 
 ## Status After Fixes
+
 - ✅ All body text combinations: WCAG AAA
 - ✅ All interactive elements: WCAG AA minimum
 - ✅ All UI components: 3:1 minimum

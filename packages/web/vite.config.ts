@@ -13,16 +13,16 @@ export default defineConfig({
 
       workbox: {
         // Precache static assets
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
 
         // Runtime caching strategies
         runtimeCaching: [
           {
             // API endpoints - NetworkFirst (try network, fallback to cache)
             urlPattern: /^\/api\/homes\/.*\/(items|messages)/,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api-cache',
+              cacheName: "api-cache",
               networkTimeoutSeconds: 3,
               expiration: {
                 maxAgeSeconds: 60 * 5, // 5 minutes
@@ -36,9 +36,9 @@ export default defineConfig({
           {
             // Images - CacheFirst (use cache, update in background)
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'images-cache',
+              cacheName: "images-cache",
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
@@ -48,9 +48,9 @@ export default defineConfig({
           {
             // Fonts - CacheFirst (static resources)
             urlPattern: /\.(?:woff|woff2|ttf|otf)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'fonts-cache',
+              cacheName: "fonts-cache",
               expiration: {
                 maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
@@ -67,13 +67,13 @@ export default defineConfig({
 
       devOptions: {
         enabled: true, // Test service worker in dev mode
-        type: 'module',
+        type: "module",
       },
     }),
 
     // Bundle visualizer for production builds
     visualizer({
-      filename: './dist/stats.html',
+      filename: "./dist/stats.html",
       open: false,
       gzipSize: true,
       brotliSize: true,
@@ -91,7 +91,7 @@ export default defineConfig({
   build: {
     outDir: "dist/client",
     emptyOutDir: true,
-    minify: 'terser',
+    minify: "terser",
 
     terserOptions: {
       compress: {
@@ -104,24 +104,24 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Vendor chunks (stable, cacheable)
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': [
-            '@tanstack/react-query',
-            '@tanstack/react-query-persist-client',
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "query-vendor": [
+            "@tanstack/react-query",
+            "@tanstack/react-query-persist-client",
           ],
-          'ui-vendor': ['lucide-react', 'framer-motion', 'sonner'],
-          'offline-vendor': ['dexie', 'idb-keyval'],
+          "ui-vendor": ["lucide-react", "framer-motion", "sonner"],
+          "offline-vendor": ["dexie", "idb-keyval"],
 
           // Feature chunks (code-split by route)
-          'chat': [
-            './src/client/pages/(app)/chat.tsx',
-            './src/client/components/chat/ChatBubble.tsx',
-            './src/client/components/chat/ChatInput.tsx',
+          chat: [
+            "./src/client/pages/(app)/chat.tsx",
+            "./src/client/components/chat/ChatBubble.tsx",
+            "./src/client/components/chat/ChatInput.tsx",
           ],
-          'list': [
-            './src/client/pages/(app)/list.tsx',
-            './src/client/components/list/CategoryGroup.tsx',
-            './src/client/components/list/ItemRow.tsx',
+          list: [
+            "./src/client/pages/(app)/list.tsx",
+            "./src/client/components/list/CategoryGroup.tsx",
+            "./src/client/components/list/ItemRow.tsx",
           ],
         },
       },

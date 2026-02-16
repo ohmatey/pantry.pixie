@@ -46,10 +46,16 @@ export async function seedTestUser(): Promise<SeedResult> {
         where: eq(chatThreadsTable.homeId, home.id),
       });
       for (const thread of threads) {
-        await db.delete(chatMessagesTable).where(eq(chatMessagesTable.threadId, thread.id));
+        await db
+          .delete(chatMessagesTable)
+          .where(eq(chatMessagesTable.threadId, thread.id));
       }
-      await db.delete(chatThreadsTable).where(eq(chatThreadsTable.homeId, home.id));
-      await db.delete(homeMembersTable).where(eq(homeMembersTable.homeId, home.id));
+      await db
+        .delete(chatThreadsTable)
+        .where(eq(chatThreadsTable.homeId, home.id));
+      await db
+        .delete(homeMembersTable)
+        .where(eq(homeMembersTable.homeId, home.id));
     }
     await db.delete(homesTable).where(eq(homesTable.ownerId, existing.id));
     await db.delete(usersTable).where(eq(usersTable.id, existing.id));

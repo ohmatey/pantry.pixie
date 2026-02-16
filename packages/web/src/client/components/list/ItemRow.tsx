@@ -57,10 +57,10 @@ export const ItemRow = memo(function ItemRow({
       onDelete(item.id);
       toast.success(`Deleted ${item.name}`, {
         action: {
-          label: 'Undo',
+          label: "Undo",
           onClick: () => {
             // TODO: Implement undo
-            toast.info('Undo not yet implemented');
+            toast.info("Undo not yet implemented");
           },
         },
       });
@@ -136,7 +136,9 @@ export const ItemRow = memo(function ItemRow({
             "flex items-center gap-3 w-full px-4 py-3 min-h-[56px] text-left transition-all duration-200 bg-white dark:bg-pixie-dusk-100",
             "hover:bg-pixie-sage-50/50 dark:hover:bg-pixie-dusk-200/50",
             item.isChecked && !selectionMode && "opacity-60",
-            selectionMode && isSelected && "bg-pixie-sage-50 dark:bg-pixie-sage-900/20"
+            selectionMode &&
+              isSelected &&
+              "bg-pixie-sage-50 dark:bg-pixie-sage-900/20",
           )}
           data-testid="item-row"
         >
@@ -146,14 +148,14 @@ export const ItemRow = memo(function ItemRow({
               type="button"
               onClick={handleCheckboxClick}
               className="relative shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2"
-              aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item.name}`}
+              aria-label={`${isSelected ? "Deselect" : "Select"} ${item.name}`}
             >
               <div
                 className={cn(
                   "flex items-center justify-center w-6 h-6 rounded border-2 transition-all duration-200",
                   isSelected
                     ? "bg-pixie-sage-500 border-pixie-sage-500 dark:bg-pixie-glow-sage dark:border-pixie-glow-sage"
-                    : "border-gray-300 dark:border-gray-600"
+                    : "border-gray-300 dark:border-gray-600",
                 )}
               >
                 {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
@@ -163,7 +165,7 @@ export const ItemRow = memo(function ItemRow({
             <button
               type="button"
               onClick={handleCheckboxClick}
-              aria-label={`${item.isChecked ? 'Uncheck' : 'Check'} ${item.name}`}
+              aria-label={`${item.isChecked ? "Uncheck" : "Check"} ${item.name}`}
               aria-pressed={item.isChecked}
               className="relative shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2"
             >
@@ -173,7 +175,9 @@ export const ItemRow = memo(function ItemRow({
                   item.isChecked
                     ? "bg-pixie-sage-400 border-pixie-sage-400 dark:bg-pixie-glow-sage dark:border-pixie-glow-sage"
                     : "border-pixie-sage-300 dark:border-pixie-mist-300",
-                  animating && item.isChecked && "animate-[check-pop_0.4s_ease-out]"
+                  animating &&
+                    item.isChecked &&
+                    "animate-[check-pop_0.4s_ease-out]",
                 )}
                 onAnimationEnd={() => setAnimating(false)}
                 data-testid="item-checkbox"
@@ -182,7 +186,8 @@ export const ItemRow = memo(function ItemRow({
                   <Check
                     className={cn(
                       "w-3.5 h-3.5 text-white",
-                      animating && "animate-[check-draw_0.3s_ease-out_0.1s_both]"
+                      animating &&
+                        "animate-[check-draw_0.3s_ease-out_0.1s_both]",
                     )}
                   />
                 )}
@@ -204,7 +209,7 @@ export const ItemRow = memo(function ItemRow({
                 "text-sm font-medium transition-all duration-200",
                 item.isChecked
                   ? "line-through text-pixie-charcoal-100 dark:text-pixie-mist-300"
-                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100"
+                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100",
               )}
             >
               {item.name}
@@ -219,7 +224,7 @@ export const ItemRow = memo(function ItemRow({
                 "text-xs shrink-0 transition-opacity duration-200",
                 item.isChecked
                   ? "text-pixie-charcoal-100/50 dark:text-pixie-mist-300/50"
-                  : "text-pixie-charcoal-100 dark:text-pixie-mist-300"
+                  : "text-pixie-charcoal-100 dark:text-pixie-mist-300",
               )}
             >
               {item.quantity} {item.unit || ""}

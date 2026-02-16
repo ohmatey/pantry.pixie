@@ -41,7 +41,7 @@ export function AddItemInput({ onAdd, isAdding = false }: AddItemInputProps) {
           "flex-1 text-sm bg-transparent border-none outline-none",
           "placeholder:text-pixie-charcoal-100/50 dark:placeholder:text-pixie-mist-300/50",
           "text-pixie-charcoal-300 dark:text-pixie-mist-100",
-          "disabled:opacity-50"
+          "disabled:opacity-50",
         )}
       />
     </form>

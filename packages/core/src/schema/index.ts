@@ -1,10 +1,5 @@
 // User schema
-export {
-  usersTable,
-  usersRelations,
-  type User,
-  type NewUser,
-} from "./user";
+export { usersTable, usersRelations, type User, type NewUser } from "./user";
 
 // Home and membership schema
 export {
@@ -19,12 +14,7 @@ export {
 } from "./home";
 
 // Item (pantry inventory) schema
-export {
-  itemsTable,
-  itemsRelations,
-  type Item,
-  type NewItem,
-} from "./item";
+export { itemsTable, itemsRelations, type Item, type NewItem } from "./item";
 
 // Grocery list schema
 export {

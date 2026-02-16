@@ -4,12 +4,55 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { classifyIntent, getIntentInfo, intentPatterns, type IntentPattern } from "../intents";
+import {
+  classifyIntent,
+  getIntentInfo,
+  intentPatterns,
+  type IntentPattern,
+} from "../intents";
 import type { PixieIntent } from "../../types";
 
 // ============================================================================
 // classifyIntent()
 // ============================================================================
+
+describe("classifyIntent() - add_to_list intent", () => {
+  it("should classify 'add milk to my shopping list' as add_to_list", () => {
+    expect(classifyIntent("add milk to my shopping list")).toBe("add_to_list");
+  });
+
+  it("should classify 'put eggs on my list' as add_to_list", () => {
+    expect(classifyIntent("put eggs on my list")).toBe("add_to_list");
+  });
+
+  it("should classify 'add all ingredients for green curry to my list' as add_to_list", () => {
+    expect(
+      classifyIntent("add all ingredients for green curry to my list"),
+    ).toBe("add_to_list");
+  });
+
+  it("should classify 'add 500g chicken breast to shopping list' as add_to_list", () => {
+    expect(classifyIntent("add 500g chicken breast to shopping list")).toBe(
+      "add_to_list",
+    );
+  });
+
+  it("should classify messages with 'shopping list' keyword as add_to_list", () => {
+    expect(classifyIntent("I need to update my shopping list")).toBe(
+      "add_to_list",
+    );
+  });
+
+  it("should classify messages with 'grocery list' keyword as add_to_list", () => {
+    expect(classifyIntent("put it on the grocery list")).toBe("add_to_list");
+  });
+
+  it("should classify 'ingredients for pasta carbonara' as add_to_list", () => {
+    expect(classifyIntent("ingredients for pasta carbonara")).toBe(
+      "add_to_list",
+    );
+  });
+});
 
 describe("classifyIntent() - add_item intent", () => {
   it("should classify 'I just bought milk' as add_item", () => {
@@ -69,11 +112,15 @@ describe("classifyIntent() - remove_item intent", () => {
 
 describe("classifyIntent() - set_recurring intent", () => {
   it("should classify 'Set milk as recurring weekly' as set_recurring", () => {
-    expect(classifyIntent("Set milk as recurring weekly")).toBe("set_recurring");
+    expect(classifyIntent("Set milk as recurring weekly")).toBe(
+      "set_recurring",
+    );
   });
 
   it("should classify 'Remind me to buy eggs monthly' as set_recurring", () => {
-    expect(classifyIntent("Remind me to buy eggs monthly")).toBe("set_recurring");
+    expect(classifyIntent("Remind me to buy eggs monthly")).toBe(
+      "set_recurring",
+    );
   });
 
   it("should classify 'I buy bread every week' as set_recurring", () => {
@@ -81,7 +128,9 @@ describe("classifyIntent() - set_recurring intent", () => {
   });
 
   it("should classify messages with 'recurring' keyword as set_recurring", () => {
-    expect(classifyIntent("make this a recurring purchase")).toBe("set_recurring");
+    expect(classifyIntent("make this a recurring purchase")).toBe(
+      "set_recurring",
+    );
   });
 });
 
@@ -109,15 +158,21 @@ describe("classifyIntent() - ask_status intent", () => {
 
 describe("classifyIntent() - budget_question intent", () => {
   it("should classify 'How much have I spent this month?' as budget_question", () => {
-    expect(classifyIntent("How much have I spent this month?")).toBe("budget_question");
+    expect(classifyIntent("How much have I spent this month?")).toBe(
+      "budget_question",
+    );
   });
 
   it("should classify messages with 'budget' keyword as budget_question", () => {
-    expect(classifyIntent("my budget is tight this month")).toBe("budget_question");
+    expect(classifyIntent("my budget is tight this month")).toBe(
+      "budget_question",
+    );
   });
 
   it("should classify messages with 'spent' keyword as budget_question", () => {
-    expect(classifyIntent("i spent too much on groceries")).toBe("budget_question");
+    expect(classifyIntent("i spent too much on groceries")).toBe(
+      "budget_question",
+    );
   });
 
   it("should classify messages with 'cost' keyword as budget_question", () => {
@@ -125,7 +180,9 @@ describe("classifyIntent() - budget_question intent", () => {
   });
 
   it("should classify messages with 'money' keyword as budget_question", () => {
-    expect(classifyIntent("running low on money for groceries")).toBe("budget_question");
+    expect(classifyIntent("running low on money for groceries")).toBe(
+      "budget_question",
+    );
   });
 
   // Note: "Budget status?" gets caught by ask_status's "status" keyword first
@@ -182,7 +239,9 @@ describe("classifyIntent() - greeting intent", () => {
 
 describe("classifyIntent() - clarification_needed intent", () => {
   it("should classify 'I didn't understand that' as clarification_needed", () => {
-    expect(classifyIntent("I didn't understand that")).toBe("clarification_needed");
+    expect(classifyIntent("I didn't understand that")).toBe(
+      "clarification_needed",
+    );
   });
 
   it("should classify 'Can you clarify?' as clarification_needed", () => {
@@ -193,7 +252,9 @@ describe("classifyIntent() - clarification_needed intent", () => {
   // This is a known limitation of the MVP sequential keyword classifier
 
   it("should classify messages with 'clarify' keyword as clarification_needed", () => {
-    expect(classifyIntent("please clarify that for me")).toBe("clarification_needed");
+    expect(classifyIntent("please clarify that for me")).toBe(
+      "clarification_needed",
+    );
   });
 
   it("should classify 'sorry' keyword as clarification_needed", () => {
@@ -239,6 +300,7 @@ describe("classifyIntent() - edge cases", () => {
 
 describe("getIntentInfo()", () => {
   const allIntents: PixieIntent[] = [
+    "add_to_list",
     "add_item",
     "remove_item",
     "set_recurring",
@@ -261,6 +323,7 @@ describe("getIntentInfo()", () => {
   });
 
   it("should categorize action intents correctly", () => {
+    expect(getIntentInfo("add_to_list").category).toBe("action");
     expect(getIntentInfo("add_item").category).toBe("action");
     expect(getIntentInfo("remove_item").category).toBe("action");
     expect(getIntentInfo("set_recurring").category).toBe("action");
@@ -301,12 +364,13 @@ describe("getIntentInfo()", () => {
 // ============================================================================
 
 describe("intentPatterns structure", () => {
-  it("should have 8 intent patterns", () => {
-    expect(intentPatterns.length).toBe(8);
+  it("should have 9 intent patterns", () => {
+    expect(intentPatterns.length).toBe(9);
   });
 
   it("should cover all action intents", () => {
     const intents = intentPatterns.map((p) => p.intent);
+    expect(intents).toContain("add_to_list");
     expect(intents).toContain("add_item");
     expect(intents).toContain("remove_item");
     expect(intents).toContain("set_recurring");

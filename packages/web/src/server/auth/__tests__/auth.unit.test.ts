@@ -4,8 +4,20 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { register, login, verifyToken, authenticateRequest, withAuth } from "../index";
-import { db, eq, usersTable, homesTable, homeMembersTable } from "@pantry-pixie/core";
+import {
+  register,
+  login,
+  verifyToken,
+  authenticateRequest,
+  withAuth,
+} from "../index";
+import {
+  db,
+  eq,
+  usersTable,
+  homesTable,
+  homeMembersTable,
+} from "@pantry-pixie/core";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
 
 // Clean up test users after tests
@@ -57,7 +69,6 @@ describe("Auth Service - register()", () => {
     expect(user!.passwordHash).toBeString();
     expect(user!.passwordHash).not.toBe("mypassword");
     expect(user!.passwordHash).toStartWith("$argon2id$");
-
   });
 
   it("should create a default home for new user", async () => {
@@ -72,7 +83,6 @@ describe("Auth Service - register()", () => {
     expect(home).toBeDefined();
     expect(home!.name).toBe("Home Test's Kitchen");
     expect(home!.ownerId).toBe(result.user.id);
-
   });
 
   it("should add user as owner of their home", async () => {
@@ -87,7 +97,6 @@ describe("Auth Service - register()", () => {
     expect(membership).toBeDefined();
     expect(membership!.userId).toBe(result.user.id);
     expect(membership!.role).toBe("owner");
-
   });
 
   it("should create a welcome chat thread with Pixie's message", async () => {
@@ -103,7 +112,6 @@ describe("Auth Service - register()", () => {
 
     expect(threads.length).toBeGreaterThanOrEqual(1);
     expect(threads[0].title).toBe("Chat");
-
   });
 
   it("should throw error for duplicate email", async () => {
@@ -114,7 +122,6 @@ describe("Auth Service - register()", () => {
     await expect(async () => {
       await register(email, "password2", "Second User");
     }).toThrow("Email already registered");
-
   });
 
   it("should generate valid JWT token", async () => {
@@ -170,7 +177,9 @@ describe("Auth Service - login()", () => {
   it("should throw error when user has no home membership", async () => {
     // Create user without home
     const email = "nohome@test.com";
-    const passwordHash = await Bun.password.hash("password", { algorithm: "argon2id" });
+    const passwordHash = await Bun.password.hash("password", {
+      algorithm: "argon2id",
+    });
     await db.insert(usersTable).values({
       email,
       name: "No Home",
@@ -219,9 +228,15 @@ describe("Auth Service - verifyToken()", () => {
   it("should throw error for expired token", async () => {
     // Create a token that's already expired
     const { SignJWT } = await import("jose");
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "dev-secret-change-me",
+    );
 
-    const expiredToken = await new SignJWT({ userId: "test", homeId: "test", email: "test@test.com" })
+    const expiredToken = await new SignJWT({
+      userId: "test",
+      homeId: "test",
+      email: "test@test.com",
+    })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("0s") // Expired immediately
@@ -298,7 +313,11 @@ describe("Auth Service - withAuth() middleware", () => {
   it("should call handler with auth payload for valid token", async () => {
     let capturedAuth: any = null;
 
-    const handler = async (req: Request, params: Record<string, string>, auth: any) => {
+    const handler = async (
+      req: Request,
+      params: Record<string, string>,
+      auth: any,
+    ) => {
       capturedAuth = auth;
       return new Response(JSON.stringify({ success: true }), {
         headers: { "Content-Type": "application/json" },

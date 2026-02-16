@@ -5,7 +5,12 @@
 
 import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { db, eq, chatThreadsTable, chatMessagesTable } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  chatThreadsTable,
+  chatMessagesTable,
+} from "@pantry-pixie/core";
 import { createThread, getThreads, getMessages, sendMessage } from "../chat";
 
 let testHomeId: string;
@@ -73,7 +78,7 @@ describe("Chat Service - getThreads()", () => {
     // Most recently updated should be first
     for (let i = 0; i < threads.length - 1; i++) {
       expect(threads[i].updatedAt.getTime()).toBeGreaterThanOrEqual(
-        threads[i + 1].updatedAt.getTime()
+        threads[i + 1].updatedAt.getTime(),
       );
     }
   });
@@ -114,7 +119,7 @@ describe("Chat Service - getMessages()", () => {
     // Most recent should be first (DESC order)
     for (let i = 0; i < messages.length - 1; i++) {
       expect(messages[i].createdAt.getTime()).toBeGreaterThanOrEqual(
-        messages[i + 1].createdAt.getTime()
+        messages[i + 1].createdAt.getTime(),
       );
     }
   });
@@ -142,7 +147,12 @@ describe("Chat Service - sendMessage()", () => {
   });
 
   it("should create user message and assistant response", async () => {
-    const result = await sendMessage(threadId, testHomeId, testUserId, "Hello Pixie!");
+    const result = await sendMessage(
+      threadId,
+      testHomeId,
+      testUserId,
+      "Hello Pixie!",
+    );
 
     expect(result.userMessage).toBeDefined();
     expect(result.assistantMessage).toBeDefined();
@@ -153,16 +163,36 @@ describe("Chat Service - sendMessage()", () => {
   });
 
   it("should classify user message intent", async () => {
-    const result = await sendMessage(threadId, testHomeId, testUserId, "We need eggs");
+    const result = await sendMessage(
+      threadId,
+      testHomeId,
+      testUserId,
+      "We need eggs",
+    );
 
     expect(result.userMessage.intent).toBeString();
     // Intent should be one of the valid types
-    const validIntents = ["add_item", "remove_item", "ask_status", "set_recurring", "other", "greeting", "clarification_needed", "budget_question", "meal_planning"];
+    const validIntents = [
+      "add_item",
+      "remove_item",
+      "ask_status",
+      "set_recurring",
+      "other",
+      "greeting",
+      "clarification_needed",
+      "budget_question",
+      "meal_planning",
+    ];
     expect(validIntents).toContain(result.userMessage.intent);
   });
 
   it("should store userId in message metadata", async () => {
-    const result = await sendMessage(threadId, testHomeId, testUserId, "Test message");
+    const result = await sendMessage(
+      threadId,
+      testHomeId,
+      testUserId,
+      "Test message",
+    );
 
     expect(result.userMessage.metadata).toBeDefined();
     expect(result.userMessage.metadata.userId).toBe(testUserId);
@@ -174,7 +204,7 @@ describe("Chat Service - sendMessage()", () => {
       threadId,
       testHomeId,
       testUserId,
-      "What's in my pantry?"
+      "What's in my pantry?",
     );
 
     expect(result.assistantMessage.content.length).toBeGreaterThan(0);
@@ -190,7 +220,7 @@ describe("Chat Service - sendMessage()", () => {
       threadId,
       testHomeId,
       testUserId,
-      "How are you?"
+      "How are you?",
     );
 
     expect(result.assistantMessage.content).toBeString();
@@ -204,14 +234,19 @@ describe("Chat Service - sendMessage()", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    await sendMessage(threadId, testHomeId, testUserId, "Update timestamp test");
+    await sendMessage(
+      threadId,
+      testHomeId,
+      testUserId,
+      "Update timestamp test",
+    );
 
     const threadAfter = await db.query.chatThreadsTable.findFirst({
       where: eq(chatThreadsTable.id, threadId),
     });
 
     expect(threadAfter!.updatedAt.getTime()).toBeGreaterThan(
-      threadBefore!.updatedAt.getTime()
+      threadBefore!.updatedAt.getTime(),
     );
   });
 
@@ -232,7 +267,7 @@ describe("Chat Service - sendMessage()", () => {
       threadId,
       testHomeId,
       testUserId,
-      "Test error handling"
+      "Test error handling",
     );
 
     expect(result.userMessage).toBeDefined();
@@ -245,7 +280,7 @@ describe("Chat Service - sendMessage()", () => {
       threadId,
       testHomeId,
       testUserId,
-      "Hello there"
+      "Hello there",
     );
 
     // Intent should be classified
@@ -299,7 +334,7 @@ describe("Chat Service - Message History Context", () => {
       thread.id,
       testHomeId,
       testUserId,
-      "New message"
+      "New message",
     );
 
     // Should still work despite many historical messages
