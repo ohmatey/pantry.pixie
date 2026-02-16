@@ -17,7 +17,7 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.1.0",
+    "@ai-sdk/openai": "^3.0.29",
     "@pantry-pixie/core": "workspace:*",
     "@pantry-pixie/sdk": "workspace:*",
     "@tanstack/query-async-storage-persister": "^5.90.22",
