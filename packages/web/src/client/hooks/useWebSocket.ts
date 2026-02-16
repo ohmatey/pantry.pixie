@@ -9,10 +9,15 @@ interface WSMessage {
 
 interface UseWebSocketOptions {
   onMessage?: (msg: WSMessage) => void;
-  onStatusChange?: (status: "connected" | "disconnected" | "reconnecting") => void;
+  onStatusChange?: (
+    status: "connected" | "disconnected" | "reconnecting",
+  ) => void;
 }
 
-export function useWebSocket({ onMessage, onStatusChange }: UseWebSocketOptions = {}) {
+export function useWebSocket({
+  onMessage,
+  onStatusChange,
+}: UseWebSocketOptions = {}) {
   const { token } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -40,7 +45,10 @@ export function useWebSocket({ onMessage, onStatusChange }: UseWebSocketOptions 
       activeWs = ws;
 
       ws.onopen = () => {
-        if (activeWs !== ws) { ws.close(); return; }
+        if (activeWs !== ws) {
+          ws.close();
+          return;
+        }
         setIsConnected(true);
         onStatusChangeRef.current?.("connected");
       };
@@ -91,14 +99,14 @@ export function useWebSocket({ onMessage, onStatusChange }: UseWebSocketOptions 
   }, []);
 
   const sendChatMessage = useCallback(
-    (threadId: string, content: string) => {
+    (threadId: string, content: string, listId?: string | null) => {
       send({
         type: "message",
-        payload: { threadId, role: "user", content },
+        payload: { threadId, role: "user", content, listId },
         timestamp: new Date().toISOString(),
       });
     },
-    [send]
+    [send],
   );
 
   return { isConnected, send, sendChatMessage };

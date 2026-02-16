@@ -7,10 +7,10 @@
  * - Syncs when back online
  */
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
-import { useNetworkStatus } from './useNetworkStatus';
-import { offlineQueue } from '../lib/offline-queue';
-import type { MutationQueueEntry } from '../lib/db';
+import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import { useNetworkStatus } from "./useNetworkStatus";
+import { offlineQueue } from "../lib/offline-queue";
+import type { MutationQueueEntry } from "../lib/db";
 
 export interface OfflineAwareMutationOptions<TData, TVariables> {
   /**
@@ -22,11 +22,8 @@ export interface OfflineAwareMutationOptions<TData, TVariables> {
    * Factory function to create a queue entry for offline mutations
    */
   queueEntry: (
-    variables: TVariables
-  ) => Omit<
-    MutationQueueEntry,
-    'id' | 'timestamp' | 'retryCount' | 'error'
-  >;
+    variables: TVariables,
+  ) => Omit<MutationQueueEntry, "id" | "timestamp" | "retryCount" | "error">;
 
   /**
    * Optimistic update function (runs immediately, even when offline)
@@ -76,7 +73,7 @@ export function useOfflineAwareMutation<TData, TVariables>({
         return { success: true, queued: false, data };
       } catch (error) {
         // Failed online mutation - queue it for retry
-        console.warn('Online mutation failed, queueing for retry:', error);
+        console.warn("Online mutation failed, queueing for retry:", error);
         await offlineQueue.add(queueEntry(variables));
         throw error;
       }

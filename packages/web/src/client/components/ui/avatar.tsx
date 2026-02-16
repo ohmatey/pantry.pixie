@@ -12,14 +12,14 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         ref={ref}
         className={cn(
           "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 Avatar.displayName = "Avatar";
 
@@ -32,7 +32,7 @@ const AvatarFallback = React.forwardRef<
       ref={ref}
       className={cn(
         "flex h-full w-full items-center justify-center rounded-full bg-pixie-cream-200 text-sm font-medium dark:bg-pixie-dusk-200",
-        className
+        className,
       )}
       {...props}
     />

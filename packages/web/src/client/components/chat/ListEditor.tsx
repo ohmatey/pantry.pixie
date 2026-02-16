@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
-import type { ListEditorUI } from "../../../server/ws";
+import type { ListEditorUI } from "@/types/websocket";
 
 interface Props {
   data: ListEditorUI;
@@ -11,7 +11,12 @@ interface Props {
   onAddItem: (itemName: string, quantity: number) => void;
 }
 
-export function ListEditor({ data, onToggleItem, onRemoveItem, onAddItem }: Props) {
+export function ListEditor({
+  data,
+  onToggleItem,
+  onRemoveItem,
+  onAddItem,
+}: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [newItemQuantity, setNewItemQuantity] = useState(1);
@@ -33,11 +38,14 @@ export function ListEditor({ data, onToggleItem, onRemoveItem, onAddItem }: Prop
       <div className="px-4 py-3 border-b border-pixie-cream-100">
         <h3 className="font-semibold text-pixie-charcoal-300">{list.name}</h3>
         {list.description && (
-          <p className="text-xs text-pixie-charcoal-100 mt-1">{list.description}</p>
+          <p className="text-xs text-pixie-charcoal-100 mt-1">
+            {list.description}
+          </p>
         )}
         <div className="flex items-center justify-between mt-2 text-xs">
           <span className="text-pixie-charcoal-100">
-            {list.completedItems}/{list.totalItems} completed ({list.completionPercentage}%)
+            {list.completedItems}/{list.totalItems} completed (
+            {list.completionPercentage}%)
           </span>
           {list.estimatedCost && (
             <span className="font-medium text-pixie-charcoal-300">
@@ -89,7 +97,9 @@ export function ListEditor({ data, onToggleItem, onRemoveItem, onAddItem }: Prop
                 type="number"
                 min="1"
                 value={newItemQuantity}
-                onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                onChange={(e) =>
+                  setNewItemQuantity(parseInt(e.target.value) || 1)
+                }
                 className="w-16 px-2 py-2 border border-pixie-cream-200 rounded-md text-sm text-center"
               />
             </div>

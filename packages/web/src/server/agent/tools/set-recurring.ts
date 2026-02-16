@@ -4,10 +4,13 @@ import * as itemsService from "../../services/items";
 
 export function createSetRecurringTool(homeId: string) {
   return tool({
-    description: "Set an item as recurring so the user gets reminded to restock. Use when they mention buying something regularly.",
+    description:
+      "Set an item as recurring so the user gets reminded to restock. Use when they mention buying something regularly.",
     parameters: z.object({
       name: z.string().describe("Name of the item to make recurring"),
-      interval: z.enum(["daily", "weekly", "biweekly", "monthly"]).describe("How often the item should be restocked"),
+      interval: z
+        .enum(["daily", "weekly", "biweekly", "monthly"])
+        .describe("How often the item should be restocked"),
     }),
     execute: async ({ name, interval }) => {
       const item = await itemsService.findItemByName(homeId, name);

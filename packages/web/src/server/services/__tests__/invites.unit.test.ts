@@ -5,9 +5,20 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { db, eq, usersTable, homesTable, homeMembersTable } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  usersTable,
+  homesTable,
+  homeMembersTable,
+} from "@pantry-pixie/core";
 import { register } from "../../auth";
-import { createInvite, acceptInvite, getInviteInfo, getHomeMembers } from "../invites";
+import {
+  createInvite,
+  acceptInvite,
+  getInviteInfo,
+  getHomeMembers,
+} from "../invites";
 
 let testHomeId: string;
 let testUserId: string;
@@ -52,7 +63,9 @@ describe("Invite Service - createInvite()", () => {
 
     // Should be approximately 24 hours (within 1 second tolerance)
     expect(expiryTime).toBeGreaterThanOrEqual(expectedExpiry - 1000);
-    expect(expiryTime).toBeLessThanOrEqual(afterCreate + 24 * 60 * 60 * 1000 + 1000);
+    expect(expiryTime).toBeLessThanOrEqual(
+      afterCreate + 24 * 60 * 60 * 1000 + 1000,
+    );
   });
 
   it("should generate unique codes", () => {
@@ -125,7 +138,11 @@ describe("Invite Service - acceptInvite()", () => {
     const invite = createInvite(testHomeId, testUserId);
 
     // Create new user to accept invite
-    const newUser = await register(`invitee-${Date.now()}@test.com`, "password", "Invitee User");
+    const newUser = await register(
+      `invitee-${Date.now()}@test.com`,
+      "password",
+      "Invitee User",
+    );
     createdUserIds.push(newUser.user.id);
 
     const result = await acceptInvite(invite.code, newUser.user.id);
@@ -137,7 +154,11 @@ describe("Invite Service - acceptInvite()", () => {
   it("should add user as member role", async () => {
     const invite = createInvite(testHomeId, testUserId);
 
-    const newUser = await register(`member-${Date.now()}@test.com`, "password", "Member User");
+    const newUser = await register(
+      `member-${Date.now()}@test.com`,
+      "password",
+      "Member User",
+    );
     createdUserIds.push(newUser.user.id);
 
     await acceptInvite(invite.code, newUser.user.id);
@@ -147,7 +168,9 @@ describe("Invite Service - acceptInvite()", () => {
       where: eq(homeMembersTable.userId, newUser.user.id),
     });
 
-    const invitedHomeMembership = memberships.find((m) => m.homeId === testHomeId);
+    const invitedHomeMembership = memberships.find(
+      (m) => m.homeId === testHomeId,
+    );
 
     expect(invitedHomeMembership).toBeDefined();
     expect(invitedHomeMembership!.homeId).toBe(testHomeId);
@@ -157,14 +180,22 @@ describe("Invite Service - acceptInvite()", () => {
   it("should consume invite code after acceptance", async () => {
     const invite = createInvite(testHomeId, testUserId);
 
-    const newUser = await register(`consumer-${Date.now()}@test.com`, "password", "Consumer User");
+    const newUser = await register(
+      `consumer-${Date.now()}@test.com`,
+      "password",
+      "Consumer User",
+    );
     createdUserIds.push(newUser.user.id);
 
     // Accept once
     await acceptInvite(invite.code, newUser.user.id);
 
     // Try to use same code again
-    const anotherUser = await register(`another-${Date.now()}@test.com`, "password", "Another User");
+    const anotherUser = await register(
+      `another-${Date.now()}@test.com`,
+      "password",
+      "Another User",
+    );
     createdUserIds.push(anotherUser.user.id);
 
     await expect(async () => {
@@ -173,7 +204,11 @@ describe("Invite Service - acceptInvite()", () => {
   });
 
   it("should throw error for invalid code", async () => {
-    const newUser = await register(`invalid-${Date.now()}@test.com`, "password", "Invalid User");
+    const newUser = await register(
+      `invalid-${Date.now()}@test.com`,
+      "password",
+      "Invalid User",
+    );
     createdUserIds.push(newUser.user.id);
 
     await expect(async () => {
@@ -185,7 +220,11 @@ describe("Invite Service - acceptInvite()", () => {
     const invite = createInvite(testHomeId, testUserId);
 
     // Accept invite
-    const newUser = await register(`existing-${Date.now()}@test.com`, "password", "Existing User");
+    const newUser = await register(
+      `existing-${Date.now()}@test.com`,
+      "password",
+      "Existing User",
+    );
     createdUserIds.push(newUser.user.id);
 
     await acceptInvite(invite.code, newUser.user.id);
@@ -200,7 +239,11 @@ describe("Invite Service - acceptInvite()", () => {
   it("should return home name after acceptance", async () => {
     const invite = createInvite(testHomeId, testUserId);
 
-    const newUser = await register(`homename-${Date.now()}@test.com`, "password", "HomeName User");
+    const newUser = await register(
+      `homename-${Date.now()}@test.com`,
+      "password",
+      "HomeName User",
+    );
     createdUserIds.push(newUser.user.id);
 
     const result = await acceptInvite(invite.code, newUser.user.id);
@@ -216,7 +259,11 @@ describe("Invite Service - getHomeMembers()", () => {
   beforeAll(async () => {
     // Add a member to the test home
     const invite = createInvite(testHomeId, testUserId);
-    const newUser = await register(`getmembers-${Date.now()}@test.com`, "password", "Get Members User");
+    const newUser = await register(
+      `getmembers-${Date.now()}@test.com`,
+      "password",
+      "Get Members User",
+    );
     createdUserIds.push(newUser.user.id);
     memberUserId = newUser.user.id;
 

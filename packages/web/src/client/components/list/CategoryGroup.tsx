@@ -58,7 +58,7 @@ export const CategoryGroup = memo(function CategoryGroup({
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
           "flex items-center justify-between w-full px-4 py-2 text-left",
-          "sticky top-0 z-10 bg-pixie-cream-50/90 backdrop-blur-sm dark:bg-pixie-dusk-50/90"
+          "sticky top-0 z-10 bg-pixie-cream-50/90 backdrop-blur-sm dark:bg-pixie-dusk-50/90",
         )}
       >
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export const CategoryGroup = memo(function CategoryGroup({
               "text-xs font-semibold uppercase tracking-wider",
               allChecked
                 ? "text-pixie-sage-300 dark:text-pixie-mist-300/50"
-                : "text-pixie-sage-600 dark:text-pixie-glow-sage"
+                : "text-pixie-sage-600 dark:text-pixie-glow-sage",
             )}
           >
             {label}
@@ -79,7 +79,7 @@ export const CategoryGroup = memo(function CategoryGroup({
         <ChevronDown
           className={cn(
             "w-4 h-4 text-pixie-charcoal-100 dark:text-pixie-mist-300 transition-transform duration-200",
-            collapsed && "-rotate-90"
+            collapsed && "-rotate-90",
           )}
         />
       </button>

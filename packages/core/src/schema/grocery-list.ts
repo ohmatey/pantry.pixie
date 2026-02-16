@@ -57,7 +57,7 @@ export const groceryListRelations = relations(
       references: [homesTable.id],
     }),
     items: many(listItemsTable),
-  })
+  }),
 );
 
 export const listItemsRelations = relations(listItemsTable, ({ one }) => ({

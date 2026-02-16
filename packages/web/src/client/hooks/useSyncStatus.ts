@@ -5,8 +5,8 @@
  * Provides pending count and sync triggers.
  */
 
-import { useState, useEffect } from 'react';
-import { offlineQueue } from '../lib/offline-queue';
+import { useState, useEffect } from "react";
+import { offlineQueue } from "../lib/offline-queue";
 
 export interface SyncStatus {
   pendingCount: number;
@@ -47,7 +47,7 @@ export function useSyncStatus(homeId?: string) {
         lastSyncAt: Date.now(),
       }));
     } catch (error) {
-      console.error('Sync failed:', error);
+      console.error("Sync failed:", error);
       setStatus((prev) => ({ ...prev, isProcessing: false }));
     }
   };

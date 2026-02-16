@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { apiFetch } from '@/lib/api';
-import { formatTHB, formatTHBCompact } from '@/lib/currency';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { apiFetch } from "@/lib/api";
+import { formatTHB, formatTHBCompact } from "@/lib/currency";
 
 interface CategorySpending {
   category: string;
@@ -28,7 +34,7 @@ interface BudgetData {
     topCategory: string | null;
     weeklyAverage: number;
     monthlyAverage: number;
-    trend: 'increasing' | 'decreasing' | 'stable';
+    trend: "increasing" | "decreasing" | "stable";
   };
 }
 
@@ -40,11 +46,11 @@ export function BudgetCard() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const { data: budgetData, isLoading } = useQuery({
-    queryKey: ['budget', user?.homeId],
+    queryKey: ["budget", user?.homeId],
     queryFn: async () => {
       const res = await apiFetch<BudgetData>(
         `/api/homes/${user!.homeId}/budget`,
-        token!
+        token!,
       );
       return res.data;
     },
@@ -91,18 +97,20 @@ export function BudgetCard() {
           </div>
 
           {/* Trend Indicator */}
-          {insights.trend !== 'stable' && (
-            <div className={`flex items-center gap-1 text-xs font-medium ${
-              insights.trend === 'increasing'
-                ? 'text-orange-600 dark:text-orange-400'
-                : 'text-green-600 dark:text-green-400'
-            }`}>
-              {insights.trend === 'increasing' ? (
+          {insights.trend !== "stable" && (
+            <div
+              className={`flex items-center gap-1 text-xs font-medium ${
+                insights.trend === "increasing"
+                  ? "text-orange-600 dark:text-orange-400"
+                  : "text-green-600 dark:text-green-400"
+              }`}
+            >
+              {insights.trend === "increasing" ? (
                 <TrendingUp className="w-4 h-4" />
               ) : (
                 <TrendingDown className="w-4 h-4" />
               )}
-              {insights.trend === 'increasing' ? 'Up' : 'Down'}
+              {insights.trend === "increasing" ? "Up" : "Down"}
             </div>
           )}
         </div>
@@ -155,7 +163,7 @@ export function BudgetCard() {
         {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="border-t border-pixie-sage-200 dark:border-pixie-sage-800 bg-white/50 dark:bg-pixie-dusk-200/30"
@@ -171,7 +179,8 @@ export function BudgetCard() {
                       {cat.category}
                     </p>
                     <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
-                      {cat.itemCount} {cat.itemCount === 1 ? 'item' : 'items'} · avg {formatTHB(cat.averagePerItem)}
+                      {cat.itemCount} {cat.itemCount === 1 ? "item" : "items"} ·
+                      avg {formatTHB(cat.averagePerItem)}
                     </p>
                   </div>
                   <div className="text-sm font-semibold text-pixie-charcoal-300 dark:text-pixie-mist-100">

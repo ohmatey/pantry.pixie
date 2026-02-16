@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Trash2, Calendar, DollarSign, Package } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
-import { useFocusTrap } from '@/hooks/useFocusTrap';
-import { apiFetch } from '@/lib/api';
-import { formatTHB, parseTHB } from '@/lib/currency';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Save, Trash2, Calendar, DollarSign, Package } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { apiFetch } from "@/lib/api";
+import { formatTHB, parseTHB } from "@/lib/currency";
+import { toast } from "sonner";
 
 interface Item {
   id: string;
@@ -29,42 +29,73 @@ interface ItemDetailsModalProps {
 }
 
 const UNITS = [
-  'piece', 'gram', 'kg', 'ml', 'liter', 'oz', 'lb',
-  'cup', 'tbsp', 'tsp', 'bunch', 'dozen', 'loaf',
-  'bottle', 'box', 'bag', 'package', 'jar'
+  "piece",
+  "gram",
+  "kg",
+  "ml",
+  "liter",
+  "oz",
+  "lb",
+  "cup",
+  "tbsp",
+  "tsp",
+  "bunch",
+  "dozen",
+  "loaf",
+  "bottle",
+  "box",
+  "bag",
+  "package",
+  "jar",
 ];
 
 const CATEGORIES = [
-  'dairy', 'meat', 'produce', 'grains', 'pantry',
-  'frozen', 'beverages', 'snacks', 'condiments',
-  'spices', 'baking', 'other'
+  "dairy",
+  "meat",
+  "produce",
+  "grains",
+  "pantry",
+  "frozen",
+  "beverages",
+  "snacks",
+  "condiments",
+  "spices",
+  "baking",
+  "other",
 ];
 
 const RECURRING_INTERVALS = [
-  { value: 'once', label: 'Not recurring' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'biweekly', label: 'Biweekly' },
-  { value: 'monthly', label: 'Monthly' },
+  { value: "once", label: "Not recurring" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Biweekly" },
+  { value: "monthly", label: "Monthly" },
 ];
 
 /**
  * Modal for editing item details
  * Edit quantity, unit, expiration, price, and recurring settings
  */
-export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetailsModalProps) {
+export function ItemDetailsModal({
+  item,
+  isOpen,
+  onClose,
+  onDelete,
+}: ItemDetailsModalProps) {
   const { user, token } = useAuth();
   const queryClient = useQueryClient();
   const containerRef = useFocusTrap(isOpen);
 
   const [formData, setFormData] = useState({
-    quantity: item.quantity || '1',
-    unit: item.unit || 'piece',
-    category: item.category || 'other',
-    expiresAt: item.expiresAt ? item.expiresAt.split('T')[0] : '',
-    estimatedCost: item.estimatedCost ? parseFloat(item.estimatedCost).toString() : '',
-    recurrenceType: item.recurrenceType || 'once',
-    notes: item.notes || '',
+    quantity: item.quantity || "1",
+    unit: item.unit || "piece",
+    category: item.category || "other",
+    expiresAt: item.expiresAt ? item.expiresAt.split("T")[0] : "",
+    estimatedCost: item.estimatedCost
+      ? parseFloat(item.estimatedCost).toString()
+      : "",
+    recurrenceType: item.recurrenceType || "once",
+    notes: item.notes || "",
   });
 
   const updateMutation = useMutation({
@@ -73,30 +104,30 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
         `/api/homes/${user!.homeId}/items/${item.id}`,
         token!,
         {
-          method: 'PUT',
+          method: "PUT",
           body: JSON.stringify(updates),
-        }
+        },
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      toast.success('Item updated');
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      toast.success("Item updated");
       onClose();
     },
     onError: () => {
-      toast.error('Failed to update item');
+      toast.error("Failed to update item");
     },
   });
 
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -157,7 +188,10 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h2 id="modal-title" className="text-lg font-semibold text-pixie-charcoal-300 dark:text-pixie-mist-100">
+              <h2
+                id="modal-title"
+                className="text-lg font-semibold text-pixie-charcoal-300 dark:text-pixie-mist-100"
+              >
                 {item.name}
               </h2>
               <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
@@ -173,7 +207,10 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+          >
             {/* Quantity & Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -185,7 +222,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
                   type="number"
                   step="0.01"
                   value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, quantity: e.target.value })
+                  }
                   className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500"
                 />
               </div>
@@ -196,7 +235,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
                 </label>
                 <select
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, unit: e.target.value })
+                  }
                   className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500"
                 >
                   {UNITS.map((unit) => (
@@ -215,7 +256,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
               </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500 capitalize"
               >
                 {CATEGORIES.map((cat) => (
@@ -235,7 +278,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
               <input
                 type="date"
                 value={formData.expiresAt}
-                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, expiresAt: e.target.value })
+                }
                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500"
               />
             </div>
@@ -251,7 +296,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
                 step="0.01"
                 placeholder="0.00"
                 value={formData.estimatedCost}
-                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, estimatedCost: e.target.value })
+                }
                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500"
               />
             </div>
@@ -263,7 +310,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
               </label>
               <select
                 value={formData.recurrenceType}
-                onChange={(e) => setFormData({ ...formData, recurrenceType: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, recurrenceType: e.target.value })
+                }
                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500"
               >
                 {RECURRING_INTERVALS.map((interval) => (
@@ -281,7 +330,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
               </label>
               <textarea
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 rows={3}
                 placeholder="Add any notes about this item..."
                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100 text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-500 resize-none"
@@ -314,7 +365,7 @@ export function ItemDetailsModal({ item, isOpen, onClose, onDelete }: ItemDetail
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-pixie-sage-500 hover:bg-pixie-sage-600 text-white rounded-md transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {updateMutation.isPending ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

@@ -4,7 +4,8 @@ import * as itemsService from "../../services/items";
 
 export function createCheckItemTool(homeId: string) {
   return tool({
-    description: "Check if a specific item exists in the pantry and its status. Use when the user asks 'do I have...?' or 'how many...?' questions.",
+    description:
+      "Check if a specific item exists in the pantry and its status. Use when the user asks 'do I have...?' or 'how many...?' questions.",
     parameters: z.object({
       name: z.string().describe("Name of the item to check"),
     }),
@@ -22,7 +23,10 @@ export function createCheckItemTool(homeId: string) {
       const now = new Date();
       const results = items.map((item) => {
         const daysUntilExpiry = item.expiresAt
-          ? Math.ceil((item.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          ? Math.ceil(
+              (item.expiresAt.getTime() - now.getTime()) /
+                (1000 * 60 * 60 * 24),
+            )
           : null;
 
         return {
@@ -32,7 +36,9 @@ export function createCheckItemTool(homeId: string) {
           location: item.location,
           isChecked: item.isChecked,
           daysUntilExpiry,
-          addedDaysAgo: Math.floor((now.getTime() - item.dateAdded.getTime()) / (1000 * 60 * 60 * 24)),
+          addedDaysAgo: Math.floor(
+            (now.getTime() - item.dateAdded.getTime()) / (1000 * 60 * 60 * 24),
+          ),
         };
       });
 

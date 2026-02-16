@@ -1,5 +1,12 @@
-import { motion } from 'framer-motion';
-import { ShoppingCart, Package, CalendarClock, HelpCircle, Utensils, Sparkles } from 'lucide-react';
+import { motion } from "framer-motion";
+import {
+  ShoppingCart,
+  Package,
+  CalendarClock,
+  HelpCircle,
+  Utensils,
+  Sparkles,
+} from "lucide-react";
 
 interface StarterPromptsProps {
   onSelectPrompt: (prompt: string) => void;
@@ -58,7 +65,7 @@ export function StarterPrompts({ onSelectPrompt }: StarterPromptsProps) {
           Hey there!
         </h2>
         <p className="text-sm text-pixie-charcoal-100 max-w-xs dark:text-pixie-mist-300">
-          I'm Pixie, your kitchen companion. Try one of these to get started:
+          I'm Pixie, your pantry companion. Try one of these to get started:
         </p>
       </div>
 

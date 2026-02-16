@@ -45,7 +45,7 @@ function toIDBItem(item: Item): IDBItem {
       : null,
     _localVersion: Date.now(),
     _serverVersion: Date.now(),
-    _syncStatus: 'synced',
+    _syncStatus: "synced",
     _lastModified: new Date(item.lastUpdated).getTime(),
     _deleted: false,
   };
@@ -58,7 +58,10 @@ export function useItems() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["items", user?.homeId],
     queryFn: async () => {
-      const res = await apiGet<Item[]>(`/api/homes/${user!.homeId}/items`, token!);
+      const res = await apiGet<Item[]>(
+        `/api/homes/${user!.homeId}/items`,
+        token!,
+      );
       const items = res.data || [];
 
       // Sync to IndexedDB
@@ -79,14 +82,14 @@ export function useItems() {
     mutationFn: async ({ itemId }: { itemId: string }) => {
       const res = await apiPatch<Item>(
         `/api/homes/${user!.homeId}/items/${itemId}/toggle`,
-        token!
+        token!,
       );
       return res.data;
     },
 
     queueEntry: ({ itemId }) => ({
-      type: 'UPDATE',
-      entity: 'item',
+      type: "UPDATE",
+      entity: "item",
       entityId: itemId,
       homeId: user!.homeId,
       payload: { toggle: true },
@@ -97,8 +100,8 @@ export function useItems() {
       await queryClient.cancelQueries({ queryKey: ["items", user?.homeId] });
       queryClient.setQueryData<Item[]>(["items", user?.homeId], (old) =>
         old?.map((item) =>
-          item.id === itemId ? { ...item, isChecked: !item.isChecked } : item
-        )
+          item.id === itemId ? { ...item, isChecked: !item.isChecked } : item,
+        ),
       );
 
       // Update IndexedDB immediately
@@ -106,7 +109,7 @@ export function useItems() {
       if (idbItem) {
         await db.items.update(itemId, {
           isChecked: !idbItem.isChecked,
-          _syncStatus: 'pending',
+          _syncStatus: "pending",
           _lastModified: Date.now(),
           _localVersion: Date.now(),
         });
@@ -123,7 +126,7 @@ export function useItems() {
     },
 
     onError: (error) => {
-      console.error('Toggle item failed:', error);
+      console.error("Toggle item failed:", error);
       // Revert optimistic update
       queryClient.invalidateQueries({ queryKey: ["items", user?.homeId] });
     },

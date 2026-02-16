@@ -88,7 +88,9 @@ describe("Agent Tools - Tool Factory Pattern", () => {
     ];
 
     expect(tools.length).toBe(5);
-    expect(tools.every((t) => t && t.description && t.parameters && t.execute)).toBe(true);
+    expect(
+      tools.every((t) => t && t.description && t.parameters && t.execute),
+    ).toBe(true);
   });
 
   it("should have unique descriptions for each tool", () => {
@@ -168,13 +170,13 @@ describe("Agent Tools - Tool Descriptions", () => {
     // Add tool should mention adding/buying
     expect(
       addTool.description.toLowerCase().includes("add") ||
-      addTool.description.toLowerCase().includes("bought")
+        addTool.description.toLowerCase().includes("bought"),
     ).toBe(true);
 
     // List tool should mention listing/checking
     expect(
       listTool.description.toLowerCase().includes("list") ||
-      listTool.description.toLowerCase().includes("inventory")
+        listTool.description.toLowerCase().includes("inventory"),
     ).toBe(true);
   });
 });
