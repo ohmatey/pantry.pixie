@@ -19,7 +19,7 @@ export function InviteCard() {
       const res = await apiPost<{ code: string; expiresAt: string }>(
         `/api/homes/${user.homeId}/invites`,
         token,
-        {}
+        {},
       );
 
       if (res.success && res.data) {
@@ -50,11 +50,17 @@ export function InviteCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
-          Share this link with your partner or housemate. They'll be able to see your items and chat with Pixie.
+          Share this link with your partner or housemate. They'll be able to see
+          your items and chat with Pixie.
         </p>
 
         {!inviteLink ? (
-          <Button onClick={handleGenerate} size="sm" className="w-full" disabled={loading}>
+          <Button
+            onClick={handleGenerate}
+            size="sm"
+            className="w-full"
+            disabled={loading}
+          >
             {loading ? "Generating..." : "Generate invite link"}
           </Button>
         ) : (

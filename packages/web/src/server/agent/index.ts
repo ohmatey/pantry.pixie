@@ -40,13 +40,18 @@ export interface StreamedResponse {
 export async function createPixieResponse(
   homeId: string,
   messages: AgentMessage[],
-  userPreferences?: UserPreferences
+  userPreferences?: UserPreferences,
+  listId?: string | null,
 ): Promise<StreamedResponse> {
   const systemPrompt = generateSystemPrompt(userPreferences);
 
   // Classify the last user message intent for metadata
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
-  const intent = lastUserMessage ? classifyIntent(lastUserMessage.content) : "other";
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user");
+  const intent = lastUserMessage
+    ? classifyIntent(lastUserMessage.content)
+    : "other";
 
   const tools = {
     addItem: createAddItemTool(homeId),
@@ -54,9 +59,9 @@ export async function createPixieResponse(
     removeItem: createRemoveItemTool(homeId),
     checkItem: createCheckItemTool(homeId),
     setRecurring: createSetRecurringTool(homeId),
-    addToList: createAddToListTool(homeId),
+    addToList: createAddToListTool(homeId, listId),
     listGroceryLists: createListGroceryListsTool(homeId),
-    showGroceryListEditor: createShowGroceryListEditorTool(homeId),
+    showGroceryListEditor: createShowGroceryListEditorTool(homeId, listId),
   };
 
   const result = streamText({

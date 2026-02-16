@@ -3,7 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -55,7 +62,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="text-3xl mb-2">✨</div>
           <CardTitle>Pantry Pixie</CardTitle>
-          <CardDescription>Sign in to your kitchen companion</CardDescription>
+          <CardDescription>Sign in to your pantry companion</CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
@@ -101,7 +108,10 @@ export default function LoginPage() {
             </Button>
             <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
               No account?{" "}
-              <Link to="/register" className="text-pixie-sage-600 hover:underline dark:text-pixie-glow-sage">
+              <Link
+                to="/register"
+                className="text-pixie-sage-600 hover:underline dark:text-pixie-glow-sage"
+              >
                 Create one
               </Link>
             </p>

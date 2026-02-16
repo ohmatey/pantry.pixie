@@ -33,7 +33,12 @@ export interface CreateListData {
   recurringSchedule?: string | null;
   scheduleDayOfWeek?: number | null;
   scheduleDayOfMonth?: number | null;
-  items?: Array<{ itemId: string; quantity?: number; notes?: string; estimatedPrice?: string }>;
+  items?: Array<{
+    itemId: string;
+    quantity?: number;
+    notes?: string;
+    estimatedPrice?: string;
+  }>;
 }
 
 export interface UpdateListData {
@@ -59,7 +64,7 @@ export interface AddListItemData {
 export function calculateNextResetAt(
   schedule: string,
   dayOfWeek?: number | null,
-  dayOfMonth?: number | null
+  dayOfMonth?: number | null,
 ): Date {
   const now = new Date();
 
@@ -67,7 +72,7 @@ export function calculateNextResetAt(
     const target = dayOfWeek ?? 0; // default Sunday
     const next = new Date(now);
     next.setHours(0, 0, 0, 0);
-    const daysUntil = ((target - next.getDay()) + 7) % 7 || 7;
+    const daysUntil = (target - next.getDay() + 7) % 7 || 7;
     next.setDate(next.getDate() + daysUntil);
     return next;
   }
@@ -76,14 +81,22 @@ export function calculateNextResetAt(
     const target = dayOfWeek ?? 0;
     const next = new Date(now);
     next.setHours(0, 0, 0, 0);
-    const daysUntil = ((target - next.getDay()) + 7) % 7 || 7;
+    const daysUntil = (target - next.getDay() + 7) % 7 || 7;
     next.setDate(next.getDate() + daysUntil + 7); // +7 for biweekly
     return next;
   }
 
   if (schedule === "monthly") {
     const target = dayOfMonth ?? 1;
-    const next = new Date(now.getFullYear(), now.getMonth(), target, 0, 0, 0, 0);
+    const next = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      target,
+      0,
+      0,
+      0,
+      0,
+    );
     if (next <= now) {
       next.setMonth(next.getMonth() + 1);
     }
@@ -96,7 +109,9 @@ export function calculateNextResetAt(
   return fallback;
 }
 
-export async function resetScheduledList(listId: string): Promise<GroceryList | undefined> {
+export async function resetScheduledList(
+  listId: string,
+): Promise<GroceryList | undefined> {
   // Uncheck all items on the list
   await db
     .update(listItemsTable)
@@ -112,7 +127,11 @@ export async function resetScheduledList(listId: string): Promise<GroceryList | 
   if (!current) return undefined;
 
   const nextReset = current.recurringSchedule
-    ? calculateNextResetAt(current.recurringSchedule, current.scheduleDayOfWeek, current.scheduleDayOfMonth)
+    ? calculateNextResetAt(
+        current.recurringSchedule,
+        current.scheduleDayOfWeek,
+        current.scheduleDayOfMonth,
+      )
     : null;
 
   const [list] = await db
@@ -126,12 +145,18 @@ export async function resetScheduledList(listId: string): Promise<GroceryList | 
     .returning();
 
   if (list) {
-    eventBus.emit("list:updated", { action: "reset", list, homeId: list.homeId });
+    eventBus.emit("list:updated", {
+      action: "reset",
+      list,
+      homeId: list.homeId,
+    });
   }
   return list;
 }
 
-export async function checkAndResetScheduledLists(homeId: string): Promise<void> {
+export async function checkAndResetScheduledLists(
+  homeId: string,
+): Promise<void> {
   const now = new Date();
 
   // Find lists where nextResetAt <= now
@@ -142,8 +167,8 @@ export async function checkAndResetScheduledLists(homeId: string): Promise<void>
       and(
         eq(groceryListsTable.homeId, homeId),
         isNotNull(groceryListsTable.nextResetAt),
-        lte(groceryListsTable.nextResetAt, now)
-      )
+        lte(groceryListsTable.nextResetAt, now),
+      ),
     );
 
   for (const list of dueLists) {
@@ -151,11 +176,18 @@ export async function checkAndResetScheduledLists(homeId: string): Promise<void>
   }
 }
 
-export async function getOrCreateDefaultList(homeId: string): Promise<GroceryList> {
+export async function getOrCreateDefaultList(
+  homeId: string,
+): Promise<GroceryList> {
   const [existing] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.homeId, homeId), eq(groceryListsTable.isDefault, true)));
+    .where(
+      and(
+        eq(groceryListsTable.homeId, homeId),
+        eq(groceryListsTable.isDefault, true),
+      ),
+    );
 
   if (existing) return existing;
 
@@ -172,7 +204,10 @@ export async function getOrCreateDefaultList(homeId: string): Promise<GroceryLis
   return created;
 }
 
-export async function findOrCreateItem(homeId: string, name: string): Promise<Item> {
+export async function findOrCreateItem(
+  homeId: string,
+  name: string,
+): Promise<Item> {
   // Try to find existing item by name (case-insensitive)
   const [existing] = await db
     .select()
@@ -193,7 +228,11 @@ export async function findOrCreateItem(homeId: string, name: string): Promise<It
     })
     .returning();
 
-  eventBus.emit("inventory:updated", { action: "added", item: created, homeId });
+  eventBus.emit("inventory:updated", {
+    action: "added",
+    item: created,
+    homeId,
+  });
   return created;
 }
 
@@ -201,9 +240,16 @@ export async function findOrCreateItem(homeId: string, name: string): Promise<It
 // List CRUD
 // ============================================================================
 
-export async function createList(homeId: string, data: CreateListData): Promise<GroceryList> {
+export async function createList(
+  homeId: string,
+  data: CreateListData,
+): Promise<GroceryList> {
   const nextReset = data.recurringSchedule
-    ? calculateNextResetAt(data.recurringSchedule, data.scheduleDayOfWeek, data.scheduleDayOfMonth)
+    ? calculateNextResetAt(
+        data.recurringSchedule,
+        data.scheduleDayOfWeek,
+        data.scheduleDayOfMonth,
+      )
     : null;
 
   const [list] = await db
@@ -229,7 +275,7 @@ export async function createList(homeId: string, data: CreateListData): Promise<
         quantity: i.quantity ?? 1,
         notes: i.notes,
         estimatedPrice: i.estimatedPrice,
-      }))
+      })),
     );
     await recalculateEstimatedCost(list.id);
   }
@@ -238,7 +284,9 @@ export async function createList(homeId: string, data: CreateListData): Promise<
   return list;
 }
 
-export async function getLists(homeId: string): Promise<GroceryListWithItems[]> {
+export async function getLists(
+  homeId: string,
+): Promise<GroceryListWithItems[]> {
   // Lazy-check scheduled resets
   await checkAndResetScheduledLists(homeId);
 
@@ -249,7 +297,11 @@ export async function getLists(homeId: string): Promise<GroceryListWithItems[]> 
     .select()
     .from(groceryListsTable)
     .where(eq(groceryListsTable.homeId, homeId))
-    .orderBy(desc(groceryListsTable.isDefault), desc(groceryListsTable.isActive), desc(groceryListsTable.createdAt));
+    .orderBy(
+      desc(groceryListsTable.isDefault),
+      desc(groceryListsTable.isActive),
+      desc(groceryListsTable.createdAt),
+    );
 
   // Fetch items for all lists
   const result: GroceryListWithItems[] = [];
@@ -275,21 +327,32 @@ export async function getLists(homeId: string): Promise<GroceryListWithItems[]> 
       items,
       completedItems: completedCount,
       totalItems: items.length,
-      completionPercentage: items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0,
+      completionPercentage:
+        items.length > 0
+          ? Math.round((completedCount / items.length) * 100)
+          : 0,
     });
   }
 
   return result;
 }
 
-export async function getList(homeId: string, listId: string): Promise<GroceryListWithItems | undefined> {
+export async function getList(
+  homeId: string,
+  listId: string,
+): Promise<GroceryListWithItems | undefined> {
   // Lazy-check scheduled resets
   await checkAndResetScheduledLists(homeId);
 
   const [list] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)));
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    );
 
   if (!list) return undefined;
 
@@ -311,7 +374,8 @@ export async function getList(homeId: string, listId: string): Promise<GroceryLi
   });
   const totalItems = items.length;
   const completedItems = completedCount;
-  const completionPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+  const completionPercentage =
+    totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return {
     ...list,
@@ -322,7 +386,11 @@ export async function getList(homeId: string, listId: string): Promise<GroceryLi
   };
 }
 
-export async function updateList(homeId: string, listId: string, data: UpdateListData): Promise<GroceryList | undefined> {
+export async function updateList(
+  homeId: string,
+  listId: string,
+  data: UpdateListData,
+): Promise<GroceryList | undefined> {
   // Recompute nextResetAt if schedule changed
   const updateData: Record<string, unknown> = { ...data };
 
@@ -331,7 +399,7 @@ export async function updateList(homeId: string, listId: string, data: UpdateLis
       updateData.nextResetAt = calculateNextResetAt(
         data.recurringSchedule,
         data.scheduleDayOfWeek,
-        data.scheduleDayOfMonth
+        data.scheduleDayOfMonth,
       );
     } else {
       updateData.nextResetAt = null;
@@ -341,7 +409,12 @@ export async function updateList(homeId: string, listId: string, data: UpdateLis
   const [list] = await db
     .update(groceryListsTable)
     .set(updateData)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)))
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    )
     .returning();
 
   if (list) {
@@ -350,12 +423,20 @@ export async function updateList(homeId: string, listId: string, data: UpdateLis
   return list;
 }
 
-export async function deleteList(homeId: string, listId: string): Promise<GroceryList | undefined> {
+export async function deleteList(
+  homeId: string,
+  listId: string,
+): Promise<GroceryList | undefined> {
   // Prevent deletion of default list
   const [existing] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)));
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    );
 
   if (!existing) return undefined;
   if (existing.isDefault) {
@@ -364,7 +445,12 @@ export async function deleteList(homeId: string, listId: string): Promise<Grocer
 
   const [list] = await db
     .delete(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)))
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    )
     .returning();
 
   if (list) {
@@ -373,11 +459,19 @@ export async function deleteList(homeId: string, listId: string): Promise<Grocer
   return list;
 }
 
-export async function completeList(homeId: string, listId: string): Promise<GroceryList | undefined> {
+export async function completeList(
+  homeId: string,
+  listId: string,
+): Promise<GroceryList | undefined> {
   const [list] = await db
     .update(groceryListsTable)
     .set({ isActive: false, completedAt: new Date() })
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)))
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    )
     .returning();
 
   if (list) {
@@ -393,13 +487,18 @@ export async function completeList(homeId: string, listId: string): Promise<Groc
 export async function addListItem(
   homeId: string,
   listId: string,
-  data: AddListItemData
+  data: AddListItemData,
 ): Promise<ListItem | undefined> {
   // Validate list belongs to home
   const [list] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)));
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    );
 
   if (!list) return undefined;
 
@@ -415,31 +514,48 @@ export async function addListItem(
     .returning();
 
   await recalculateEstimatedCost(listId);
-  eventBus.emit("list:updated", { action: "item_added", list, listItem, homeId });
+  eventBus.emit("list:updated", {
+    action: "item_added",
+    list,
+    listItem,
+    homeId,
+  });
   return listItem;
 }
 
 export async function removeListItem(
   homeId: string,
   listId: string,
-  listItemId: string
+  listItemId: string,
 ): Promise<ListItem | undefined> {
   // Validate list belongs to home
   const [list] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)));
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    );
 
   if (!list) return undefined;
 
   const [listItem] = await db
     .delete(listItemsTable)
-    .where(and(eq(listItemsTable.id, listItemId), eq(listItemsTable.listId, listId)))
+    .where(
+      and(eq(listItemsTable.id, listItemId), eq(listItemsTable.listId, listId)),
+    )
     .returning();
 
   if (listItem) {
     await recalculateEstimatedCost(listId);
-    eventBus.emit("list:updated", { action: "item_removed", list, listItem, homeId });
+    eventBus.emit("list:updated", {
+      action: "item_removed",
+      list,
+      listItem,
+      homeId,
+    });
   }
   return listItem;
 }
@@ -447,18 +563,28 @@ export async function removeListItem(
 export async function toggleListItem(
   homeId: string,
   listId: string,
-  listItemId: string
+  listItemId: string,
 ): Promise<ListItem | undefined> {
   // Validate list ownership and fetch item in parallel (independent queries)
   const [listResult, itemResult] = await Promise.all([
     db
       .select()
       .from(groceryListsTable)
-      .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId))),
+      .where(
+        and(
+          eq(groceryListsTable.id, listId),
+          eq(groceryListsTable.homeId, homeId),
+        ),
+      ),
     db
       .select()
       .from(listItemsTable)
-      .where(and(eq(listItemsTable.id, listItemId), eq(listItemsTable.listId, listId))),
+      .where(
+        and(
+          eq(listItemsTable.id, listItemId),
+          eq(listItemsTable.listId, listId),
+        ),
+      ),
   ]);
 
   const [list] = listResult;
@@ -471,11 +597,18 @@ export async function toggleListItem(
       isCompleted: !existing.isCompleted,
       completedAt: existing.isCompleted ? null : new Date(),
     })
-    .where(and(eq(listItemsTable.id, listItemId), eq(listItemsTable.listId, listId)))
+    .where(
+      and(eq(listItemsTable.id, listItemId), eq(listItemsTable.listId, listId)),
+    )
     .returning();
 
   if (listItem) {
-    eventBus.emit("list:updated", { action: "item_toggled", list, listItem, homeId });
+    eventBus.emit("list:updated", {
+      action: "item_toggled",
+      list,
+      listItem,
+      homeId,
+    });
   }
   return listItem;
 }
@@ -484,12 +617,20 @@ export async function toggleListItem(
 // Stats
 // ============================================================================
 
-export async function getListStats(homeId: string, listId: string): Promise<ListStats | undefined> {
+export async function getListStats(
+  homeId: string,
+  listId: string,
+): Promise<ListStats | undefined> {
   // Validate list belongs to home
   const [list] = await db
     .select()
     .from(groceryListsTable)
-    .where(and(eq(groceryListsTable.id, listId), eq(groceryListsTable.homeId, homeId)));
+    .where(
+      and(
+        eq(groceryListsTable.id, listId),
+        eq(groceryListsTable.homeId, homeId),
+      ),
+    );
 
   if (!list) return undefined;
 
@@ -505,10 +646,17 @@ export async function getListStats(homeId: string, listId: string): Promise<List
     if (i.isCompleted) completedItems++;
     estimatedTotal += parseFloat(i.estimatedPrice || "0") * i.quantity;
   }
-  const completionPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+  const completionPercentage =
+    totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
   const estimatedPerItem = totalItems > 0 ? estimatedTotal / totalItems : 0;
 
-  return { totalItems, completedItems, completionPercentage, estimatedTotal, estimatedPerItem };
+  return {
+    totalItems,
+    completedItems,
+    completionPercentage,
+    estimatedTotal,
+    estimatedPerItem,
+  };
 }
 
 // ============================================================================
@@ -521,7 +669,10 @@ async function recalculateEstimatedCost(listId: string): Promise<void> {
     .from(listItemsTable)
     .where(eq(listItemsTable.listId, listId));
 
-  const total = items.reduce((sum, i) => sum + (parseFloat(i.estimatedPrice || "0") * i.quantity), 0);
+  const total = items.reduce(
+    (sum, i) => sum + parseFloat(i.estimatedPrice || "0") * i.quantity,
+    0,
+  );
 
   await db
     .update(groceryListsTable)

@@ -51,7 +51,10 @@ async function main(): Promise<void> {
   try {
     await command.execute(args.slice(1));
   } catch (error) {
-    console.error("✗ Error:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "✗ Error:",
+      error instanceof Error ? error.message : String(error),
+    );
     process.exit(1);
   }
 }

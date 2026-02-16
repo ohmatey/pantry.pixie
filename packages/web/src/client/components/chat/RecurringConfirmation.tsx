@@ -1,19 +1,23 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { CalendarClock, Check, X } from 'lucide-react';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { CalendarClock, Check, X } from "lucide-react";
 
 interface RecurringConfirmationProps {
   itemName: string;
-  suggestedInterval?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
-  onConfirm: (interval: 'daily' | 'weekly' | 'biweekly' | 'monthly') => void;
+  suggestedInterval?: "daily" | "weekly" | "biweekly" | "monthly";
+  onConfirm: (interval: "daily" | "weekly" | "biweekly" | "monthly") => void;
   onDismiss: () => void;
 }
 
 const INTERVAL_OPTIONS = [
-  { value: 'daily' as const, label: 'Daily', description: 'Every day' },
-  { value: 'weekly' as const, label: 'Weekly', description: 'Once a week' },
-  { value: 'biweekly' as const, label: 'Biweekly', description: 'Every 2 weeks' },
-  { value: 'monthly' as const, label: 'Monthly', description: 'Once a month' },
+  { value: "daily" as const, label: "Daily", description: "Every day" },
+  { value: "weekly" as const, label: "Weekly", description: "Once a week" },
+  {
+    value: "biweekly" as const,
+    label: "Biweekly",
+    description: "Every 2 weeks",
+  },
+  { value: "monthly" as const, label: "Monthly", description: "Once a month" },
 ];
 
 /**
@@ -22,7 +26,7 @@ const INTERVAL_OPTIONS = [
  */
 export function RecurringConfirmation({
   itemName,
-  suggestedInterval = 'weekly',
+  suggestedInterval = "weekly",
   onConfirm,
   onDismiss,
 }: RecurringConfirmationProps) {
@@ -62,8 +66,8 @@ export function RecurringConfirmation({
               p-2 rounded-md border-2 transition-all text-left
               ${
                 selectedInterval === option.value
-                  ? 'border-pixie-sage-500 dark:border-pixie-glow-sage bg-pixie-sage-100 dark:bg-pixie-sage-800/50'
-                  : 'border-pixie-sage-200 dark:border-pixie-sage-700 bg-white dark:bg-pixie-dusk-100 hover:border-pixie-sage-300 dark:hover:border-pixie-sage-600'
+                  ? "border-pixie-sage-500 dark:border-pixie-glow-sage bg-pixie-sage-100 dark:bg-pixie-sage-800/50"
+                  : "border-pixie-sage-200 dark:border-pixie-sage-700 bg-white dark:bg-pixie-dusk-100 hover:border-pixie-sage-300 dark:hover:border-pixie-sage-600"
               }
             `}
           >

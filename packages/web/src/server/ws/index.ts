@@ -45,8 +45,8 @@ export interface ListEditorUI {
     totalBudget?: number;
     estimatedCost?: number;
     items: Array<{
-      id: string;           // listItemId
-      itemId: string;       // pantry item ID
+      id: string; // listItemId
+      itemId: string; // pantry item ID
       name: string;
       quantity: number;
       unit?: string;
@@ -66,7 +66,15 @@ export type SerializedUI =
   | { type: "list-editor"; data: ListEditorUI };
 
 export interface WebSocketMessage {
-  type: "message" | "ui_message" | "status" | "inventory_update" | "list_update" | "ping" | "pong" | "error";
+  type:
+    | "message"
+    | "ui_message"
+    | "status"
+    | "inventory_update"
+    | "list_update"
+    | "ping"
+    | "pong"
+    | "error";
   payload: unknown;
   timestamp: string;
 }
@@ -79,6 +87,7 @@ export interface ChatWebSocketMessage extends WebSocketMessage {
     content: string;
     intent?: string;
     messageId?: string;
+    listId?: string | null;
   };
 }
 
@@ -103,22 +112,33 @@ export interface WSData {
 const homeConnections = new Map<string, Set<ServerWebSocket<WSData>>>();
 
 // Subscribe to inventory events and broadcast to home clients
-eventBus.on("inventory:updated", (data: { action: string; item: any; homeId: string }) => {
-  broadcastToHome(data.homeId, {
-    type: "inventory_update",
-    payload: { action: data.action, item: data.item, homeId: data.homeId },
-    timestamp: new Date().toISOString(),
-  });
-});
+eventBus.on(
+  "inventory:updated",
+  (data: { action: string; item: any; homeId: string }) => {
+    broadcastToHome(data.homeId, {
+      type: "inventory_update",
+      payload: { action: data.action, item: data.item, homeId: data.homeId },
+      timestamp: new Date().toISOString(),
+    });
+  },
+);
 
 // Subscribe to list events and broadcast to home clients
-eventBus.on("list:updated", (data: { action: string; list: any; listItem?: any; homeId: string }) => {
-  broadcastToHome(data.homeId, {
-    type: "list_update",
-    payload: { action: data.action, list: data.list, listItem: data.listItem, homeId: data.homeId },
-    timestamp: new Date().toISOString(),
-  });
-});
+eventBus.on(
+  "list:updated",
+  (data: { action: string; list: any; listItem?: any; homeId: string }) => {
+    broadcastToHome(data.homeId, {
+      type: "list_update",
+      payload: {
+        action: data.action,
+        list: data.list,
+        listItem: data.listItem,
+        homeId: data.homeId,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  },
+);
 
 export function handleWebSocketOpen(ws: ServerWebSocket<WSData>): void {
   const { homeId } = ws.data;
@@ -134,16 +154,17 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WSData>): void {
       type: "status",
       payload: { status: "connected", message: "Connected to Pantry Pixie" },
       timestamp: new Date().toISOString(),
-    })
+    }),
   );
 }
 
 export function handleWebSocketMessage(
   ws: ServerWebSocket<WSData>,
-  message: string | ArrayBuffer
+  message: string | ArrayBuffer,
 ): void {
   try {
-    const msg = typeof message === "string" ? message : new TextDecoder().decode(message);
+    const msg =
+      typeof message === "string" ? message : new TextDecoder().decode(message);
     const data = JSON.parse(msg) as WebSocketMessage;
 
     switch (data.type) {
@@ -151,7 +172,13 @@ export function handleWebSocketMessage(
         handleChatMessage(ws, data as ChatWebSocketMessage);
         break;
       case "ping":
-        ws.send(JSON.stringify({ type: "pong", payload: {}, timestamp: new Date().toISOString() }));
+        ws.send(
+          JSON.stringify({
+            type: "pong",
+            payload: {},
+            timestamp: new Date().toISOString(),
+          }),
+        );
         break;
       default:
         logger.warn({ type: data.type }, "Unknown WebSocket message type");
@@ -163,7 +190,7 @@ export function handleWebSocketMessage(
         type: "error",
         payload: { error: "Invalid message format" },
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
   }
 }
@@ -181,9 +208,12 @@ export function handleWebSocketClose(ws: ServerWebSocket<WSData>): void {
   }
 }
 
-async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocketMessage): Promise<void> {
+async function handleChatMessage(
+  ws: ServerWebSocket<WSData>,
+  msg: ChatWebSocketMessage,
+): Promise<void> {
   const { userId, homeId } = ws.data;
-  const { threadId, content } = msg.payload;
+  const { threadId, content, listId } = msg.payload;
 
   if (!threadId || !content) {
     ws.send(
@@ -191,7 +221,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
         type: "error",
         payload: { error: "threadId and content are required" },
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
     return;
   }
@@ -204,7 +234,13 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
   });
 
   try {
-    const result = await chatService.sendMessage(threadId, homeId, userId, content);
+    const result = await chatService.sendMessage(
+      threadId,
+      homeId,
+      userId,
+      content,
+      listId,
+    );
 
     // Broadcast the user message to other clients
     broadcastToHome(
@@ -220,7 +256,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
         },
         timestamp: result.userMessage.createdAt.toISOString(),
       },
-      ws // exclude sender
+      ws, // exclude sender
     );
 
     // Start streaming the assistant response
@@ -265,7 +301,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
           payload: { status: "idle", threadId },
           timestamp: new Date().toISOString(),
         });
-      }
+      },
     );
   } catch (error) {
     logger.error({ err: error }, "WebSocket chat error");
@@ -274,7 +310,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
         type: "error",
         payload: { error: "Failed to process message" },
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
 
     // Clear typing indicator
@@ -289,7 +325,7 @@ async function handleChatMessage(ws: ServerWebSocket<WSData>, msg: ChatWebSocket
 function broadcastToHome(
   homeId: string,
   message: WebSocketMessage,
-  exclude?: ServerWebSocket<WSData>
+  exclude?: ServerWebSocket<WSData>,
 ): void {
   const connections = homeConnections.get(homeId);
   if (!connections) return;

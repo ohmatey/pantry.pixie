@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { startServer, loginSeedUser, authedFetch, type TestServer } from "./helpers";
+import {
+  startServer,
+  loginSeedUser,
+  authedFetch,
+  type TestServer,
+} from "./helpers";
 
 let server: TestServer;
 let token: string;
@@ -26,7 +31,11 @@ afterAll(() => {
 
 describe("GET /api/homes/:homeId/chat/threads", () => {
   it("returns the seed thread", async () => {
-    const res = await authedFetch(server.url, `/api/homes/${homeId}/chat/threads`, token);
+    const res = await authedFetch(
+      server.url,
+      `/api/homes/${homeId}/chat/threads`,
+      token,
+    );
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -50,10 +59,15 @@ describe("GET /api/homes/:homeId/chat/threads", () => {
 
 describe("POST /api/homes/:homeId/chat/threads", () => {
   it("creates a new thread with a title", async () => {
-    const res = await authedFetch(server.url, `/api/homes/${homeId}/chat/threads`, token, {
-      method: "POST",
-      body: JSON.stringify({ title: "Grocery Planning" }),
-    });
+    const res = await authedFetch(
+      server.url,
+      `/api/homes/${homeId}/chat/threads`,
+      token,
+      {
+        method: "POST",
+        body: JSON.stringify({ title: "Grocery Planning" }),
+      },
+    );
 
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -64,10 +78,15 @@ describe("POST /api/homes/:homeId/chat/threads", () => {
   });
 
   it("creates a thread with default title when none provided", async () => {
-    const res = await authedFetch(server.url, `/api/homes/${homeId}/chat/threads`, token, {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
+    const res = await authedFetch(
+      server.url,
+      `/api/homes/${homeId}/chat/threads`,
+      token,
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+      },
+    );
 
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -84,7 +103,7 @@ describe("GET /api/homes/:homeId/chat/threads/:threadId/messages", () => {
     const res = await authedFetch(
       server.url,
       `/api/homes/${homeId}/chat/threads/${existingThreadId}/messages`,
-      token
+      token,
     );
 
     expect(res.status).toBe(200);
@@ -95,7 +114,7 @@ describe("GET /api/homes/:homeId/chat/threads/:threadId/messages", () => {
 
   it("returns 401 without auth", async () => {
     const res = await fetch(
-      `${server.url}/api/homes/${homeId}/chat/threads/${existingThreadId}/messages`
+      `${server.url}/api/homes/${homeId}/chat/threads/${existingThreadId}/messages`,
     );
     expect(res.status).toBe(401);
   });

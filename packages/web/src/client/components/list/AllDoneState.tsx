@@ -13,14 +13,14 @@ export function AllDoneState() {
       spread: 360,
       ticks: 60,
       zIndex: 0,
-      colors: ['#8FAF9D', '#7FAF9B', '#E6C97A', '#C6C1F2'], // Pixie brand colors
+      colors: ["#8FAF9D", "#7FAF9B", "#E6C97A", "#C6C1F2"], // Pixie brand colors
     };
 
     function randomInRange(min: number, max: number) {
       return Math.random() * (max - min) + min;
     }
 
-    const interval: any = setInterval(function() {
+    const interval: any = setInterval(function () {
       const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
@@ -33,12 +33,12 @@ export function AllDoneState() {
       confetti({
         ...defaults,
         particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
       });
       confetti({
         ...defaults,
         particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
       });
     }, 250);
 

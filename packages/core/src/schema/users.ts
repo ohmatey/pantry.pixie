@@ -3,7 +3,14 @@
  * Defines the users table for authentication and profile management
  */
 
-import { pgTable, uuid, varchar, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
@@ -30,11 +37,15 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
 
   // Preferences
-  preferredLanguage: varchar("preferred_language", { length: 10 }).default("en"),
+  preferredLanguage: varchar("preferred_language", { length: 10 }).default(
+    "en",
+  ),
   timezone: varchar("timezone", { length: 50 }).default("UTC"),
 
   // Timestamps
-  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`now()`)
+    .notNull(),
   updatedAt: timestamp("updated_at")
     .default(sql`now()`)
     .notNull()

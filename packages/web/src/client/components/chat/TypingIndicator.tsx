@@ -18,7 +18,9 @@ const dotVariants = {
 };
 
 export function TypingIndicator() {
-  const [phrase] = useState(() => PHRASES[Math.floor(Math.random() * PHRASES.length)]);
+  const [phrase] = useState(
+    () => PHRASES[Math.floor(Math.random() * PHRASES.length)],
+  );
 
   return (
     <div className="flex gap-2 max-w-[85%] mr-auto">

@@ -52,7 +52,9 @@ export const homes = pgTable("homes", {
     .references(() => users.id, { onDelete: "restrict" }),
 
   // Timestamps
-  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`now()`)
+    .notNull(),
   updatedAt: timestamp("updated_at")
     .default(sql`now()`)
     .notNull()
@@ -81,7 +83,9 @@ export const homeMembers = pgTable(
     role: memberRoleEnum("role").notNull().default("member"),
 
     // Invitation tracking
-    invitedAt: timestamp("invited_at").default(sql`now()`).notNull(),
+    invitedAt: timestamp("invited_at")
+      .default(sql`now()`)
+      .notNull(),
     joinedAt: timestamp("joined_at"),
 
     // Inviter tracking (who added this member)
@@ -93,7 +97,9 @@ export const homeMembers = pgTable(
     isActive: boolean("is_active").default(true),
 
     // Timestamps
-    createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`now()`)
+      .notNull(),
     updatedAt: timestamp("updated_at")
       .default(sql`now()`)
       .notNull()
@@ -106,7 +112,7 @@ export const homeMembers = pgTable(
       foreignColumns: [users.id],
       name: "home_members_invited_by_fk",
     }),
-  ]
+  ],
 );
 
 // Relations

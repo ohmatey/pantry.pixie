@@ -30,7 +30,11 @@ export function CategoryIcon({ category, className = "" }: CategoryIconProps) {
   const icon = CATEGORY_ICONS[normalizedCategory] || CATEGORY_ICONS.other;
 
   return (
-    <span className={`text-2xl ${className}`} role="img" aria-label={category || "other"}>
+    <span
+      className={`text-2xl ${className}`}
+      role="img"
+      aria-label={category || "other"}
+    >
       {icon}
     </span>
   );

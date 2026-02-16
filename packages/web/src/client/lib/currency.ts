@@ -15,11 +15,11 @@
  */
 export function formatTHB(
   amount: number,
-  options?: Partial<Intl.NumberFormatOptions>
+  options?: Partial<Intl.NumberFormatOptions>,
 ): string {
-  return new Intl.NumberFormat('th-TH', {
-    style: 'currency',
-    currency: 'THB',
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     ...options,
@@ -43,10 +43,10 @@ export function formatTHBCompact(amount: number): string {
     return formatTHB(amount, { minimumFractionDigits: 0 });
   }
 
-  return new Intl.NumberFormat('th-TH', {
-    style: 'currency',
-    currency: 'THB',
-    notation: 'compact',
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+    notation: "compact",
     maximumFractionDigits: 1,
   }).format(amount);
 }
@@ -63,7 +63,7 @@ export function formatTHBCompact(amount: number): string {
  */
 export function parseTHB(value: string): number | null {
   // Remove currency symbol, spaces, and commas
-  const cleaned = value.replace(/[฿\s,]/g, '');
+  const cleaned = value.replace(/[฿\s,]/g, "");
 
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? null : parsed;
@@ -87,4 +87,4 @@ export function formatTHBRange(min: number, max: number): string {
 /**
  * Get currency symbol for Thai Baht
  */
-export const THB_SYMBOL = '฿';
+export const THB_SYMBOL = "฿";

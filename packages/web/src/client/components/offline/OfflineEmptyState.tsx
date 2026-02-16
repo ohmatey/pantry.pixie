@@ -3,25 +3,25 @@ import { CloudOff, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OfflineEmptyStateProps {
-  entity: 'items' | 'messages' | 'lists';
+  entity: "items" | "messages" | "lists";
   onRetry?: () => void;
 }
 
 const ENTITY_CONFIG = {
   items: {
-    title: 'No Items Cached',
-    description: 'Connect to the internet to load your pantry items.',
-    icon: '📦',
+    title: "No Items Cached",
+    description: "Connect to the internet to load your pantry items.",
+    icon: "📦",
   },
   messages: {
-    title: 'No Messages Cached',
-    description: 'Connect to the internet to load your chat history.',
-    icon: '💬',
+    title: "No Messages Cached",
+    description: "Connect to the internet to load your chat history.",
+    icon: "💬",
   },
   lists: {
-    title: 'No Lists Cached',
-    description: 'Connect to the internet to load your shopping lists.',
-    icon: '📝',
+    title: "No Lists Cached",
+    description: "Connect to the internet to load your shopping lists.",
+    icon: "📝",
   },
 };
 
@@ -59,11 +59,7 @@ export function OfflineEmptyState({ entity, onRetry }: OfflineEmptyStateProps) {
 
       {/* Retry Button */}
       {onRetry && (
-        <Button
-          onClick={onRetry}
-          variant="outline"
-          className="gap-2"
-        >
+        <Button onClick={onRetry} variant="outline" className="gap-2">
           <Wifi className="w-4 h-4" />
           Retry Connection
         </Button>

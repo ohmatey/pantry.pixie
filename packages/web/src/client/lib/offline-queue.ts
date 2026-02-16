@@ -5,7 +5,7 @@
  * Handles retry logic, dependencies, and conflict resolution.
  */
 
-import { db, type MutationQueueEntry } from './db';
+import { db, type MutationQueueEntry } from "./db";
 
 // ============================================================================
 // Queue Manager
@@ -21,8 +21,8 @@ class OfflineQueue {
   async add(
     entry: Omit<
       MutationQueueEntry,
-      'id' | 'timestamp' | 'retryCount' | 'error'
-    >
+      "id" | "timestamp" | "retryCount" | "error"
+    >,
   ): Promise<string> {
     const queueEntry: MutationQueueEntry = {
       id: crypto.randomUUID(),
@@ -45,7 +45,7 @@ class OfflineQueue {
    */
   async process(): Promise<{ success: number; failed: number }> {
     if (this.processing) {
-      console.log('Queue already processing, skipping...');
+      console.log("Queue already processing, skipping...");
       return { success: 0, failed: 0 };
     }
 
@@ -54,7 +54,7 @@ class OfflineQueue {
     let failedCount = 0;
 
     try {
-      const pending = await db.mutationQueue.orderBy('timestamp').toArray();
+      const pending = await db.mutationQueue.orderBy("timestamp").toArray();
 
       if (pending.length === 0) {
         return { success: 0, failed: 0 };
@@ -70,10 +70,10 @@ class OfflineQueue {
         } catch (error) {
           failedCount++;
           const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
+            error instanceof Error ? error.message : "Unknown error";
 
           if (entry.retryCount >= 5) {
-            console.error('Max retries reached, removing from queue:', entry);
+            console.error("Max retries reached, removing from queue:", entry);
             await db.mutationQueue.delete(entry.id);
           } else {
             // Exponential backoff: 1s, 2s, 4s, 8s, 16s
@@ -88,7 +88,7 @@ class OfflineQueue {
       }
 
       console.log(
-        `Queue processing complete: ${successCount} succeeded, ${failedCount} failed`
+        `Queue processing complete: ${successCount} succeeded, ${failedCount} failed`,
       );
     } finally {
       this.processing = false;
@@ -102,9 +102,9 @@ class OfflineQueue {
    * Execute a single mutation against the server
    */
   private async executeMutation(entry: MutationQueueEntry): Promise<void> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error("No authentication token found");
     }
 
     // Build endpoint URL
@@ -112,26 +112,26 @@ class OfflineQueue {
 
     // Build HTTP method
     const method =
-      entry.type === 'CREATE'
-        ? 'POST'
-        : entry.type === 'UPDATE'
-          ? 'PATCH'
-          : 'DELETE';
+      entry.type === "CREATE"
+        ? "POST"
+        : entry.type === "UPDATE"
+          ? "PATCH"
+          : "DELETE";
 
     // Make request
     const response = await fetch(endpoint, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: entry.type !== 'DELETE' ? JSON.stringify(entry.payload) : undefined,
+      body: entry.type !== "DELETE" ? JSON.stringify(entry.payload) : undefined,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `HTTP ${response.status}: ${errorText || response.statusText}`
+        `HTTP ${response.status}: ${errorText || response.statusText}`,
       );
     }
 
@@ -142,13 +142,13 @@ class OfflineQueue {
    * Build API endpoint URL for a mutation
    */
   private buildEndpoint(entry: MutationQueueEntry): string {
-    const baseUrl = '/api';
+    const baseUrl = "/api";
     const { homeId, entity, entityId, type } = entry;
 
     // Map entity names to plural form
-    const entityPath = entity === 'item' ? 'items' : `${entity}s`;
+    const entityPath = entity === "item" ? "items" : `${entity}s`;
 
-    if (type === 'CREATE') {
+    if (type === "CREATE") {
       return `${baseUrl}/homes/${homeId}/${entityPath}`;
     } else {
       return `${baseUrl}/homes/${homeId}/${entityPath}/${entityId}`;
@@ -195,13 +195,16 @@ class OfflineQueue {
    * Register background sync (if supported)
    */
   private registerBackgroundSync() {
-    if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+    if (
+      "serviceWorker" in navigator &&
+      "sync" in ServiceWorkerRegistration.prototype
+    ) {
       navigator.serviceWorker.ready
         .then((registration) => {
-          return (registration as any).sync.register('sync-mutations');
+          return (registration as any).sync.register("sync-mutations");
         })
         .catch((error) => {
-          console.warn('Background sync registration failed:', error);
+          console.warn("Background sync registration failed:", error);
         });
     }
   }
@@ -217,17 +220,17 @@ export const offlineQueue = new OfflineQueue();
 // Auto-sync on visibility change and online event
 // ============================================================================
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // Sync when going online
-  window.addEventListener('online', () => {
-    console.log('Network online, processing queue...');
+  window.addEventListener("online", () => {
+    console.log("Network online, processing queue...");
     offlineQueue.process();
   });
 
   // Sync when tab becomes visible (user returns to app)
-  document.addEventListener('visibilitychange', () => {
+  document.addEventListener("visibilitychange", () => {
     if (!document.hidden && navigator.onLine) {
-      console.log('App visible and online, processing queue...');
+      console.log("App visible and online, processing queue...");
       offlineQueue.process();
     }
   });

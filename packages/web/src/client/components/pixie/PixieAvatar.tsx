@@ -18,19 +18,22 @@ const iconSizes = {
   lg: "w-10 h-10",
 };
 
-export function PixieAvatar({ size = "md", animate = false }: PixieAvatarProps) {
+export function PixieAvatar({
+  size = "md",
+  animate = false,
+}: PixieAvatarProps) {
   return (
     <div
       className={cn(
         "rounded-full bg-pixie-sage-100 dark:bg-pixie-dusk-200 flex items-center justify-center",
         sizes[size],
-        animate && "animate-sparkle"
+        animate && "animate-sparkle",
       )}
     >
       <Sparkles
         className={cn(
           "text-pixie-sage-500 dark:text-pixie-glow-sage",
-          iconSizes[size]
+          iconSizes[size],
         )}
       />
     </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { RefreshCw, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { RefreshCw, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Notification component that appears when a new service worker version is available.
@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
  */
 export function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [registration, setRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     // Only runs in production (service worker only active in prod)
@@ -18,7 +19,7 @@ export function UpdatePrompt() {
 
     // Listen for service worker updates
     const checkForUpdates = async () => {
-      if ('serviceWorker' in navigator) {
+      if ("serviceWorker" in navigator) {
         try {
           const reg = await navigator.serviceWorker.ready;
           setRegistration(reg);
@@ -27,36 +28,42 @@ export function UpdatePrompt() {
           reg.update();
 
           // Listen for new service worker installation
-          reg.addEventListener('updatefound', () => {
+          reg.addEventListener("updatefound", () => {
             const newWorker = reg.installing;
 
             if (!newWorker) return;
 
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.addEventListener("statechange", () => {
+              if (
+                newWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
                 // New service worker installed but not yet active
                 // Old service worker still controlling the page
-                console.log('[PWA] New version available');
+                console.log("[PWA] New version available");
                 setShowPrompt(true);
               }
             });
           });
 
           // Listen for messages from service worker
-          navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data?.type === 'UPDATE_AVAILABLE') {
+          navigator.serviceWorker.addEventListener("message", (event) => {
+            if (event.data?.type === "UPDATE_AVAILABLE") {
               setShowPrompt(true);
             }
           });
 
           // Check for updates periodically (every 1 hour)
-          const interval = setInterval(() => {
-            reg.update();
-          }, 60 * 60 * 1000); // 1 hour
+          const interval = setInterval(
+            () => {
+              reg.update();
+            },
+            60 * 60 * 1000,
+          ); // 1 hour
 
           return () => clearInterval(interval);
         } catch (error) {
-          console.error('[PWA] Service worker registration failed:', error);
+          console.error("[PWA] Service worker registration failed:", error);
         }
       }
     };
@@ -67,10 +74,10 @@ export function UpdatePrompt() {
   const handleUpdate = () => {
     if (registration?.waiting) {
       // Tell the waiting service worker to skip waiting and become active
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
 
       // Listen for controlling service worker change
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
         // Reload page to get new version
         window.location.reload();
       });
@@ -84,11 +91,14 @@ export function UpdatePrompt() {
     setShowPrompt(false);
 
     // Show again after 1 hour if user dismisses
-    setTimeout(() => {
-      if (registration?.waiting) {
-        setShowPrompt(true);
-      }
-    }, 60 * 60 * 1000); // 1 hour
+    setTimeout(
+      () => {
+        if (registration?.waiting) {
+          setShowPrompt(true);
+        }
+      },
+      60 * 60 * 1000,
+    ); // 1 hour
   };
 
   if (!showPrompt) {
@@ -114,7 +124,8 @@ export function UpdatePrompt() {
               </div>
 
               <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
-                A new version of Pantry Pixie is ready. Refresh to get the latest features and bug fixes.
+                A new version of Pantry Pixie is ready. Refresh to get the
+                latest features and bug fixes.
               </p>
 
               <div className="flex gap-2">

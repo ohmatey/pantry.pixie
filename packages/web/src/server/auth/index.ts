@@ -3,7 +3,16 @@
  */
 
 import { SignJWT, jwtVerify } from "jose";
-import { db, eq, usersTable, homesTable, homeMembersTable, chatThreadsTable, chatMessagesTable, getWelcomeMessage } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  usersTable,
+  homesTable,
+  homeMembersTable,
+  chatThreadsTable,
+  chatMessagesTable,
+  getWelcomeMessage,
+} from "@pantry-pixie/core";
 
 // JWT_SECRET is validated in config/env.ts (required, min 32 chars)
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -18,8 +27,11 @@ export interface AuthPayload {
 export async function register(
   email: string,
   password: string,
-  name: string
-): Promise<{ token: string; user: { id: string; email: string; name: string; homeId: string } }> {
+  name: string,
+): Promise<{
+  token: string;
+  user: { id: string; email: string; name: string; homeId: string };
+}> {
   // Check if user already exists
   const existing = await db.query.usersTable.findFirst({
     where: eq(usersTable.email, email),
@@ -68,7 +80,11 @@ export async function register(
     intent: "greeting",
   });
 
-  const token = await createToken({ userId: user.id, homeId: home.id, email: user.email });
+  const token = await createToken({
+    userId: user.id,
+    homeId: home.id,
+    email: user.email,
+  });
 
   return {
     token,
@@ -78,8 +94,11 @@ export async function register(
 
 export async function login(
   email: string,
-  password: string
-): Promise<{ token: string; user: { id: string; email: string; name: string; homeId: string } }> {
+  password: string,
+): Promise<{
+  token: string;
+  user: { id: string; email: string; name: string; homeId: string };
+}> {
   const user = await db.query.usersTable.findFirst({
     where: eq(usersTable.email, email),
   });
@@ -102,16 +121,25 @@ export async function login(
     throw new Error("No home found for user");
   }
 
-  const token = await createToken({ userId: user.id, homeId: membership.homeId, email: user.email });
+  const token = await createToken({
+    userId: user.id,
+    homeId: membership.homeId,
+    email: user.email,
+  });
 
   return {
     token,
-    user: { id: user.id, email: user.email, name: user.name, homeId: membership.homeId },
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      homeId: membership.homeId,
+    },
   };
 }
 
 export async function authenticateRequest(
-  request: Request
+  request: Request,
 ): Promise<AuthPayload> {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -143,16 +171,23 @@ async function createToken(payload: AuthPayload): Promise<string> {
  * Wrapper for protected route handlers
  */
 export function withAuth(
-  handler: (request: Request, params: Record<string, string>, auth: AuthPayload) => Response | Promise<Response>
+  handler: (
+    request: Request,
+    params: Record<string, string>,
+    auth: AuthPayload,
+  ) => Response | Promise<Response>,
 ) {
-  return async (request: Request, params: Record<string, string>): Promise<Response> => {
+  return async (
+    request: Request,
+    params: Record<string, string>,
+  ): Promise<Response> => {
     try {
       const auth = await authenticateRequest(request);
       return handler(request, params, auth);
     } catch {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
+        { status: 401, headers: { "Content-Type": "application/json" } },
       );
     }
   };

@@ -3,7 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { PixieAvatar } from "@/components/pixie/PixieAvatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { apiGet, apiPost } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
@@ -60,7 +66,7 @@ export default function AcceptInvitePage() {
       const res = await apiPost<{ homeId: string; homeName: string }>(
         `/api/invites/${code}/accept`,
         token,
-        {}
+        {},
       );
 
       if (res.data) {
@@ -93,7 +99,7 @@ export default function AcceptInvitePage() {
           <div className="flex justify-center mb-3">
             <PixieAvatar size="lg" animate />
           </div>
-          <CardTitle>Join a Kitchen</CardTitle>
+          <CardTitle>Join a Pantry</CardTitle>
         </CardHeader>
 
         <CardContent className="text-center space-y-3">
@@ -122,10 +128,18 @@ export default function AcceptInvitePage() {
 
         {inviteInfo && (
           <CardFooter className="flex flex-col gap-3">
-            <Button onClick={handleAccept} className="w-full" disabled={accepting}>
-              {accepting ? "Joining..." : "Join Kitchen"}
+            <Button
+              onClick={handleAccept}
+              className="w-full"
+              disabled={accepting}
+            >
+              {accepting ? "Joining..." : "Join Pantry"}
             </Button>
-            <Button variant="ghost" onClick={() => navigate("/chat", { replace: true })} className="w-full">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/chat", { replace: true })}
+              className="w-full"
+            >
               Cancel
             </Button>
           </CardFooter>

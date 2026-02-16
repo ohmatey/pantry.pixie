@@ -74,7 +74,7 @@ export function useGroceryLists() {
     queryFn: async () => {
       const res = await apiGet<GroceryListWithItems[]>(
         `/api/homes/${user!.homeId}/lists`,
-        token!
+        token!,
       );
       return res.data || [];
     },
@@ -87,13 +87,10 @@ export function useGroceryLists() {
 
   const defaultList = useMemo(
     () => lists.find((l) => l.isDefault) ?? null,
-    [lists]
+    [lists],
   );
 
-  const namedLists = useMemo(
-    () => lists.filter((l) => !l.isDefault),
-    [lists]
-  );
+  const namedLists = useMemo(() => lists.filter((l) => !l.isDefault), [lists]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
 
@@ -103,7 +100,7 @@ export function useGroceryLists() {
       const res = await apiPost(
         `/api/homes/${user!.homeId}/lists`,
         token!,
-        input
+        input,
       );
       return res.data;
     },
@@ -116,7 +113,7 @@ export function useGroceryLists() {
       const res = await apiPut(
         `/api/homes/${user!.homeId}/lists/${id}`,
         token!,
-        input
+        input,
       );
       return res.data;
     },
@@ -128,7 +125,7 @@ export function useGroceryLists() {
     mutationFn: async (id: string) => {
       const res = await apiDelete(
         `/api/homes/${user!.homeId}/lists/${id}`,
-        token!
+        token!,
       );
       return res;
     },
@@ -149,7 +146,7 @@ export function useGroceryLists() {
       const res = await apiPost(
         `/api/homes/${user!.homeId}/lists/${listId}/items/by-name`,
         token!,
-        { name, quantity }
+        { name, quantity },
       );
       return res.data;
     },
@@ -167,7 +164,7 @@ export function useGroceryLists() {
     }) => {
       const res = await apiDelete(
         `/api/homes/${user!.homeId}/lists/${listId}/items/${listItemId}`,
-        token!
+        token!,
       );
       return res;
     },
@@ -185,7 +182,7 @@ export function useGroceryLists() {
     }) => {
       const res = await apiPatch(
         `/api/homes/${user!.homeId}/lists/${listId}/items/${listItemId}/toggle`,
-        token!
+        token!,
       );
       return res.data;
     },
@@ -199,7 +196,7 @@ export function useGroceryLists() {
                 items: list.items.map((li) =>
                   li.id === listItemId
                     ? { ...li, isCompleted: !li.isCompleted }
-                    : li
+                    : li,
                 ),
                 completedItems: list.items.reduce(
                   (n, li) =>
@@ -211,11 +208,11 @@ export function useGroceryLists() {
                       : li.isCompleted
                         ? 1
                         : 0),
-                  0
+                  0,
                 ),
               }
-            : list
-        )
+            : list,
+        ),
       );
     },
     onSettled: invalidate,
@@ -226,7 +223,7 @@ export function useGroceryLists() {
     mutationFn: async (listId: string) => {
       const res = await apiPatch(
         `/api/homes/${user!.homeId}/lists/${listId}/reset`,
-        token!
+        token!,
       );
       return res.data;
     },

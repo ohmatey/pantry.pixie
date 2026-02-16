@@ -28,7 +28,8 @@ const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 const IS_PRODUCTION = env.NODE_ENV === "production";
 const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB
 const REQUEST_TIMEOUT = env.REQUEST_TIMEOUT; // ms
-const ALLOWED_ORIGINS = env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+const ALLOWED_ORIGINS =
+  env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) || [];
 
 // Resolve static directory for production builds
 const STATIC_DIR = path.resolve(import.meta.dir, "../../dist/client");
@@ -38,7 +39,7 @@ const agentReady = await initializeAgent();
 function matchRoute(
   pathname: string,
   method: string,
-  routes: Array<{ method: string; path: string }>
+  routes: Array<{ method: string; path: string }>,
 ): {
   route: (typeof routes)[0] | null;
   params: Record<string, string>;
@@ -75,7 +76,10 @@ function addCorsHeaders(response: Response, origin: string | null): Response {
     headers.set("Access-Control-Allow-Origin", origin || "*");
   }
 
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   headers.set("Access-Control-Allow-Credentials", "true");
 
@@ -109,14 +113,17 @@ const server = Bun.serve<WSData>({
           {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
       // Rate limiting (apply to all requests except health check)
       const rateLimitResponse = await rateLimit(request);
       if (rateLimitResponse) {
-        logger.warn({ url: pathname, method: request.method }, 'Rate limit exceeded');
+        logger.warn(
+          { url: pathname, method: request.method },
+          "Rate limit exceeded",
+        );
         return addSecurityHeaders(rateLimitResponse);
       }
 
@@ -126,22 +133,27 @@ const server = Bun.serve<WSData>({
         if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
           return errorResponse(
             createError("Payload Too Large", 413, "PAYLOAD_TOO_LARGE"),
-            request
+            request,
           );
         }
       }
 
       // CORS preflight
       if (request.method === "OPTIONS") {
-        return addSecurityHeaders(addCorsHeaders(new Response(null, { status: 204 }), origin));
+        return addSecurityHeaders(
+          addCorsHeaders(new Response(null, { status: 204 }), origin),
+        );
       }
 
       // WebSocket upgrade
       if (request.headers.get("upgrade") === "websocket") {
         if (pathname === "/api/ws" || pathname === "/ws") {
           // Extract token from Sec-WebSocket-Protocol header (more secure than query params)
-          const protocols = request.headers.get("sec-websocket-protocol")?.split(',') || [];
-          const authProtocol = protocols.find(p => p.trim().startsWith('auth-'));
+          const protocols =
+            request.headers.get("sec-websocket-protocol")?.split(",") || [];
+          const authProtocol = protocols.find((p) =>
+            p.trim().startsWith("auth-"),
+          );
           const token = authProtocol?.trim().slice(5); // Remove 'auth-' prefix
 
           let wsData: WSData = { userId: "", homeId: "" };
@@ -153,9 +165,12 @@ const server = Bun.serve<WSData>({
                 userId: payload.userId as string,
                 homeId: payload.homeId as string,
               };
-              logger.info({ userId: wsData.userId, homeId: wsData.homeId }, 'WebSocket authenticated');
+              logger.info(
+                { userId: wsData.userId, homeId: wsData.homeId },
+                "WebSocket authenticated",
+              );
             } catch (error) {
-              logger.warn({ error }, 'WebSocket authentication failed');
+              logger.warn({ error }, "WebSocket authentication failed");
               return new Response("Unauthorized", { status: 401 });
             }
           }
@@ -168,53 +183,91 @@ const server = Bun.serve<WSData>({
 
       // API routes
       const apiRoutes = registerApiRoutes();
-      const { route: matchedRoute, params } = matchRoute(pathname, request.method, apiRoutes);
+      const { route: matchedRoute, params } = matchRoute(
+        pathname,
+        request.method,
+        apiRoutes,
+      );
 
       if (matchedRoute) {
-        const handler = apiRoutes.find((r) => r.path === matchedRoute.path && r.method === matchedRoute.method)?.handler;
+        const handler = apiRoutes.find(
+          (r) =>
+            r.path === matchedRoute.path && r.method === matchedRoute.method,
+        )?.handler;
         if (handler) {
           const response = await Promise.race([
             handler(request, params),
             new Promise<Response>((_, reject) =>
-              setTimeout(() => reject(new Error("Request timeout")), REQUEST_TIMEOUT)
+              setTimeout(
+                () => reject(new Error("Request timeout")),
+                REQUEST_TIMEOUT,
+              ),
             ),
           ]).catch((err) => {
             if (err.message === "Request timeout") {
-              logger.warn({ url: pathname, method: request.method, timeout: REQUEST_TIMEOUT }, 'Request timed out');
-              return errorResponse(createError("Request Timeout", 408, "REQUEST_TIMEOUT"), request);
+              logger.warn(
+                {
+                  url: pathname,
+                  method: request.method,
+                  timeout: REQUEST_TIMEOUT,
+                },
+                "Request timed out",
+              );
+              return errorResponse(
+                createError("Request Timeout", 408, "REQUEST_TIMEOUT"),
+                request,
+              );
             }
             throw err;
           });
           const duration = Date.now() - startTime;
-          logger.info({ method: request.method, url: pathname, status: response.status, duration }, 'HTTP Request');
+          logger.info(
+            {
+              method: request.method,
+              url: pathname,
+              status: response.status,
+              duration,
+            },
+            "HTTP Request",
+          );
           return addSecurityHeaders(addCorsHeaders(response, origin));
         }
       }
 
       // Serve static files in production
       if (IS_PRODUCTION) {
-        const filePath = path.join(STATIC_DIR, pathname === "/" ? "index.html" : pathname);
+        const filePath = path.join(
+          STATIC_DIR,
+          pathname === "/" ? "index.html" : pathname,
+        );
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
           return addSecurityHeaders(new Response(Bun.file(filePath)));
         }
         // SPA fallback
         const indexPath = path.join(STATIC_DIR, "index.html");
         if (fs.existsSync(indexPath)) {
-          return addSecurityHeaders(new Response(Bun.file(indexPath), {
-            headers: { "Content-Type": "text/html" },
-          }));
+          return addSecurityHeaders(
+            new Response(Bun.file(indexPath), {
+              headers: { "Content-Type": "text/html" },
+            }),
+          );
         }
       }
 
       // PWA assets (dev mode fallback)
       if (pathname === "/manifest.json") {
-        return new Response(Bun.file(path.resolve(import.meta.dir, "../../public/manifest.json")));
+        return new Response(
+          Bun.file(path.resolve(import.meta.dir, "../../public/manifest.json")),
+        );
       }
 
       if (pathname === "/sw.js") {
-        return new Response(Bun.file(path.resolve(import.meta.dir, "../../public/sw.js")), {
-          headers: { "Content-Type": "application/javascript" },
-        });
+        return new Response(
+          Bun.file(path.resolve(import.meta.dir, "../../public/sw.js")),
+          {
+            headers: { "Content-Type": "application/javascript" },
+          },
+        );
       }
 
       return addSecurityHeaders(new Response("Not found", { status: 404 }));
@@ -236,14 +289,18 @@ const server = Bun.serve<WSData>({
       handleWebSocketClose(ws);
     },
     error(ws, error) {
-      logError(error as Error, { component: 'WebSocket' });
+      logError(error as Error, { component: "WebSocket" });
     },
   },
 });
 
-logger.info({
-  host: HOST,
-  port: PORT,
-  mode: IS_PRODUCTION ? "production" : "development",
-  allowedOrigins: ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : "all (dev mode)",
-}, 'Pantry Pixie Server started');
+logger.info(
+  {
+    host: HOST,
+    port: PORT,
+    mode: IS_PRODUCTION ? "production" : "development",
+    allowedOrigins:
+      ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : "all (dev mode)",
+  },
+  "Pantry Pixie Server started",
+);

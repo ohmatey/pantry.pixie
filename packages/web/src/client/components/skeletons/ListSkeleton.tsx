@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ListSkeleton() {
   return (
@@ -14,7 +14,10 @@ export function ListSkeleton() {
         {/* Items */}
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg">
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-white rounded-lg"
+            >
               <Skeleton className="w-5 h-5 rounded" />
               <Skeleton className="h-4 flex-1" />
             </div>
@@ -33,7 +36,10 @@ export function ListSkeleton() {
         {/* Items */}
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg">
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-white rounded-lg"
+            >
               <Skeleton className="w-5 h-5 rounded" />
               <Skeleton className="h-4 flex-1" />
             </div>
@@ -52,7 +58,10 @@ export function ListSkeleton() {
         {/* Items */}
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg">
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-white rounded-lg"
+            >
               <Skeleton className="w-5 h-5 rounded" />
               <Skeleton className="h-4 flex-1" />
             </div>

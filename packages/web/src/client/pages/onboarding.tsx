@@ -6,7 +6,15 @@ import { PixieAvatar } from "@/components/pixie/PixieAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiPut, apiPost } from "@/lib/api";
-import { X, Copy, Check, Mail, Loader2, WifiOff, AlertCircle } from "lucide-react";
+import {
+  X,
+  Copy,
+  Check,
+  Mail,
+  Loader2,
+  WifiOff,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InvitedPerson {
@@ -19,33 +27,38 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const [step, setStep] = useState(0);
-  const [kitchenName, setKitchenName] = useState(`${user?.name || "My"}'s Kitchen`);
+  const [pantryName, setPantryName] = useState(
+    `${user?.name || "My"}'s Pantry`,
+  );
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitedPeople, setInvitedPeople] = useState<InvitedPerson[]>([]);
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState("");
-  const [nameKitchenLoading, setNameKitchenLoading] = useState(false);
-  const [nameKitchenError, setNameKitchenError] = useState("");
+  const [namePantryLoading, setNamePantryLoading] = useState(false);
+  const [namePantryError, setNamePantryError] = useState("");
   const [finishLoading, setFinishLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  const handleNameKitchen = async () => {
-    if (!kitchenName.trim()) return;
+  const handleNamePantry = async () => {
+    if (!pantryName.trim()) return;
 
-    setNameKitchenLoading(true);
-    setNameKitchenError("");
+    setNamePantryLoading(true);
+    setNamePantryError("");
 
     try {
       if (token && user?.homeId) {
-        await apiPut(`/api/homes/${user.homeId}`, token, { name: kitchenName.trim() });
+        await apiPut(`/api/homes/${user.homeId}`, token, {
+          name: pantryName.trim(),
+        });
       }
       setStep(2);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update kitchen name";
-      setNameKitchenError(message);
-      console.error("Name kitchen error:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to update pantry name";
+      setNamePantryError(message);
+      console.error("Name pantry error:", error);
     } finally {
-      setNameKitchenLoading(false);
+      setNamePantryLoading(false);
     }
   };
 
@@ -54,7 +67,7 @@ export default function OnboardingPage() {
     try {
       localStorage.setItem("pp_onboarded", "true");
       // Small delay for smooth transition
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       navigate("/chat", { replace: true });
     } catch (error) {
       console.error("Finish error:", error);
@@ -90,7 +103,7 @@ export default function OnboardingPage() {
       const res = await apiPost<{ code: string; expiresAt: string }>(
         `/api/homes/${user.homeId}/invites`,
         token,
-        {}
+        {},
       );
 
       if (res.success && res.data) {
@@ -110,11 +123,11 @@ export default function OnboardingPage() {
     if (!person) return;
     await navigator.clipboard.writeText(person.link);
     setInvitedPeople((prev) =>
-      prev.map((p) => (p.email === email ? { ...p, copied: true } : p))
+      prev.map((p) => (p.email === email ? { ...p, copied: true } : p)),
     );
     setTimeout(() => {
       setInvitedPeople((prev) =>
-        prev.map((p) => (p.email === email ? { ...p, copied: false } : p))
+        prev.map((p) => (p.email === email ? { ...p, copied: false } : p)),
       );
     }, 2000);
   };
@@ -146,12 +159,12 @@ export default function OnboardingPage() {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -182,10 +195,11 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-xl font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
-                  Hey! I'm Pixie, your kitchen sidekick ✨
+                  Hey! I'm Pixie, your pantry sidekick ✨
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 leading-relaxed">
-                  Think of me as your kitchen's quiet organizer. No judgment, no pressure — just a calm space to keep track of what you need.
+                  Think of me as your pantry's quiet organizer. No judgment, no
+                  pressure — just a calm space to keep track of what you need.
                 </p>
               </div>
               <Button onClick={() => handleStepChange(1)} className="w-full">
@@ -199,7 +213,9 @@ export default function OnboardingPage() {
                     key={i}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all duration-300",
-                      i === step ? "bg-pixie-sage-500 w-6" : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30"
+                      i === step
+                        ? "bg-pixie-sage-500 w-6"
+                        : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30",
                     )}
                   />
                 ))}
@@ -207,7 +223,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 1: Name Your Kitchen */}
+          {/* Step 1: Name Your Pantry */}
           {step === 1 && (
             <motion.div
               key="step-1"
@@ -224,31 +240,34 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
-                  Let's set up your kitchen
+                  Let's set up your pantry
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
                   What should we call it?
                 </p>
-                <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400 }}>
+                <motion.div
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
                   <Input
-                    value={kitchenName}
-                    onChange={(e) => setKitchenName(e.target.value)}
+                    value={pantryName}
+                    onChange={(e) => setPantryName(e.target.value)}
                     className="text-center"
-                    placeholder="Smith Family Kitchen"
+                    placeholder="Smith Family Pantry"
                     autoFocus
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && kitchenName.trim()) {
-                        handleNameKitchen();
+                      if (e.key === "Enter" && pantryName.trim()) {
+                        handleNamePantry();
                       }
                     }}
                   />
                 </motion.div>
                 <p className="text-xs text-pixie-charcoal-100/60 dark:text-pixie-mist-300/60">
-                  e.g., "Smith Family", "Apartment 4B", "Main Kitchen"
+                  e.g., "Smith Family", "Apartment 4B", "Main Pantry"
                 </p>
               </div>
               <div className="space-y-2">
-                {nameKitchenError && (
+                {namePantryError && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -256,7 +275,7 @@ export default function OnboardingPage() {
                     role="alert"
                   >
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{nameKitchenError}</span>
+                    <span>{namePantryError}</span>
                   </motion.div>
                 )}
                 {isOffline && (
@@ -267,15 +286,17 @@ export default function OnboardingPage() {
                     role="alert"
                   >
                     <WifiOff className="w-4 h-4 flex-shrink-0" />
-                    <span>You're offline. Changes will sync when you reconnect.</span>
+                    <span>
+                      You're offline. Changes will sync when you reconnect.
+                    </span>
                   </motion.div>
                 )}
                 <Button
-                  onClick={handleNameKitchen}
+                  onClick={handleNamePantry}
                   className="w-full"
-                  disabled={!kitchenName.trim() || nameKitchenLoading}
+                  disabled={!pantryName.trim() || namePantryLoading}
                 >
-                  {nameKitchenLoading ? (
+                  {namePantryLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Saving...
@@ -293,7 +314,9 @@ export default function OnboardingPage() {
                     key={i}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all duration-300",
-                      i === step ? "bg-pixie-sage-500 w-6" : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30"
+                      i === step
+                        ? "bg-pixie-sage-500 w-6"
+                        : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30",
                     )}
                   />
                 ))}
@@ -321,105 +344,108 @@ export default function OnboardingPage() {
                   Want to invite your household?
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 leading-relaxed">
-                  Share your kitchen so everyone's on the same page. Add people by email — they'll get a link to join.
+                  Share your pantry so everyone's on the same page. Add people
+                  by email — they'll get a link to join.
                 </p>
               </div>
 
-            {/* Email input */}
-            <div className="space-y-2">
-              {inviteError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
-                  role="alert"
-                >
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{inviteError}</span>
-                </motion.div>
-              )}
-              {isOffline && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-sm text-orange-700 dark:text-orange-400"
-                  role="alert"
-                >
-                  <WifiOff className="w-4 h-4 flex-shrink-0" />
-                  <span>You're offline. Invites will be sent when you reconnect.</span>
-                </motion.div>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="partner@email.com"
-                  value={inviteEmail}
-                  onChange={(e) => {
-                    setInviteEmail(e.target.value);
-                    setInviteError("");
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleSendInvite();
-                    }
-                  }}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button
-                  onClick={handleSendInvite}
-                  disabled={inviteSending || !inviteEmail.trim()}
-                  size="sm"
-                  className="shrink-0 px-4"
-                >
-                  {inviteSending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Mail className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Invited people list */}
-            {invitedPeople.length > 0 && (
+              {/* Email input */}
               <div className="space-y-2">
-                {invitedPeople.map((person) => (
-                  <div
-                    key={person.email}
-                    className="flex items-center gap-2 bg-pixie-sage-50/60 dark:bg-pixie-dusk-200/40 rounded-xl px-3 py-2.5 animate-in slide-in-from-top-2 fade-in duration-300"
+                {inviteError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+                    role="alert"
                   >
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-pixie-sage-200 dark:bg-pixie-sage-400/20 shrink-0">
-                      <Check className="w-3.5 h-3.5 text-pixie-sage-600 dark:text-pixie-glow-sage" />
-                    </div>
-                    <span className="text-sm text-pixie-charcoal-200 dark:text-pixie-mist-200 truncate flex-1 text-left">
-                      {person.email}
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{inviteError}</span>
+                  </motion.div>
+                )}
+                {isOffline && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-sm text-orange-700 dark:text-orange-400"
+                    role="alert"
+                  >
+                    <WifiOff className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                      You're offline. Invites will be sent when you reconnect.
                     </span>
-                    <button
-                      onClick={() => handleCopyInviteLink(person.email)}
-                      className="shrink-0 p-1 hover:bg-pixie-sage-100 dark:hover:bg-pixie-dusk-300 rounded-lg transition-colors"
-                      title="Copy invite link"
-                    >
-                      {person.copied ? (
-                        <Check className="w-3.5 h-3.5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-pixie-charcoal-100 dark:text-pixie-mist-300" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleRemoveInvite(person.email)}
-                      className="shrink-0 p-1 hover:bg-pixie-cream-200 dark:hover:bg-pixie-dusk-300 rounded-lg transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5 text-pixie-charcoal-100 dark:text-pixie-mist-300" />
-                    </button>
-                  </div>
-                ))}
-                <p className="text-xs text-pixie-charcoal-100/60 dark:text-pixie-mist-300/60 text-left">
-                  Invite links expire in 24 hours
-                </p>
+                  </motion.div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="partner@email.com"
+                    value={inviteEmail}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value);
+                      setInviteError("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendInvite();
+                      }
+                    }}
+                    className="flex-1"
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleSendInvite}
+                    disabled={inviteSending || !inviteEmail.trim()}
+                    size="sm"
+                    className="shrink-0 px-4"
+                  >
+                    {inviteSending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            )}
+
+              {/* Invited people list */}
+              {invitedPeople.length > 0 && (
+                <div className="space-y-2">
+                  {invitedPeople.map((person) => (
+                    <div
+                      key={person.email}
+                      className="flex items-center gap-2 bg-pixie-sage-50/60 dark:bg-pixie-dusk-200/40 rounded-xl px-3 py-2.5 animate-in slide-in-from-top-2 fade-in duration-300"
+                    >
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-pixie-sage-200 dark:bg-pixie-sage-400/20 shrink-0">
+                        <Check className="w-3.5 h-3.5 text-pixie-sage-600 dark:text-pixie-glow-sage" />
+                      </div>
+                      <span className="text-sm text-pixie-charcoal-200 dark:text-pixie-mist-200 truncate flex-1 text-left">
+                        {person.email}
+                      </span>
+                      <button
+                        onClick={() => handleCopyInviteLink(person.email)}
+                        className="shrink-0 p-1 hover:bg-pixie-sage-100 dark:hover:bg-pixie-dusk-300 rounded-lg transition-colors"
+                        title="Copy invite link"
+                      >
+                        {person.copied ? (
+                          <Check className="w-3.5 h-3.5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-pixie-charcoal-100 dark:text-pixie-mist-300" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleRemoveInvite(person.email)}
+                        className="shrink-0 p-1 hover:bg-pixie-cream-200 dark:hover:bg-pixie-dusk-300 rounded-lg transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5 text-pixie-charcoal-100 dark:text-pixie-mist-300" />
+                      </button>
+                    </div>
+                  ))}
+                  <p className="text-xs text-pixie-charcoal-100/60 dark:text-pixie-mist-300/60 text-left">
+                    Invite links expire in 24 hours
+                  </p>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="space-y-3 pt-2">
@@ -435,7 +461,9 @@ export default function OnboardingPage() {
                     key={i}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all duration-300",
-                      i === step ? "bg-pixie-sage-500 w-6" : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30"
+                      i === step
+                        ? "bg-pixie-sage-500 w-6"
+                        : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30",
                     )}
                   />
                 ))}
@@ -463,10 +491,15 @@ export default function OnboardingPage() {
                   You're all set! 🎉
                 </h2>
                 <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 leading-relaxed">
-                  Head to chat and tell me what's in your pantry — or what you need to buy. I'm here whenever you're ready.
+                  Head to chat and tell me what's in your pantry — or what you
+                  need to buy. I'm here whenever you're ready.
                 </p>
               </div>
-              <Button onClick={handleFinish} className="w-full" disabled={finishLoading}>
+              <Button
+                onClick={handleFinish}
+                className="w-full"
+                disabled={finishLoading}
+              >
                 {finishLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -484,7 +517,9 @@ export default function OnboardingPage() {
                     key={i}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all duration-300",
-                      i === step ? "bg-pixie-sage-500 w-6" : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30"
+                      i === step
+                        ? "bg-pixie-sage-500 w-6"
+                        : "bg-pixie-sage-200 dark:bg-pixie-sage-400/30",
                     )}
                   />
                 ))}

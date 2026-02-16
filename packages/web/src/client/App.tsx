@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { get, set, del } from "idb-keyval";
 import { Toaster } from "sonner";
 import { BrowserRouter, Routes } from "react-router-dom";
@@ -19,11 +19,11 @@ const queryClient = new QueryClient({
   },
 });
 
-const persister = createSyncStoragePersister({
+const persister = createAsyncStoragePersister({
   storage: {
-    getItem: async (key) => await get(key),
-    setItem: async (key, value) => await set(key, value),
-    removeItem: async (key) => await del(key),
+    getItem: (key) => get(key),
+    setItem: (key, value) => set(key, value),
+    removeItem: (key) => del(key),
   },
 });
 
@@ -46,18 +46,16 @@ export function App() {
           position="top-center"
           toastOptions={{
             style: {
-              background: '#F4EFE6',
-              color: '#2B2B2B',
-              border: '1px solid #8FAF9D',
+              background: "#F4EFE6",
+              color: "#2B2B2B",
+              border: "1px solid #8FAF9D",
             },
-            className: 'font-sans',
+            className: "font-sans",
           }}
         />
 
         <main id="main-content" className="h-screen">
-          <Routes>
-            {renderRoutes(routes)}
-          </Routes>
+          <Routes>{renderRoutes(routes)}</Routes>
         </main>
 
         {/* PWA Install & Update Prompts */}

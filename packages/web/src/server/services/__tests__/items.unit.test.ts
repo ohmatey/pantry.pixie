@@ -148,14 +148,18 @@ describe("Items Service - listItems()", () => {
     const items = await listItems(testHomeId, { search: "Apples" });
 
     expect(items.length).toBeGreaterThanOrEqual(1);
-    expect(items.some((i) => i.name.toLowerCase().includes("apples"))).toBe(true);
+    expect(items.some((i) => i.name.toLowerCase().includes("apples"))).toBe(
+      true,
+    );
   });
 
   it("should search items case-insensitively", async () => {
     const items = await listItems(testHomeId, { search: "BREAD" });
 
     expect(items.length).toBeGreaterThanOrEqual(1);
-    expect(items.some((i) => i.name.toLowerCase().includes("bread"))).toBe(true);
+    expect(items.some((i) => i.name.toLowerCase().includes("bread"))).toBe(
+      true,
+    );
   });
 
   it("should filter by isChecked status", async () => {
@@ -201,7 +205,10 @@ describe("Items Service - getItem()", () => {
   });
 
   it("should return undefined for non-existent item", async () => {
-    const item = await getItem(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const item = await getItem(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(item).toBeUndefined();
   });
@@ -227,7 +234,9 @@ describe("Items Service - updateItem()", () => {
   });
 
   it("should update item name", async () => {
-    const updated = await updateItem(testHomeId, itemId, { name: "Updated Name" });
+    const updated = await updateItem(testHomeId, itemId, {
+      name: "Updated Name",
+    });
 
     expect(updated).toBeDefined();
     expect(updated!.name).toBe("Updated Name");
@@ -274,13 +283,16 @@ describe("Items Service - updateItem()", () => {
   });
 
   it("should return undefined when updating non-existent item", async () => {
-    const updated = await updateItem(testHomeId, "00000000-0000-0000-0000-000000000000", {
-      name: "No Item",
-    });
+    const updated = await updateItem(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+      {
+        name: "No Item",
+      },
+    );
 
     expect(updated).toBeUndefined();
   });
-
 });
 
 describe("Items Service - removeItem()", () => {
@@ -300,7 +312,10 @@ describe("Items Service - removeItem()", () => {
   });
 
   it("should return undefined when removing non-existent item", async () => {
-    const removed = await removeItem(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const removed = await removeItem(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(removed).toBeUndefined();
   });
@@ -309,7 +324,10 @@ describe("Items Service - removeItem()", () => {
     const item = await addItem(testHomeId, { name: "Safe Item" });
     createdItemIds.push(item.id);
 
-    const removed = await removeItem("00000000-0000-0000-0000-000000000000", item.id);
+    const removed = await removeItem(
+      "00000000-0000-0000-0000-000000000000",
+      item.id,
+    );
 
     expect(removed).toBeUndefined();
 
@@ -372,7 +390,10 @@ describe("Items Service - toggleItemCheck()", () => {
   });
 
   it("should return undefined when toggling non-existent item", async () => {
-    const toggled = await toggleItemCheck(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const toggled = await toggleItemCheck(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(toggled).toBeUndefined();
   });

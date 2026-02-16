@@ -40,10 +40,10 @@ const reply = await client.chat.sendMessage(homeId, thread.data.id, {
 
 ```typescript
 interface PantryPixieClientConfig {
-  baseUrl: string;        // API base URL (trailing slash stripped)
-  apiKey?: string;        // Sent as X-API-Key header
-  accessToken?: string;   // Sent as Bearer token
-  timeout?: number;       // Request timeout in ms (default: 30000)
+  baseUrl: string; // API base URL (trailing slash stripped)
+  apiKey?: string; // Sent as X-API-Key header
+  accessToken?: string; // Sent as Bearer token
+  timeout?: number; // Request timeout in ms (default: 30000)
 }
 ```
 
@@ -59,47 +59,47 @@ All methods return `Promise<ApiResponse<T>>` unless noted. Paginated endpoints r
 
 ### `client.homes` — HomeClient
 
-| Method | Parameters | Returns |
-|---|---|---|
-| `list()` | — | `Home[]` |
-| `get(homeId)` | `homeId: string` | `Home` |
-| `create(data)` | `{ name, description?, monthlyBudget? }` | `Home` |
-| `update(homeId, data)` | `homeId, Partial<{ name, description, monthlyBudget }>` | `Home` |
-| `delete(homeId)` | `homeId: string` | `{ success: boolean }` |
+| Method                 | Parameters                                              | Returns                |
+| ---------------------- | ------------------------------------------------------- | ---------------------- |
+| `list()`               | —                                                       | `Home[]`               |
+| `get(homeId)`          | `homeId: string`                                        | `Home`                 |
+| `create(data)`         | `{ name, description?, monthlyBudget? }`                | `Home`                 |
+| `update(homeId, data)` | `homeId, Partial<{ name, description, monthlyBudget }>` | `Home`                 |
+| `delete(homeId)`       | `homeId: string`                                        | `{ success: boolean }` |
 
 ### `client.items` — ItemClient
 
-| Method | Parameters | Returns |
-|---|---|---|
-| `list(homeId, options?)` | `homeId, { page?, limit? }` | `PaginatedResponse<Item>` |
-| `get(homeId, itemId)` | `homeId, itemId` | `Item` |
-| `create(homeId, data)` | `homeId, CreateItemInput` | `Item` |
-| `update(homeId, itemId, data)` | `homeId, itemId, UpdateItemInput` | `Item` |
-| `delete(homeId, itemId)` | `homeId, itemId` | `{ success: boolean }` |
+| Method                         | Parameters                        | Returns                   |
+| ------------------------------ | --------------------------------- | ------------------------- |
+| `list(homeId, options?)`       | `homeId, { page?, limit? }`       | `PaginatedResponse<Item>` |
+| `get(homeId, itemId)`          | `homeId, itemId`                  | `Item`                    |
+| `create(homeId, data)`         | `homeId, CreateItemInput`         | `Item`                    |
+| `update(homeId, itemId, data)` | `homeId, itemId, UpdateItemInput` | `Item`                    |
+| `delete(homeId, itemId)`       | `homeId, itemId`                  | `{ success: boolean }`    |
 
 **CreateItemInput**: `{ name, quantity?, unit?, category?, expiresAt?, location?, price?, isRecurring?, recurringInterval?, notes? }`
 
 ### `client.lists` — GroceryListClient
 
-| Method | Parameters | Returns |
-|---|---|---|
-| `list(homeId, options?)` | `homeId, { page?, limit? }` | `PaginatedResponse<GroceryList>` |
-| `get(homeId, listId)` | `homeId, listId` | `GroceryList` |
-| `create(homeId, data)` | `homeId, CreateGroceryListInput` | `GroceryList` |
-| `update(homeId, listId, data)` | `homeId, listId, Partial<CreateGroceryListInput>` | `GroceryList` |
-| `delete(homeId, listId)` | `homeId, listId` | `{ success: boolean }` |
+| Method                         | Parameters                                        | Returns                          |
+| ------------------------------ | ------------------------------------------------- | -------------------------------- |
+| `list(homeId, options?)`       | `homeId, { page?, limit? }`                       | `PaginatedResponse<GroceryList>` |
+| `get(homeId, listId)`          | `homeId, listId`                                  | `GroceryList`                    |
+| `create(homeId, data)`         | `homeId, CreateGroceryListInput`                  | `GroceryList`                    |
+| `update(homeId, listId, data)` | `homeId, listId, Partial<CreateGroceryListInput>` | `GroceryList`                    |
+| `delete(homeId, listId)`       | `homeId, listId`                                  | `{ success: boolean }`           |
 
 **CreateGroceryListInput**: `{ name, description?, totalBudget?, items?: Array<{ itemId, quantity }> }`
 
 ### `client.chat` — ChatClient
 
-| Method | Parameters | Returns |
-|---|---|---|
-| `listThreads(homeId)` | `homeId` | `ChatThread[]` |
-| `getThread(homeId, threadId)` | `homeId, threadId` | `ChatThread` |
-| `createThread(homeId, data?)` | `homeId, { title? }` | `ChatThread` |
-| `sendMessage(homeId, threadId, data)` | `homeId, threadId, { content, intent? }` | `ChatMessage` |
-| `getMessages(homeId, threadId, options?)` | `homeId, threadId, { limit? }` | `ChatMessage[]` |
+| Method                                    | Parameters                               | Returns         |
+| ----------------------------------------- | ---------------------------------------- | --------------- |
+| `listThreads(homeId)`                     | `homeId`                                 | `ChatThread[]`  |
+| `getThread(homeId, threadId)`             | `homeId, threadId`                       | `ChatThread`    |
+| `createThread(homeId, data?)`             | `homeId, { title? }`                     | `ChatThread`    |
+| `sendMessage(homeId, threadId, data)`     | `homeId, threadId, { content, intent? }` | `ChatMessage`   |
+| `getMessages(homeId, threadId, options?)` | `homeId, threadId, { limit? }`           | `ChatMessage[]` |
 
 ## Re-exported types
 

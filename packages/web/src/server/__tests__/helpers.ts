@@ -8,7 +8,10 @@ import { TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
 function addCorsHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return new Response(response.body, {
     status: response.status,
@@ -20,7 +23,7 @@ function addCorsHeaders(response: Response): Response {
 function matchRoute(
   pathname: string,
   method: string,
-  routes: Array<{ method: string; path: string }>
+  routes: Array<{ method: string; path: string }>,
 ) {
   for (const route of routes) {
     if (route.method !== method) continue;
@@ -54,10 +57,15 @@ export function startServer(): TestServer {
       if (request.method === "OPTIONS") {
         return addCorsHeaders(new Response(null, { status: 204 }));
       }
-      const { route: matchedRoute, params } = matchRoute(url.pathname, request.method, apiRoutes);
+      const { route: matchedRoute, params } = matchRoute(
+        url.pathname,
+        request.method,
+        apiRoutes,
+      );
       if (matchedRoute) {
         const handler = apiRoutes.find(
-          (r) => r.path === matchedRoute.path && r.method === matchedRoute.method
+          (r) =>
+            r.path === matchedRoute.path && r.method === matchedRoute.method,
         )?.handler;
         if (handler) {
           const response = await handler(request, params);
@@ -90,7 +98,10 @@ export async function loginSeedUser(baseUrl: string) {
 
   const body = (await res.json()) as {
     success: boolean;
-    data: { token: string; user: { id: string; email: string; name: string; homeId: string } };
+    data: {
+      token: string;
+      user: { id: string; email: string; name: string; homeId: string };
+    };
   };
 
   return { token: body.data.token, user: body.data.user };
@@ -103,7 +114,7 @@ export async function authedFetch(
   baseUrl: string,
   path: string,
   token: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ) {
   const headers = new Headers(options.headers);
   headers.set("Authorization", `Bearer ${token}`);

@@ -1,5 +1,10 @@
 import { useState, useRef, memo } from "react";
-import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Check, Trash2 } from "lucide-react";
 import type { ListItemWithItem } from "@/hooks/useGroceryLists";
@@ -87,7 +92,7 @@ export const ListItemRow = memo(function ListItemRow({
           className={cn(
             "flex items-center gap-3 w-full px-4 py-3 min-h-[48px] text-left transition-all duration-200 bg-white dark:bg-pixie-dusk-100",
             "hover:bg-pixie-sage-50/50 dark:hover:bg-pixie-dusk-200/50",
-            listItem.isCompleted && "opacity-60"
+            listItem.isCompleted && "opacity-60",
           )}
         >
           {/* Checkbox */}
@@ -105,12 +110,10 @@ export const ListItemRow = memo(function ListItemRow({
                 "flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200",
                 listItem.isCompleted
                   ? "bg-pixie-sage-400 border-pixie-sage-400 dark:bg-pixie-glow-sage dark:border-pixie-glow-sage"
-                  : "border-pixie-sage-300 dark:border-pixie-mist-300"
+                  : "border-pixie-sage-300 dark:border-pixie-mist-300",
               )}
             >
-              {listItem.isCompleted && (
-                <Check className="w-3 h-3 text-white" />
-              )}
+              {listItem.isCompleted && <Check className="w-3 h-3 text-white" />}
             </div>
           </button>
 
@@ -130,7 +133,7 @@ export const ListItemRow = memo(function ListItemRow({
                 "text-sm font-medium transition-all duration-200",
                 listItem.isCompleted
                   ? "line-through text-pixie-charcoal-100 dark:text-pixie-mist-300"
-                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100"
+                  : "text-pixie-charcoal-300 dark:text-pixie-mist-100",
               )}
             >
               {listItem.item.name}
@@ -154,7 +157,7 @@ export const ListItemRow = memo(function ListItemRow({
                   "text-xs",
                   listItem.isCompleted
                     ? "text-pixie-charcoal-100/50 dark:text-pixie-mist-300/50"
-                    : "text-pixie-charcoal-100 dark:text-pixie-mist-300"
+                    : "text-pixie-charcoal-100 dark:text-pixie-mist-300",
                 )}
               >
                 x{listItem.quantity}

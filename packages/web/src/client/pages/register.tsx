@@ -3,7 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -115,7 +122,10 @@ export default function RegisterPage() {
             </Button>
             <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
               Already have an account?{" "}
-              <Link to="/login" className="text-pixie-sage-600 hover:underline dark:text-pixie-glow-sage">
+              <Link
+                to="/login"
+                className="text-pixie-sage-600 hover:underline dark:text-pixie-glow-sage"
+              >
                 Sign in
               </Link>
             </p>

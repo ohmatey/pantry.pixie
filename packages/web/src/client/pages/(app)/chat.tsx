@@ -5,11 +5,16 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { ChatBubbleWithUI } from "@/components/chat/ChatBubbleWithUI";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { StarterPrompts } from "@/components/chat/StarterPrompts";
+import { ListSelector } from "@/components/chat/ListSelector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
-import type { SerializedUI, UIWebSocketMessage, ListUpdateWebSocketMessage } from "@/types/websocket";
+import type {
+  SerializedUI,
+  UIWebSocketMessage,
+  ListUpdateWebSocketMessage,
+} from "@/types/websocket";
 
 interface Message {
   id?: string;
@@ -28,6 +33,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
   // Fetch or create a thread
   const { data: threadsData } = useQuery({
@@ -64,7 +70,10 @@ export default function ChatPage() {
   const { data: messagesData } = useQuery({
     queryKey: ["messages", activeThreadId],
     queryFn: () =>
-      apiFetch(`/api/homes/${user!.homeId}/chat/threads/${activeThreadId}/messages`, token!),
+      apiFetch(
+        `/api/homes/${user!.homeId}/chat/threads/${activeThreadId}/messages`,
+        token!,
+      ),
     enabled: !!activeThreadId && !!token,
   });
 
@@ -87,10 +96,15 @@ export default function ChatPage() {
   // WebSocket message handler
   const handleWSMessage = useCallback(
     (msg: any) => {
+      console.log("[Chat] Received WS message:", msg.type, msg.payload);
+
       if (msg.type === "message" && msg.payload?.threadId === activeThreadId) {
         setMessages((prev) => {
           // Avoid duplicates
-          if (msg.payload.messageId && prev.some((m) => m.id === msg.payload.messageId)) {
+          if (
+            msg.payload.messageId &&
+            prev.some((m) => m.id === msg.payload.messageId)
+          ) {
             return prev;
           }
           return [
@@ -105,11 +119,21 @@ export default function ChatPage() {
           ];
         });
         setIsTyping(false);
-      } else if (msg.type === "ui_message" && msg.payload?.threadId === activeThreadId) {
+      } else if (
+        msg.type === "ui_message" &&
+        msg.payload?.threadId === activeThreadId
+      ) {
         const uiMsg = msg as UIWebSocketMessage;
+        console.log("[Chat] UI message:", {
+          content: uiMsg.payload.content,
+          ui: uiMsg.payload.ui,
+          isStreaming: uiMsg.payload.isStreaming,
+        });
         setMessages((prev) => {
           // Find existing message by ID (for streaming updates)
-          const existingIndex = prev.findIndex((m) => m.id === uiMsg.payload.messageId);
+          const existingIndex = prev.findIndex(
+            (m) => m.id === uiMsg.payload.messageId,
+          );
 
           if (existingIndex >= 0) {
             // Update existing message (streaming)
@@ -146,27 +170,40 @@ export default function ChatPage() {
         setMessages((prev) => {
           return prev.map((m) => {
             // Find messages with grocery list UI
-            if (m.ui?.type === "grocery-list" && m.ui.data.id === listMsg.payload.list?.id) {
+            if (
+              m.ui?.type === "grocery-list" &&
+              m.ui.data.id === listMsg.payload.list?.id
+            ) {
               // Update the UI data based on action
               const updatedUI = { ...m.ui };
 
-              if (listMsg.payload.action === "item_toggled" && listMsg.payload.listItem) {
+              if (
+                listMsg.payload.action === "item_toggled" &&
+                listMsg.payload.listItem
+              ) {
                 // Update the specific item's completion status
                 updatedUI.data = {
                   ...updatedUI.data,
                   items: updatedUI.data.items.map((item) =>
                     item.id === listMsg.payload.listItem.id
-                      ? { ...item, isCompleted: listMsg.payload.listItem.isCompleted }
-                      : item
+                      ? {
+                          ...item,
+                          isCompleted: listMsg.payload.listItem.isCompleted,
+                        }
+                      : item,
                   ),
                 };
 
                 // Recalculate stats
-                const completedCount = updatedUI.data.items.filter((i) => i.isCompleted).length;
+                const completedCount = updatedUI.data.items.filter(
+                  (i) => i.isCompleted,
+                ).length;
                 updatedUI.data.completedItems = completedCount;
                 updatedUI.data.completionPercentage =
                   updatedUI.data.totalItems > 0
-                    ? Math.round((completedCount / updatedUI.data.totalItems) * 100)
+                    ? Math.round(
+                        (completedCount / updatedUI.data.totalItems) * 100,
+                      )
                     : 0;
               }
 
@@ -185,7 +222,12 @@ export default function ChatPage() {
         // Show toast notification for inventory changes
         const { action, itemName } = msg.payload || {};
         if (action && itemName) {
-          const actionText = action === "added" ? "Added" : action === "removed" ? "Removed" : "Updated";
+          const actionText =
+            action === "added"
+              ? "Added"
+              : action === "removed"
+                ? "Removed"
+                : "Updated";
           toast.success(`${actionText} ${itemName}`, {
             description: "Inventory updated",
             action: {
@@ -199,7 +241,7 @@ export default function ChatPage() {
         }
       }
     },
-    [activeThreadId]
+    [activeThreadId],
   );
 
   const { sendChatMessage, isConnected } = useWebSocket({
@@ -227,15 +269,25 @@ export default function ChatPage() {
     ]);
 
     setIsTyping(true);
-    sendChatMessage(activeThreadId, content);
+    sendChatMessage(activeThreadId, content, selectedListId);
   };
 
   // Mutation for toggling list items
   const toggleListItem = useMutation({
-    mutationFn: async ({ listId, listItemId }: { listId: string; listItemId: string }) => {
-      return apiFetch(`/api/homes/${user!.homeId}/lists/${listId}/items/${listItemId}/toggle`, token!, {
-        method: "POST",
-      });
+    mutationFn: async ({
+      listId,
+      listItemId,
+    }: {
+      listId: string;
+      listItemId: string;
+    }) => {
+      return apiFetch(
+        `/api/homes/${user!.homeId}/lists/${listId}/items/${listItemId}/toggle`,
+        token!,
+        {
+          method: "POST",
+        },
+      );
     },
     onError: (error) => {
       toast.error("Failed to update item");
@@ -245,11 +297,17 @@ export default function ChatPage() {
 
   // Mutation for removing list items
   const removeListItem = useMutation({
-    mutationFn: async ({ listId, listItemId }: { listId: string; listItemId: string }) => {
+    mutationFn: async ({
+      listId,
+      listItemId,
+    }: {
+      listId: string;
+      listItemId: string;
+    }) => {
       return apiFetch(
         `/api/homes/${user!.homeId}/lists/${listId}/items/${listItemId}`,
         token!,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
     },
     onSuccess: () => {
@@ -271,12 +329,16 @@ export default function ChatPage() {
             updatedUI.data = {
               ...updatedUI.data,
               items: updatedUI.data.items.map((item) =>
-                item.id === listItemId ? { ...item, isCompleted: !item.isCompleted } : item
+                item.id === listItemId
+                  ? { ...item, isCompleted: !item.isCompleted }
+                  : item,
               ),
             };
 
             // Recalculate stats
-            const completedCount = updatedUI.data.items.filter((i) => i.isCompleted).length;
+            const completedCount = updatedUI.data.items.filter(
+              (i) => i.isCompleted,
+            ).length;
             updatedUI.data.completedItems = completedCount;
             updatedUI.data.completionPercentage =
               updatedUI.data.totalItems > 0
@@ -294,30 +356,36 @@ export default function ChatPage() {
               list: {
                 ...updatedUI.data.list,
                 items: updatedUI.data.list.items.map((item) =>
-                  item.id === listItemId ? { ...item, isCompleted: !item.isCompleted } : item
+                  item.id === listItemId
+                    ? { ...item, isCompleted: !item.isCompleted }
+                    : item,
                 ),
               },
             };
 
             // Recalculate stats
-            const completedCount = updatedUI.data.list.items.filter((i) => i.isCompleted).length;
+            const completedCount = updatedUI.data.list.items.filter(
+              (i) => i.isCompleted,
+            ).length;
             updatedUI.data.list.completedItems = completedCount;
             updatedUI.data.list.completionPercentage =
               updatedUI.data.list.totalItems > 0
-                ? Math.round((completedCount / updatedUI.data.list.totalItems) * 100)
+                ? Math.round(
+                    (completedCount / updatedUI.data.list.totalItems) * 100,
+                  )
                 : 0;
 
             return { ...m, ui: updatedUI };
           }
 
           return m;
-        })
+        }),
       );
 
       // Call API
       toggleListItem.mutate({ listId, listItemId });
     },
-    [toggleListItem]
+    [toggleListItem],
   );
 
   // Handler for selecting a list from overview
@@ -326,7 +394,7 @@ export default function ChatPage() {
       if (!activeThreadId) return;
       sendChatMessage(activeThreadId, `Show me the ${listName} list`);
     },
-    [activeThreadId, sendChatMessage]
+    [activeThreadId, sendChatMessage],
   );
 
   // Handler for adding item to list via chat message
@@ -334,9 +402,12 @@ export default function ChatPage() {
     (listId: string, itemName: string, quantity: number) => {
       if (!activeThreadId) return;
       const quantityText = quantity > 1 ? `${quantity} ` : "";
-      sendChatMessage(activeThreadId, `Add ${quantityText}${itemName} to my list`);
+      sendChatMessage(
+        activeThreadId,
+        `Add ${quantityText}${itemName} to my list`,
+      );
     },
-    [activeThreadId, sendChatMessage]
+    [activeThreadId, sendChatMessage],
   );
 
   // Handler for removing item from list
@@ -344,7 +415,7 @@ export default function ChatPage() {
     (listId: string, listItemId: string) => {
       removeListItem.mutate({ listId, listItemId });
     },
-    [removeListItem]
+    [removeListItem],
   );
 
   return (
@@ -387,8 +458,17 @@ export default function ChatPage() {
         </div>
       </ScrollArea>
 
+      {/* List Selector */}
+      <ListSelector
+        selectedListId={selectedListId}
+        onSelectList={setSelectedListId}
+      />
+
       {/* Input */}
-      <ChatInput onSend={handleSend} disabled={!isConnected || !activeThreadId} />
+      <ChatInput
+        onSend={handleSend}
+        disabled={!isConnected || !activeThreadId}
+      />
     </div>
   );
 }
