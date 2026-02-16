@@ -65,11 +65,10 @@ export async function createPixieResponse(
   };
 
   const result = await streamText({
-    model: openai("gpt-4o-mini"),
+    model: openai("gpt-4o-mini") as any,
     system: systemPrompt,
     messages,
     tools,
-    maxSteps: 5,
   });
 
   return {
@@ -78,8 +77,8 @@ export async function createPixieResponse(
     fullText: Promise.resolve(result.text).then((t) => t),
     toolResults: Promise.resolve(result.response).then((r) =>
       r.messages
-        .filter((m) => m.role === 'assistant' && Array.isArray(m.content))
-        .flatMap((m) =>
+        .filter((m: any) => m.role === 'assistant' && Array.isArray(m.content))
+        .flatMap((m: any) =>
           m.content
             .filter((c: any) => c.type === 'tool-call')
             .map((c: any) => ({

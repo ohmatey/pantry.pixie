@@ -28,6 +28,7 @@ export {
   ilike,
   sql,
   lte,
+  gte,
   isNotNull,
 } from "drizzle-orm";
 

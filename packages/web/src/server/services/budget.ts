@@ -2,8 +2,7 @@
  * Budget service - Calculate spending and provide insights
  */
 
-import { db, itemsTable, eq, and } from "@pantry-pixie/core";
-import { gte } from "drizzle-orm";
+import { db, itemsTable, eq, and, gte } from "@pantry-pixie/core";
 
 export type TimePeriod = "week" | "month" | "all-time";
 

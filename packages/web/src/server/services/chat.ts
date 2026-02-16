@@ -122,9 +122,16 @@ export async function sendMessage(
 
         // Consume text stream (AI SDK returns ReadableStream<string>)
         let fullText = "";
-        for await (const chunk of result.textStream) {
-          fullText += chunk;
-          onChunk(chunk);
+        const reader = result.textStream.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            fullText += value;
+            onChunk(value);
+          }
+        } finally {
+          reader.releaseLock();
         }
 
         logger.info(

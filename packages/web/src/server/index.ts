@@ -34,7 +34,9 @@ const ALLOWED_ORIGINS =
 // Resolve static directory for production builds
 const STATIC_DIR = path.resolve(import.meta.dir, "../../dist/client");
 
-const agentReady = await initializeAgent();
+// Initialize agent (Bun allows top-level await)
+let agentReady = false;
+initializeAgent().then(ready => { agentReady = ready; });
 
 function matchRoute(
   pathname: string,
@@ -283,13 +285,13 @@ const server = Bun.serve<WSData>({
       handleWebSocketOpen(ws);
     },
     message(ws, message) {
-      handleWebSocketMessage(ws, message);
+      const msgString = typeof message === 'string'
+        ? message
+        : new TextDecoder().decode(message as unknown as ArrayBuffer);
+      handleWebSocketMessage(ws, msgString);
     },
     close(ws) {
       handleWebSocketClose(ws);
-    },
-    error(ws, error) {
-      logError(error as Error, { component: "WebSocket" });
     },
   },
 });

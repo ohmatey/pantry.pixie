@@ -133,7 +133,7 @@ class PixieDatabase extends Dexie {
   async getGroceryList(homeId: string): Promise<IDBItem[]> {
     return this.items
       .where("[homeId+isChecked]")
-      .equals([homeId, false])
+      .equals([homeId, false] as any)
       .and((item) => !item._deleted)
       .toArray();
   }
