@@ -25,6 +25,7 @@ export {
   or,
   desc,
   asc,
+  like,
   ilike,
   sql,
   lte,

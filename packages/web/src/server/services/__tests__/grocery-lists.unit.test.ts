@@ -3,7 +3,7 @@
  * Tests list CRUD, list items, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
@@ -72,7 +72,7 @@ describe("Grocery Lists Service - createList()", () => {
 
     expect(list.name).toBe("Monthly Shop");
     expect(list.description).toBe("Big monthly shopping trip");
-    expect(list.totalBudget).toBe("500.00");
+    expect(list.totalBudget).toBe(500);
   });
 
   it("should create list with initial items", async () => {
@@ -188,7 +188,7 @@ describe("Grocery Lists Service - updateList()", () => {
       totalBudget: "250.00",
     });
 
-    expect(updated!.totalBudget).toBe("250.00");
+    expect(updated!.totalBudget).toBe(250);
   });
 
   it("should return undefined for non-existent list", async () => {
@@ -290,7 +290,7 @@ describe("Grocery Lists Service - addListItem()", () => {
 
     expect(listItem!.quantity).toBe(5);
     expect(listItem!.notes).toBe("Ripe ones");
-    expect(listItem!.estimatedPrice).toBe("2.50");
+    expect(listItem!.estimatedPrice).toBe(2.5);
   });
 
   it("should return undefined for non-existent list", async () => {

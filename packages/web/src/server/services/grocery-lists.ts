@@ -9,7 +9,7 @@ import {
   and,
   desc,
   asc,
-  ilike,
+  like,
   lte,
   isNotNull,
   groceryListsTable,
@@ -212,7 +212,7 @@ export async function findOrCreateItem(
   const [existing] = await db
     .select()
     .from(itemsTable)
-    .where(and(eq(itemsTable.homeId, homeId), ilike(itemsTable.name, name)));
+    .where(and(eq(itemsTable.homeId, homeId), like(itemsTable.name, name)));
 
   if (existing) return existing;
 

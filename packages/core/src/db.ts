@@ -1,12 +1,12 @@
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { Database } from "bun:sqlite";
 import * as schema from "./schema";
 import path from "path";
 import fs from "fs";
 
 // Type for the database with schema
 type DbSchema = typeof schema;
-export type DbType = BetterSQLite3Database<DbSchema>;
+export type DbType = BunSQLiteDatabase<DbSchema>;
 
 // Lazy initialization: connection created on first use
 let _db: DbType | null = null;
@@ -37,7 +37,7 @@ function initializeDb(): DbType {
   // Create data directory if using file-based DB
   if (dbPath !== ":memory:" && !dbPath.includes(":memory:")) {
     const dir = path.dirname(dbPath);
-    if (!Bun.file(dir).exists()) {
+    if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   }
@@ -45,9 +45,9 @@ function initializeDb(): DbType {
   const sqlite = new Database(dbPath);
 
   // Enable foreign keys and WAL mode for better concurrency
-  sqlite.pragma("foreign_keys = ON");
+  sqlite.exec("PRAGMA foreign_keys = ON;");
   if (dbPath !== ":memory:") {
-    sqlite.pragma("journal_mode = WAL");
+    sqlite.exec("PRAGMA journal_mode = WAL;");
   }
 
   return drizzle(sqlite, { schema });
@@ -63,7 +63,6 @@ export function getDb(): DbType {
 // Close database connection (useful for cleanup in tests)
 export function closeDb(): void {
   if (_db) {
-    // Type assertion needed as better-sqlite3's close isn't in drizzle types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (_db as any).$client?.close();
     _db = null;

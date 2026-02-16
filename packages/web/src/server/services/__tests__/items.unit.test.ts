@@ -3,7 +3,7 @@
  * Tests CRUD operations, filtering, search, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import { db, eq, itemsTable } from "@pantry-pixie/core";
 import {
@@ -67,7 +67,7 @@ describe("Items Service - addItem()", () => {
     expect(item.category).toBe("dairy");
     expect(item.location).toBe("Fridge");
     expect(item.notes).toBe("Free range");
-    expect(item.price).toBe("4.99");
+    expect(item.price).toBe(4.99);
     expect(item.isChecked).toBe(false);
   });
 

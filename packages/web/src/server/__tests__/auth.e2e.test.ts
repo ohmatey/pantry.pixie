@@ -7,24 +7,18 @@ import {
   type TestServer,
 } from "./helpers";
 
-// Early exit if DATABASE_URL is not set
-if (!process.env.DATABASE_URL) {
-  console.warn("⚠️  Skipping E2E tests - DATABASE_URL not set");
-  process.exit(0);
-}
-
 let server: TestServer;
 
-  beforeAll(async () => {
-    await seedTestUser();
-    server = startServer();
-  });
+beforeAll(async () => {
+  await seedTestUser();
+  server = startServer();
+});
 
-  afterAll(() => {
-    if (server) {
-      server.stop();
-    }
-  });
+afterAll(() => {
+  if (server) {
+    server.stop();
+  }
+});
 
   // ---------------------------------------------------------------------------
   // POST /api/auth/login
@@ -109,7 +103,7 @@ describe("POST /api/auth/register", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: TEST_EMAIL,
-        password: "dup123",
+        password: "dup12345",
         name: "Dup",
       }),
     });

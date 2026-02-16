@@ -3,18 +3,17 @@
  */
 
 /**
- * Check if PostgreSQL database is available
- * Returns true if DATABASE_URL is set, false otherwise
- * Note: We don't try to connect here to avoid import-time connection attempts
+ * Check if database is available for tests.
+ * With the SQLite in-memory setup (via test-preload.ts), the DB is always available.
  */
 export function isDatabaseAvailable(): boolean {
-  return !!process.env.DATABASE_URL;
+  return true;
 }
 
 /**
- * Returns true if tests should be skipped due to missing database
- * Use with Bun's test.skipIf()
+ * Returns true if tests should be skipped due to missing database.
+ * With the test preload creating in-memory SQLite tables, the DB is always available.
  */
 export function shouldSkipDatabaseTests(): boolean {
-  return !isDatabaseAvailable();
+  return false;
 }

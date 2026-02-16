@@ -7,7 +7,7 @@ import {
   db,
   eq,
   and,
-  ilike,
+  like,
   asc,
   itemsTable,
   type Item,
@@ -146,7 +146,7 @@ export async function findItemByName(
     .select()
     .from(itemsTable)
     .where(
-      and(eq(itemsTable.homeId, homeId), ilike(itemsTable.name, `%${name}%`)),
+      and(eq(itemsTable.homeId, homeId), like(itemsTable.name, `%${name}%`)),
     );
 
   return items[0];

@@ -10,3 +10,4 @@ prefer = "online"
 [test]
 # Configure test runner
 timeout = 5000
+preload = ["./packages/core/src/test-preload.ts"]

@@ -3,7 +3,7 @@
  * Tests invite creation, acceptance, expiration, and home member management
  */
 
-import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
