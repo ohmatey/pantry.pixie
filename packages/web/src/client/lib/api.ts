@@ -4,6 +4,7 @@
 
 import { useAuthStore } from "../hooks/useAuth";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiFetch<T = any>(
   path: string,
   token: string,
@@ -36,10 +37,12 @@ export async function apiFetch<T = any>(
   return json;
 }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function apiGet<T = any>(path: string, token: string) {
   return apiFetch<T>(path, token);
 }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function apiPost<T = any>(path: string, token: string, body: unknown) {
   return apiFetch<T>(path, token, {
     method: "POST",
@@ -47,6 +50,7 @@ export function apiPost<T = any>(path: string, token: string, body: unknown) {
   });
 }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function apiPut<T = any>(path: string, token: string, body: unknown) {
   return apiFetch<T>(path, token, {
     method: "PUT",
@@ -54,6 +58,7 @@ export function apiPut<T = any>(path: string, token: string, body: unknown) {
   });
 }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function apiPatch<T = any>(path: string, token: string, body?: unknown) {
   return apiFetch<T>(path, token, {
     method: "PATCH",
@@ -61,6 +66,7 @@ export function apiPatch<T = any>(path: string, token: string, body?: unknown) {
   });
 }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function apiDelete<T = any>(path: string, token: string) {
   return apiFetch<T>(path, token, { method: "DELETE" });
 }

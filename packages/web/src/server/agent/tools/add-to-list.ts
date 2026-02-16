@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import * as groceryListsService from "../../services/grocery-lists";
-import type { GroceryListWithItems } from "@pantry-pixie/core";
 
 export function createAddToListTool(
   homeId: string,

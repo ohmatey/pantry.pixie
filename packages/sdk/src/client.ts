@@ -16,7 +16,6 @@ import type {
   SendChatMessageInput,
   ApiResponse,
   PaginatedResponse,
-  AuthToken,
 } from "@pantry-pixie/core";
 
 export interface PantryPixieClientConfig {

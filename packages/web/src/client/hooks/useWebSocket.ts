@@ -3,6 +3,7 @@ import { useAuth } from "./useAuth";
 
 interface WSMessage {
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   timestamp: string;
 }

@@ -5,7 +5,6 @@
 import {
   register,
   login,
-  authenticateRequest,
   withAuth,
   type AuthPayload,
 } from "../auth";
@@ -18,7 +17,6 @@ import {
   eq,
   homesTable,
   homeMembersTable,
-  usersTable,
 } from "@pantry-pixie/core";
 import {
   createInvite,
@@ -249,6 +247,7 @@ async function handleRegister(request: Request): Promise<Response> {
     const { email, password, name } = parsed.data;
     const result = await register(email, password, name);
     return json({ success: true, data: result, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     const status = err.message === "Email already registered" ? 409 : 500;
     return json({ success: false, error: err.message }, status);
@@ -264,14 +263,15 @@ async function handleLogin(request: Request): Promise<Response> {
     const { email, password } = parsed.data;
     const result = await login(email, password);
     return json({ success: true, data: result, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 401);
   }
 }
 
 async function handleGetMe(
-  request: Request,
-  params: Record<string, string>,
+  _request: Request,
+  _params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   return json({
@@ -286,8 +286,8 @@ async function handleGetMe(
 // ============================================================================
 
 async function handleListHomes(
-  request: Request,
-  params: Record<string, string>,
+  _request: Request,
+  _params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
@@ -309,6 +309,7 @@ async function handleListHomes(
     }
 
     return json({ success: true, data: homes, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -317,7 +318,7 @@ async function handleListHomes(
 async function handleGetHome(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const home = await db.query.homesTable.findFirst({
@@ -329,6 +330,7 @@ async function handleGetHome(
     }
 
     return json({ success: true, data: home, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -336,7 +338,7 @@ async function handleGetHome(
 
 async function handleCreateHome(
   request: Request,
-  params: Record<string, string>,
+  _params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
@@ -357,6 +359,7 @@ async function handleCreateHome(
     });
 
     return json({ success: true, data: home, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -365,7 +368,7 @@ async function handleCreateHome(
 async function handleUpdateHome(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -384,6 +387,7 @@ async function handleUpdateHome(
     }
 
     return json({ success: true, data: home, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -396,11 +400,12 @@ async function handleUpdateHome(
 async function handleListMembers(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const members = await getHomeMembers(params.homeId);
     return json({ success: true, data: members, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -418,6 +423,7 @@ async function handleCreateInvite(
   try {
     const invite = createInvite(params.homeId, auth.userId);
     return json({ success: true, data: invite, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -431,6 +437,7 @@ async function handleAcceptInvite(
   try {
     const result = await acceptInvite(params.code, auth.userId);
     return json({ success: true, data: result, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 400);
   }
@@ -448,6 +455,7 @@ async function handleGetInviteInfo(
       return json({ success: false, error: "Invalid or expired invite" }, 404);
     }
     return json({ success: true, data: info, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -460,7 +468,7 @@ async function handleGetInviteInfo(
 async function handleListItems(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const url = new URL(request.url);
@@ -472,6 +480,7 @@ async function handleListItems(
       search,
     });
     return json({ success: true, data: items, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -480,7 +489,7 @@ async function handleListItems(
 async function handleGetItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const item = await itemsService.getItem(params.homeId, params.id);
@@ -488,6 +497,7 @@ async function handleGetItem(
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -496,7 +506,7 @@ async function handleGetItem(
 async function handleCreateItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -504,6 +514,7 @@ async function handleCreateItem(
     if (!parsed.success) return parsed.response;
     const item = await itemsService.addItem(params.homeId, parsed.data);
     return json({ success: true, data: item, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -512,7 +523,7 @@ async function handleCreateItem(
 async function handleUpdateItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -527,6 +538,7 @@ async function handleUpdateItem(
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -535,7 +547,7 @@ async function handleUpdateItem(
 async function handleToggleItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const item = await itemsService.toggleItemCheck(params.homeId, params.id);
@@ -543,6 +555,7 @@ async function handleToggleItem(
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -551,7 +564,7 @@ async function handleToggleItem(
 async function handleDeleteItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const item = await itemsService.removeItem(params.homeId, params.id);
@@ -559,6 +572,7 @@ async function handleDeleteItem(
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -567,11 +581,12 @@ async function handleDeleteItem(
 async function handleGetItemStats(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const stats = await itemsService.getStats(params.homeId);
     return json({ success: true, data: stats, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -584,11 +599,12 @@ async function handleGetItemStats(
 async function handleListGroceryLists(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const lists = await groceryListsService.getLists(params.homeId);
     return json({ success: true, data: lists, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -597,7 +613,7 @@ async function handleListGroceryLists(
 async function handleGetGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const list = await groceryListsService.getList(params.homeId, params.id);
@@ -605,6 +621,7 @@ async function handleGetGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -613,7 +630,7 @@ async function handleGetGroceryList(
 async function handleCreateGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -625,6 +642,7 @@ async function handleCreateGroceryList(
       parsed.data,
     );
     return json({ success: true, data: list, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -633,7 +651,7 @@ async function handleCreateGroceryList(
 async function handleUpdateGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -648,6 +666,7 @@ async function handleUpdateGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -656,7 +675,7 @@ async function handleUpdateGroceryList(
 async function handleDeleteGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const list = await groceryListsService.deleteList(params.homeId, params.id);
@@ -664,6 +683,7 @@ async function handleDeleteGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -672,7 +692,7 @@ async function handleDeleteGroceryList(
 async function handleCompleteGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const list = await groceryListsService.completeList(
@@ -683,6 +703,7 @@ async function handleCompleteGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -691,13 +712,14 @@ async function handleCompleteGroceryList(
 async function handleGetDefaultList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const list = await groceryListsService.getOrCreateDefaultList(
       params.homeId,
     );
     return json({ success: true, data: list, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -706,7 +728,7 @@ async function handleGetDefaultList(
 async function handleResetGroceryList(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const list = await groceryListsService.resetScheduledList(params.id);
@@ -714,6 +736,7 @@ async function handleResetGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -722,7 +745,7 @@ async function handleResetGroceryList(
 async function handleAddListItemByName(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -754,6 +777,7 @@ async function handleAddListItemByName(
       { success: true, data: { listItem, item }, timestamp: new Date() },
       201,
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -762,7 +786,7 @@ async function handleAddListItemByName(
 async function handleGetListStats(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const stats = await groceryListsService.getListStats(
@@ -773,6 +797,7 @@ async function handleGetListStats(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: stats, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -781,7 +806,7 @@ async function handleGetListStats(
 async function handleAddListItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -797,6 +822,7 @@ async function handleAddListItem(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: listItem, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -805,7 +831,7 @@ async function handleAddListItem(
 async function handleRemoveListItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const listItem = await groceryListsService.removeListItem(
@@ -817,6 +843,7 @@ async function handleRemoveListItem(
       return json({ success: false, error: "List item not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -825,7 +852,7 @@ async function handleRemoveListItem(
 async function handleToggleListItem(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const listItem = await groceryListsService.toggleListItem(
@@ -837,6 +864,7 @@ async function handleToggleListItem(
       return json({ success: false, error: "List item not found" }, 404);
     }
     return json({ success: true, data: listItem, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -854,6 +882,7 @@ async function handleListChatThreads(
   try {
     const threads = await chatService.getThreads(params.homeId || auth.homeId);
     return json({ success: true, data: threads, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -873,6 +902,7 @@ async function handleCreateChatThread(
       parsed.data.title,
     );
     return json({ success: true, data: thread, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -881,13 +911,14 @@ async function handleCreateChatThread(
 async function handleGetMessages(
   request: Request,
   params: Record<string, string>,
-  auth: AuthPayload,
+  _auth: AuthPayload,
 ): Promise<Response> {
   try {
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
     const messages = await chatService.getMessages(params.threadId, limit);
     return json({ success: true, data: messages, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -911,6 +942,7 @@ async function handleSendMessage(
     );
 
     return json({ success: true, data: result, timestamp: new Date() }, 201);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }
@@ -930,6 +962,7 @@ async function handleGetBudget(
       params.homeId || auth.homeId,
     );
     return json({ success: true, data: budgetSummary, timestamp: new Date() });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return json({ success: false, error: err.message }, 500);
   }

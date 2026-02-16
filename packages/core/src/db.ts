@@ -2,6 +2,7 @@ import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import Database from "better-sqlite3";
 import * as schema from "./schema";
 import path from "path";
+import fs from "fs";
 
 // Type for the database with schema
 type DbSchema = typeof schema;
@@ -37,7 +38,6 @@ function initializeDb(): DbType {
   if (dbPath !== ":memory:" && !dbPath.includes(":memory:")) {
     const dir = path.dirname(dbPath);
     if (!Bun.file(dir).exists()) {
-      const fs = require("fs");
       fs.mkdirSync(dir, { recursive: true });
     }
   }
@@ -64,6 +64,7 @@ export function getDb(): DbType {
 export function closeDb(): void {
   if (_db) {
     // Type assertion needed as better-sqlite3's close isn't in drizzle types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (_db as any).$client?.close();
     _db = null;
   }

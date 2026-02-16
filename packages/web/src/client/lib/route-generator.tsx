@@ -27,12 +27,6 @@ export interface RouteConfig {
   children?: RouteConfig[];
 }
 
-interface PageModule {
-  default: ComponentType<any>;
-  Layout?: ComponentType<{ children: ReactNode }>;
-  Guard?: ComponentType<{ children: ReactNode }>;
-}
-
 // ============================================================================
 // Route Definitions
 // ============================================================================

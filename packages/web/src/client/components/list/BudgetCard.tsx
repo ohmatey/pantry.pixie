@@ -66,7 +66,7 @@ export function BudgetCard() {
     );
   }
 
-  const { week, month, insights } = budgetData;
+  const { month, insights } = budgetData;
   const hasData = month.total > 0;
 
   if (!hasData) {

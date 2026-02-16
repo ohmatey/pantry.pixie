@@ -6,6 +6,7 @@ import "./globals.css";
 // Performance monitoring with Web Vitals
 if (import.meta.env.DEV) {
   import("web-vitals").then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     function sendToAnalytics(metric: any) {
       const { name, value, rating } = metric;
       console.log(`[Web Vitals] ${name}:`, {

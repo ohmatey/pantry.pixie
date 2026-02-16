@@ -64,7 +64,7 @@ export const listCommand = new Command("list")
       .description("Add item to list")
       .argument("<listId>", "List ID")
       .argument("[itemName]", "Item name")
-      .action(async (listId: string, itemName: string | undefined) => {
+      .action(async (listId: string, _itemName: string | undefined) => {
         try {
           // TODO: Implement add to list:
           // 1. Get list details

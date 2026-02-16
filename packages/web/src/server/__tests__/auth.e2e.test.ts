@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
 import {
   startServer,
@@ -161,5 +161,3 @@ describe("GET /api/auth/me", () => {
     expect(res.status).toBe(401);
   });
 });
-
-} // end of else block (skipTests check)

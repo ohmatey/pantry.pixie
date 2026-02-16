@@ -114,6 +114,7 @@ const homeConnections = new Map<string, Set<ServerWebSocket<WSData>>>();
 // Subscribe to inventory events and broadcast to home clients
 eventBus.on(
   "inventory:updated",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (data: { action: string; item: any; homeId: string }) => {
     broadcastToHome(data.homeId, {
       type: "inventory_update",
@@ -126,6 +127,7 @@ eventBus.on(
 // Subscribe to list events and broadcast to home clients
 eventBus.on(
   "list:updated",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (data: { action: string; list: any; listItem?: any; homeId: string }) => {
     broadcastToHome(data.homeId, {
       type: "list_update",

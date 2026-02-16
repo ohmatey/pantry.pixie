@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useGroceryLists } from "@/hooks/useGroceryLists";
 import { ChevronDown, ShoppingCart } from "lucide-react";
 
@@ -12,11 +11,6 @@ export function ListSelector({
   onSelectList,
 }: ListSelectorProps) {
   const { lists, isLoading } = useGroceryLists();
-
-  const selectedList = useMemo(
-    () => lists.find((l) => l.id === selectedListId),
-    [lists, selectedListId],
-  );
 
   if (isLoading) {
     return (

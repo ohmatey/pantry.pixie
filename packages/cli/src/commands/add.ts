@@ -19,7 +19,7 @@ export const addCommand = new Command("add")
     async (
       name: string | undefined,
       options: Record<string, string>,
-      command: Command,
+      _command: Command,
     ) => {
       try {
         // TODO: Implement add item command:
@@ -30,8 +30,6 @@ export const addCommand = new Command("add")
         // 5. Call client.addItem()
         // 6. Display success message with item details
         // 7. Optionally save to recent items for faster future additions
-
-        const parentOptions = command.parent?.opts?.() || {};
 
         if (!name) {
           // Interactive mode

@@ -7,7 +7,7 @@
  * - Syncs when back online
  */
 
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNetworkStatus } from "./useNetworkStatus";
 import { offlineQueue } from "../lib/offline-queue";
 import type { MutationQueueEntry } from "../lib/db";

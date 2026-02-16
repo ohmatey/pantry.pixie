@@ -79,7 +79,7 @@ export async function calculateSpending(
   const categoryMap = new Map<string, CategorySpending>();
 
   for (const item of itemsWithCosts) {
-    const cost = item.price ? parseFloat(item.price) : 0;
+    const cost = item.price || 0;
 
     if (cost > 0) {
       total += cost;
@@ -111,7 +111,7 @@ export async function calculateSpending(
     .sort((a, b) => b.total - a.total); // Sort by total spending (highest first)
 
   const itemsWithCostCount = itemsWithCosts.filter(
-    (item) => item.price && parseFloat(item.price) > 0,
+    (item) => item.price && item.price > 0,
   ).length;
 
   return {

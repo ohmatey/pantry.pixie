@@ -69,7 +69,7 @@ export const createItemSchema = z.object({
   location: z.string().max(255).optional(),
   expiresAt: z.coerce.date().optional(),
   notes: z.string().max(1000).optional(),
-  price: z.string().max(50).optional(),
+  price: z.coerce.number().positive().optional(),
 });
 
 export const updateItemSchema = z.object({
@@ -88,7 +88,7 @@ export const updateItemSchema = z.object({
   location: z.string().max(255).optional(),
   expiresAt: z.coerce.date().optional(),
   notes: z.string().max(1000).optional(),
-  price: z.string().max(50).optional(),
+  price: z.coerce.number().positive().optional(),
   isRecurring: z.boolean().optional(),
   recurringInterval: z.string().max(50).optional(),
   isChecked: z.boolean().optional(),
@@ -104,7 +104,7 @@ const listItemInputSchema = z.object({
   itemId: z.string().uuid(),
   quantity: z.number().positive().optional(),
   notes: z.string().max(500).optional(),
-  estimatedPrice: z.string().max(50).optional(),
+  estimatedPrice: z.coerce.number().positive().optional(),
 });
 
 export const createGroceryListSchema = z.object({
@@ -113,7 +113,7 @@ export const createGroceryListSchema = z.object({
     .min(VALIDATION.LIST.MIN_NAME_LENGTH)
     .max(VALIDATION.LIST.MAX_NAME_LENGTH),
   description: z.string().max(1000).optional(),
-  totalBudget: z.string().max(50).optional(),
+  totalBudget: z.coerce.number().positive().optional(),
   recurringSchedule: z.enum(listScheduleValues).nullable().optional(),
   scheduleDayOfWeek: z.number().int().min(0).max(6).nullable().optional(),
   scheduleDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
@@ -127,7 +127,7 @@ export const updateGroceryListSchema = z.object({
     .max(VALIDATION.LIST.MAX_NAME_LENGTH)
     .optional(),
   description: z.string().max(1000).optional(),
-  totalBudget: z.string().max(50).optional(),
+  totalBudget: z.coerce.number().positive().optional(),
   recurringSchedule: z.enum(listScheduleValues).nullable().optional(),
   scheduleDayOfWeek: z.number().int().min(0).max(6).nullable().optional(),
   scheduleDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
@@ -137,7 +137,7 @@ export const addListItemSchema = z.object({
   itemId: z.string().uuid(),
   quantity: z.number().positive().optional(),
   notes: z.string().max(500).optional(),
-  estimatedPrice: z.string().max(50).optional(),
+  estimatedPrice: z.coerce.number().positive().optional(),
 });
 
 export const addListItemByNameSchema = z.object({

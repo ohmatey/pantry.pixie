@@ -75,11 +75,6 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSkipToChat = () => {
-    localStorage.setItem("pp_onboarded", "true");
-    navigate("/chat", { replace: true });
-  };
-
   const handleSendInvite = async () => {
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !token || !user?.homeId) return;
@@ -152,7 +147,7 @@ export default function OnboardingPage() {
   };
 
   const [direction, setDirection] = useState(0);
-  const [previousStep, setPreviousStep] = useState(0);
+  const [, setPreviousStep] = useState(0);
 
   // Monitor online/offline status
   useEffect(() => {

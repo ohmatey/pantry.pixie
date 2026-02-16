@@ -52,6 +52,7 @@ if (skipTests) {
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.data.length).toBeGreaterThanOrEqual(1);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const thread = body.data.find((t: any) => t.id === existingThreadId);
     expect(thread).toBeDefined();
   });

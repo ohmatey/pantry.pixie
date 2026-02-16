@@ -8,7 +8,6 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { ShoppingProgress } from "./ShoppingProgress";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { ListItemRow } from "./ListItemRow";
 import { AddItemInput } from "./AddItemInput";

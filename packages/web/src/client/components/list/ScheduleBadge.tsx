@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { CalendarClock } from "lucide-react";
 
 interface ScheduleBadgeProps {

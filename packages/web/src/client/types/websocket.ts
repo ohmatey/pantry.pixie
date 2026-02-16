@@ -112,7 +112,9 @@ export interface ListUpdateWebSocketMessage extends WebSocketMessage {
   type: "list_update";
   payload: {
     action: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     list: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listItem?: any;
     homeId: string;
   };

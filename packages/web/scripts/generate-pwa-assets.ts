@@ -9,7 +9,7 @@
  * - Screenshots: 540x720 (narrow) and 1280x720 (wide)
  */
 
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { createCanvas } from "@napi-rs/canvas";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 

@@ -24,6 +24,7 @@ export async function rateLimit(request: Request): Promise<Response | null> {
   try {
     await rateLimiter.consume(ip);
     return null; // Allow request
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (rejRes: any) {
     const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
 

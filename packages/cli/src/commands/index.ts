@@ -40,7 +40,7 @@ export class ItemCommand extends BaseCommand {
   description = "Manage pantry items";
   usage = "pixie item <subcommand> [options]";
 
-  async execute(args: string[]): Promise<void> {
+  async execute(_args: string[]): Promise<void> {
     this.logInfo("Item command - coming soon");
   }
 }
@@ -50,7 +50,7 @@ export class ListCommand extends BaseCommand {
   description = "Manage grocery lists";
   usage = "pixie list <subcommand> [options]";
 
-  async execute(args: string[]): Promise<void> {
+  async execute(_args: string[]): Promise<void> {
     this.logInfo("List command - coming soon");
   }
 }
@@ -60,7 +60,7 @@ export class HomeCommand extends BaseCommand {
   description = "Manage homes";
   usage = "pixie home <subcommand> [options]";
 
-  async execute(args: string[]): Promise<void> {
+  async execute(_args: string[]): Promise<void> {
     this.logInfo("Home command - coming soon");
   }
 }
@@ -70,7 +70,7 @@ export class ConfigCommand extends BaseCommand {
   description = "Configure Pantry Pixie";
   usage = "pixie config <key> <value>";
 
-  async execute(args: string[]): Promise<void> {
+  async execute(_args: string[]): Promise<void> {
     this.logInfo("Config command - coming soon");
   }
 }

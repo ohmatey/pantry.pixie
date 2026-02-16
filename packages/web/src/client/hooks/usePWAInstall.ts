@@ -47,6 +47,7 @@ export function usePWAInstall(): UsePWAInstallReturn {
 
   // Detect iOS
   const isIOS =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
   // Check if already installed
@@ -55,6 +56,7 @@ export function usePWAInstall(): UsePWAInstallReturn {
       // Check if running in standalone mode (PWA installed)
       const isStandalone =
         window.matchMedia("(display-mode: standalone)").matches ||
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window.navigator as any).standalone === true;
       setIsInstalled(isStandalone);
     };

@@ -52,8 +52,11 @@ export function useDetailedNetworkStatus(): NetworkStatus {
   useEffect(() => {
     function updateNetworkInfo() {
       const connection =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (navigator as any).connection ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (navigator as any).mozConnection ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (navigator as any).webkitConnection;
 
       setStatus((prev) => ({
@@ -80,8 +83,11 @@ export function useDetailedNetworkStatus(): NetworkStatus {
 
     // Also listen to connection change events
     const connection =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (navigator as any).connection ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (navigator as any).mozConnection ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (navigator as any).webkitConnection;
 
     if (connection) {

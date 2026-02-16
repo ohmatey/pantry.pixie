@@ -3,7 +3,7 @@
  * Tests thread creation, message retrieval, and AI agent integration
  */
 
-import { describe, it, expect, beforeAll, afterAll, mock , test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll , test } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import {
   db,
@@ -170,10 +170,9 @@ describe("Chat Service - sendMessage()", () => {
     expect(typeof result.streamHandler).toBe("function");
 
     // Execute stream handler to get assistant response
-    let assistantContent = "";
     await result.streamHandler(
-      (chunk) => {
-        assistantContent += chunk;
+      () => {
+        // Stream chunks (not used in test)
       },
       (fullText) => {
         expect(fullText).toBeString();
@@ -230,10 +229,9 @@ describe("Chat Service - sendMessage()", () => {
     expect(result.assistantMessageId).toBeString();
 
     // Execute stream to verify assistant response generation
-    let fullResponse = "";
     await result.streamHandler(
-      (chunk) => {
-        fullResponse += chunk;
+      () => {
+        // Stream chunks (not used in test)
       },
       (fullText) => {
         expect(fullText.length).toBeGreaterThan(0);
@@ -257,10 +255,9 @@ describe("Chat Service - sendMessage()", () => {
       "How are you?",
     );
 
-    let response = "";
     await result.streamHandler(
-      (chunk) => {
-        response += chunk;
+      () => {
+        // Stream chunks (not used in test)
       },
       (fullText) => {
         expect(fullText).toBeString();

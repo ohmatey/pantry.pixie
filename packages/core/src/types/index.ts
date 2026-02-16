@@ -2,7 +2,7 @@
  * Comprehensive TypeScript types for Pantry Pixie
  * These types extend the database schemas with additional application logic
  */
-import { ItemCategory, ListStatus, RecurrenceType } from "../constants";
+import { ItemCategory } from "../constants";
 
 import type {
   User,

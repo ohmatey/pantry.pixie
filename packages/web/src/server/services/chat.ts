@@ -164,6 +164,7 @@ export async function sendMessage(
             "uiData" in toolResult.result
           ) {
             // New pattern: tools return { success, message, uiData }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
             uiData = (toolResult.result as any).uiData;
             logger.info({ threadId, uiType: uiData?.type }, "Extracted uiData");
             break;
@@ -178,6 +179,7 @@ export async function sendMessage(
           ) {
             uiData = {
               type: "grocery-list",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
               data: (toolResult.result as any).listData,
             };
             logger.info(

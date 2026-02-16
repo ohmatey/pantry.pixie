@@ -4,6 +4,7 @@
 
 import { logger } from "../lib/logger";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EventHandler = (data: any) => void;
 
 class EventBus {
@@ -21,6 +22,7 @@ class EventBus {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   emit(event: string, data: any): void {
     const handlers = this.handlers.get(event);
     if (!handlers) return;

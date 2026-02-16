@@ -22,7 +22,7 @@ export interface AddItemData {
   location?: string;
   expiresAt?: Date;
   notes?: string;
-  price?: string;
+  price?: number;
 }
 
 export interface UpdateItemData {
@@ -33,7 +33,7 @@ export interface UpdateItemData {
   location?: string;
   expiresAt?: Date;
   notes?: string;
-  price?: string;
+  price?: number;
   isRecurring?: boolean;
   recurringInterval?: string;
   isChecked?: boolean;

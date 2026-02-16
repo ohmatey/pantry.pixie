@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, test , test } from "bun:test";
-import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
+import { seedTestUser } from "@pantry-pixie/core";
 import { db, eq, itemsTable } from "@pantry-pixie/core";
 import {
   addItem,

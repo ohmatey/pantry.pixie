@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { apiFetch } from "@/lib/api";
-import { formatTHB, parseTHB } from "@/lib/currency";
+// formatTHB and parseTHB removed - unused from "@/lib/currency";
 import { toast } from "sonner";
 
 interface Item {
@@ -133,6 +133,7 @@ export function ItemDetailsModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = {
       quantity: parseFloat(formData.quantity) || 1,
       unit: formData.unit,

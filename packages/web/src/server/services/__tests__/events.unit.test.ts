@@ -3,7 +3,7 @@
  * Tests subscribe, emit, unsubscribe, and error handling — pure in-memory, no DB
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock } from "bun:test";
 
 // We need a fresh EventBus per test — import the class pattern
 // The module exports a singleton, so we re-import to test behavior
@@ -40,6 +40,7 @@ describe("EventBus - on() subscription", () => {
 
 describe("EventBus - emit()", () => {
   it("should call handler with the emitted data", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let received: any = null;
     eventBus.on("test:data", (data) => {
       received = data;
@@ -150,6 +151,7 @@ describe("EventBus - error handling", () => {
 
 describe("EventBus - real-world event patterns", () => {
   it("should work with item:added event pattern", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let addedItem: any = null;
     eventBus.on("item:added:test", (data) => {
       addedItem = data;
@@ -166,6 +168,7 @@ describe("EventBus - real-world event patterns", () => {
   });
 
   it("should work with message:sent event pattern", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let sentMessage: any = null;
     eventBus.on("message:sent:test", (data) => {
       sentMessage = data;

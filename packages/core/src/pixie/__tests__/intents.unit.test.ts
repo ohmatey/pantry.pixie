@@ -8,7 +8,6 @@ import {
   classifyIntent,
   getIntentInfo,
   intentPatterns,
-  type IntentPattern,
 } from "../intents";
 import type { PixieIntent } from "../../types";
 

@@ -81,6 +81,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (messagesData?.success && messagesData.data) {
       const dbMessages: Message[] = messagesData.data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((m: any) => ({
           id: m.id,
           role: m.role,
@@ -95,6 +96,7 @@ export default function ChatPage() {
 
   // WebSocket message handler
   const handleWSMessage = useCallback(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (msg: any) => {
       console.log("[Chat] Received WS message:", msg.type, msg.payload);
 

@@ -77,6 +77,7 @@ export async function createPixieResponse(
   };
 
   const result = await streamText({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     model: openai("gpt-4o-mini") as any,
     system: systemPrompt,
     messages,
@@ -89,10 +90,14 @@ export async function createPixieResponse(
     fullText: Promise.resolve(result.text).then((t) => t),
     toolResults: Promise.resolve(result.response).then((r) =>
       r.messages
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((m: any) => m.role === 'assistant' && Array.isArray(m.content))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .flatMap((m: any) =>
           m.content
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .filter((c: any) => c.type === 'tool-call')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map((c: any) => ({
               toolName: c.toolName,
               result: c.result,

@@ -116,10 +116,6 @@ describe("Invite Service - getInviteInfo()", () => {
   });
 
   it("should return null for expired invite", async () => {
-    // Create an invite that's already expired (hack the expiry)
-    const invite = createInvite(testHomeId, testUserId);
-
-    // Manually set expiry to past (access internal store)
     // For testing purposes, we'll just test with a very old code that doesn't exist
     const info = await getInviteInfo("000000000000");
 

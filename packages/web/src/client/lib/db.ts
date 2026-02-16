@@ -56,6 +56,7 @@ export interface MutationQueueEntry {
   entity: "item" | "list_item" | "message";
   entityId: string;
   homeId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   retryCount: number;
   timestamp: number;
@@ -133,6 +134,7 @@ class PixieDatabase extends Dexie {
   async getGroceryList(homeId: string): Promise<IDBItem[]> {
     return this.items
       .where("[homeId+isChecked]")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .equals([homeId, false] as any)
       .and((item) => !item._deleted)
       .toArray();

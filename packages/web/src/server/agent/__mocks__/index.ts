@@ -86,8 +86,9 @@ function createMockTextStream(text: string): ReadableStream<string> {
 export async function createPixieResponse(
   homeId: string,
   messages: AgentMessage[],
-  userPreferences?: any,
-  listId?: string | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _userPreferences?: any,
+  _listId?: string | null,
 ): Promise<StreamedResponse> {
   const responseText = getMockResponse(messages);
   const lastMessage = messages[messages.length - 1];

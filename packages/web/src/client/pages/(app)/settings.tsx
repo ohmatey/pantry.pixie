@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const { data: home } = useQuery({
     queryKey: ["home", user?.homeId],
     queryFn: async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = await apiGet<any>(`/api/homes/${user!.homeId}`, token!);
       if (res.data) setHomeName(res.data.name);
       return res.data;

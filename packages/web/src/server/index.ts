@@ -92,6 +92,8 @@ function addCorsHeaders(response: Response, origin: string | null): Response {
   });
 }
 
+// Server instance - referenced to keep it alive
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const server = Bun.serve<WSData>({
   hostname: HOST,
   port: PORT,

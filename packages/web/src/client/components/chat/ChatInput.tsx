@@ -42,6 +42,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         disabled={disabled}
         rows={1}
         className="flex-1 resize-none rounded-xl border border-pixie-cream-300 bg-pixie-cream-50 px-4 py-2.5 text-sm placeholder:text-pixie-charcoal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pixie-sage-400 min-h-[42px] max-h-[120px] dark:border-pixie-dusk-300 dark:bg-pixie-dusk-50 dark:placeholder:text-pixie-mist-300 dark:focus-visible:ring-pixie-glow-sage"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
         style={{ fieldSizing: "content" } as any}
       />
       <Button

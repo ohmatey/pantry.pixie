@@ -9,7 +9,6 @@ import {
   db,
   eq,
   groceryListsTable,
-  listItemsTable,
   itemsTable,
 } from "@pantry-pixie/core";
 import { addItem } from "../items";

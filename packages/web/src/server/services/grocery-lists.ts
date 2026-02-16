@@ -29,7 +29,7 @@ import { eventBus } from "./events";
 export interface CreateListData {
   name: string;
   description?: string;
-  totalBudget?: string;
+  totalBudget?: number;
   recurringSchedule?: string | null;
   scheduleDayOfWeek?: number | null;
   scheduleDayOfMonth?: number | null;
@@ -37,14 +37,14 @@ export interface CreateListData {
     itemId: string;
     quantity?: number;
     notes?: string;
-    estimatedPrice?: string;
+    estimatedPrice?: number;
   }>;
 }
 
 export interface UpdateListData {
   name?: string;
   description?: string;
-  totalBudget?: string;
+  totalBudget?: number;
   recurringSchedule?: string | null;
   scheduleDayOfWeek?: number | null;
   scheduleDayOfMonth?: number | null;
@@ -54,7 +54,7 @@ export interface AddListItemData {
   itemId: string;
   quantity?: number;
   notes?: string;
-  estimatedPrice?: string;
+  estimatedPrice?: number;
 }
 
 // ============================================================================
@@ -644,7 +644,7 @@ export async function getListStats(
   let estimatedTotal = 0;
   for (const i of items) {
     if (i.isCompleted) completedItems++;
-    estimatedTotal += parseFloat(i.estimatedPrice || "0") * i.quantity;
+    estimatedTotal += (i.estimatedPrice || 0) * i.quantity;
   }
   const completionPercentage =
     totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
@@ -670,12 +670,12 @@ async function recalculateEstimatedCost(listId: string): Promise<void> {
     .where(eq(listItemsTable.listId, listId));
 
   const total = items.reduce(
-    (sum, i) => sum + parseFloat(i.estimatedPrice || "0") * i.quantity,
+    (sum, i) => sum + (i.estimatedPrice || 0) * i.quantity,
     0,
   );
 
   await db
     .update(groceryListsTable)
-    .set({ estimatedCost: total.toFixed(2) })
+    .set({ estimatedCost: total })
     .where(eq(groceryListsTable.id, listId));
 }

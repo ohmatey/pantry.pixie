@@ -50,7 +50,7 @@ export function createAddItemTool(homeId: string) {
         category: category || "other",
         location,
         expiresAt,
-        price,
+        price: price ? parseFloat(price) : undefined,
       });
 
       const priceMessage = price ? ` (฿${price})` : "";

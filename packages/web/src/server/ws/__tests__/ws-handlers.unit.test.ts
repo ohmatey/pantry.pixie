@@ -5,7 +5,7 @@
 
 import { describe, it, expect, mock } from "bun:test";
 import type { ServerWebSocket } from "bun";
-import type { WSData, WebSocketMessage, ChatWebSocketMessage } from "../index";
+import type { WSData,  } from "../index";
 import {
   handleWebSocketOpen,
   handleWebSocketMessage,
@@ -27,6 +27,7 @@ function createMockWebSocket(
     close: mock(() => {}),
     // Add sentMessages for test assertions
     _sentMessages: sentMessages,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 
@@ -37,6 +38,7 @@ describe("WebSocket Handlers - handleWebSocketOpen()", () => {
     handleWebSocketOpen(ws);
 
     expect(ws.send).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -50,6 +52,7 @@ describe("WebSocket Handlers - handleWebSocketOpen()", () => {
 
     handleWebSocketOpen(ws);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -92,6 +95,7 @@ describe("WebSocket Handlers - handleWebSocketMessage()", () => {
     handleWebSocketMessage(ws, pingMessage);
 
     expect(ws.send).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -131,6 +135,7 @@ describe("WebSocket Handlers - handleWebSocketMessage()", () => {
     handleWebSocketMessage(ws, "invalid json {{{");
 
     expect(ws.send).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -148,6 +153,7 @@ describe("WebSocket Handlers - handleWebSocketMessage()", () => {
 
     handleWebSocketMessage(ws, pingMessage);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -225,6 +231,7 @@ describe("WebSocket Handlers - Message Structure", () => {
 
     handleWebSocketOpen(ws);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -243,6 +250,7 @@ describe("WebSocket Handlers - Message Structure", () => {
 
     handleWebSocketMessage(ws, pingMessage);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -257,6 +265,7 @@ describe("WebSocket Handlers - Message Structure", () => {
 
     handleWebSocketMessage(ws, "invalid");
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -287,7 +296,9 @@ describe("WebSocket Handlers - Connection State Management", () => {
     handleWebSocketOpen(ws2);
 
     // Each should get their own confirmation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((ws1 as any)._sentMessages.length).toBe(1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((ws2 as any)._sentMessages.length).toBe(1);
   });
 
@@ -310,6 +321,7 @@ describe("WebSocket Handlers - Error Handling", () => {
 
     handleWebSocketMessage(ws, "{broken json");
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -321,6 +333,7 @@ describe("WebSocket Handlers - Error Handling", () => {
 
     handleWebSocketMessage(ws, "not json at all");
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sentMessage = (ws as any)._sentMessages[0];
     const parsed = JSON.parse(sentMessage);
 
@@ -343,6 +356,7 @@ describe("WebSocket Handlers - Error Handling", () => {
     handleWebSocketMessage(ws, validMessage);
 
     // Should have received both error and pong
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((ws as any)._sentMessages.length).toBe(2);
   });
 });

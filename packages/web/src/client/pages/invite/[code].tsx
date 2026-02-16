@@ -10,7 +10,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 interface InviteInfo {

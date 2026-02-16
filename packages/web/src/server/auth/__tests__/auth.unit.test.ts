@@ -318,11 +318,13 @@ describe("Auth Service - withAuth() middleware", () => {
   });
 
   it("should call handler with auth payload for valid token", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let capturedAuth: any = null;
 
     const handler = async (
       req: Request,
       params: Record<string, string>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
       auth: any,
     ) => {
       capturedAuth = auth;
