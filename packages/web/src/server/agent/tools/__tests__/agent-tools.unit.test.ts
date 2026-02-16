@@ -23,7 +23,7 @@ describe("Agent Tools - Tool Structure", () => {
     const tool = createAddItemTool(testHomeId);
 
     expect(tool).toHaveProperty("description");
-    expect(tool).toHaveProperty("parameters");
+    expect(tool).toHaveProperty("inputSchema");
     expect(tool).toHaveProperty("execute");
     expect(tool.description).toBeString();
     expect(tool.description).toContain("Add");
@@ -34,7 +34,7 @@ describe("Agent Tools - Tool Structure", () => {
     const tool = createListItemsTool(testHomeId);
 
     expect(tool).toHaveProperty("description");
-    expect(tool).toHaveProperty("parameters");
+    expect(tool).toHaveProperty("inputSchema");
     expect(tool).toHaveProperty("execute");
     expect(tool.description).toContain("List");
   });
@@ -43,7 +43,7 @@ describe("Agent Tools - Tool Structure", () => {
     const tool = createRemoveItemTool(testHomeId);
 
     expect(tool).toHaveProperty("description");
-    expect(tool).toHaveProperty("parameters");
+    expect(tool).toHaveProperty("inputSchema");
     expect(tool).toHaveProperty("execute");
     expect(tool.description).toContain("Remove");
   });
@@ -52,7 +52,7 @@ describe("Agent Tools - Tool Structure", () => {
     const tool = createCheckItemTool(testHomeId);
 
     expect(tool).toHaveProperty("description");
-    expect(tool).toHaveProperty("parameters");
+    expect(tool).toHaveProperty("inputSchema");
     expect(tool).toHaveProperty("execute");
     expect(tool.description).toContain("Check");
   });
@@ -61,7 +61,7 @@ describe("Agent Tools - Tool Structure", () => {
     const tool = createSetRecurringTool(testHomeId);
 
     expect(tool).toHaveProperty("description");
-    expect(tool).toHaveProperty("parameters");
+    expect(tool).toHaveProperty("inputSchema");
     expect(tool).toHaveProperty("execute");
     expect(tool.description).toContain("recurring");
   });
@@ -89,7 +89,7 @@ describe("Agent Tools - Tool Factory Pattern", () => {
 
     expect(tools.length).toBe(5);
     expect(
-      tools.every((t) => t && t.description && t.parameters && t.execute),
+      tools.every((t) => t && t.description && t.inputSchema && t.execute),
     ).toBe(true);
   });
 
@@ -115,24 +115,24 @@ describe("Agent Tools - Tool Factory Pattern", () => {
 });
 
 describe("Agent Tools - Parameters Schema", () => {
-  it("should have zod parameters schema for add-item", () => {
+  it("should have zod inputSchema for add-item", () => {
     const tool = createAddItemTool(testHomeId);
 
-    expect(tool.parameters).toBeDefined();
-    expect(typeof tool.parameters).toBe("object");
+    expect(tool.inputSchema).toBeDefined();
+    expect(typeof tool.inputSchema).toBe("object");
     // Zod schemas have _def property
-    expect(tool.parameters).toHaveProperty("_def");
+    expect(tool.inputSchema).toHaveProperty("_def");
   });
 
-  it("should have zod parameters schema for list-items", () => {
+  it("should have zod inputSchema for list-items", () => {
     const tool = createListItemsTool(testHomeId);
 
-    expect(tool.parameters).toBeDefined();
-    expect(typeof tool.parameters).toBe("object");
-    expect(tool.parameters).toHaveProperty("_def");
+    expect(tool.inputSchema).toBeDefined();
+    expect(typeof tool.inputSchema).toBe("object");
+    expect(tool.inputSchema).toHaveProperty("_def");
   });
 
-  it("should have zod parameters schema for all tools", () => {
+  it("should have zod inputSchema for all tools", () => {
     const tools = [
       createAddItemTool(testHomeId),
       createListItemsTool(testHomeId),
@@ -142,7 +142,7 @@ describe("Agent Tools - Parameters Schema", () => {
     ];
 
     for (const tool of tools) {
-      expect(tool.parameters).toHaveProperty("_def");
+      expect(tool.inputSchema).toHaveProperty("_def");
     }
   });
 });

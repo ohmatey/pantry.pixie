@@ -1,5 +1,6 @@
 /**
  * Pixie AI Agent — Vercel AI SDK with tool calling
+ * In test mode, uses mock responses instead of OpenAI API
  */
 
 import { streamText } from "ai";
@@ -16,6 +17,9 @@ import {
   createListGroceryListsTool,
   createShowGroceryListEditorTool,
 } from "./tools";
+
+// Use mock in test mode
+const USE_MOCK = process.env.NODE_ENV === "test" && !process.env.OPENAI_API_KEY;
 
 interface UserPreferences {
   name?: string;
@@ -43,6 +47,14 @@ export async function createPixieResponse(
   userPreferences?: UserPreferences,
   listId?: string | null,
 ): Promise<StreamedResponse> {
+  // Use mock in test mode
+  if (USE_MOCK) {
+    const { createPixieResponse: mockResponse } = await import(
+      "./__mocks__/index"
+    );
+    return mockResponse(homeId, messages, userPreferences, listId);
+  }
+
   const systemPrompt = generateSystemPrompt(userPreferences);
 
   // Classify the last user message intent for metadata

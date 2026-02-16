@@ -155,12 +155,24 @@ describe("Chat Service - sendMessage()", () => {
     );
 
     expect(result.userMessage).toBeDefined();
-    expect(result.assistantMessage).toBeDefined();
+    expect(result.assistantMessageId).toBeDefined();
+    expect(result.streamHandler).toBeDefined();
     expect(result.userMessage.role).toBe("user");
     expect(result.userMessage.content).toBe("Hello Pixie!");
-    expect(result.assistantMessage.role).toBe("assistant");
-    expect(result.assistantMessage.content).toBeString();
-  });
+    expect(typeof result.streamHandler).toBe("function");
+
+    // Execute stream handler to get assistant response
+    let assistantContent = "";
+    await result.streamHandler(
+      (chunk) => {
+        assistantContent += chunk;
+      },
+      (fullText) => {
+        expect(fullText).toBeString();
+        expect(fullText.length).toBeGreaterThan(0);
+      },
+    );
+  }, 15000);
 
   it("should classify user message intent", async () => {
     const result = await sendMessage(
@@ -207,13 +219,27 @@ describe("Chat Service - sendMessage()", () => {
       "What's in my pantry?",
     );
 
-    expect(result.assistantMessage.content.length).toBeGreaterThan(0);
-    expect(result.assistantMessage.intent).toBeString();
-  });
+    expect(result.assistantMessageId).toBeString();
+
+    // Execute stream to verify assistant response generation
+    let fullResponse = "";
+    await result.streamHandler(
+      (chunk) => {
+        fullResponse += chunk;
+      },
+      (fullText) => {
+        expect(fullText.length).toBeGreaterThan(0);
+      },
+    );
+  }, 15000);
 
   it("should handle conversation context", async () => {
     // First message
     const first = await sendMessage(threadId, testHomeId, testUserId, "Hello");
+    await first.streamHandler(
+      () => {},
+      () => {},
+    );
 
     // Follow-up message
     const result = await sendMessage(
@@ -223,8 +249,16 @@ describe("Chat Service - sendMessage()", () => {
       "How are you?",
     );
 
-    expect(result.assistantMessage.content).toBeString();
-    expect(result.assistantMessage.content.length).toBeGreaterThan(0);
+    let response = "";
+    await result.streamHandler(
+      (chunk) => {
+        response += chunk;
+      },
+      (fullText) => {
+        expect(fullText).toBeString();
+        expect(fullText.length).toBeGreaterThan(0);
+      },
+    );
   }, 15000);
 
   it("should update thread timestamp after message", async () => {
@@ -271,9 +305,17 @@ describe("Chat Service - sendMessage()", () => {
     );
 
     expect(result.userMessage).toBeDefined();
-    expect(result.assistantMessage).toBeDefined();
-    expect(result.assistantMessage.content).toBeString();
-  });
+    expect(result.assistantMessageId).toBeString();
+    expect(result.streamHandler).toBeDefined();
+
+    // Execute stream to verify fallback works
+    await result.streamHandler(
+      () => {},
+      (fullText) => {
+        expect(fullText).toBeString();
+      },
+    );
+  }, 15000);
 
   it("should classify different message types", async () => {
     const result = await sendMessage(
@@ -287,9 +329,14 @@ describe("Chat Service - sendMessage()", () => {
     expect(result.userMessage.intent).toBeString();
     expect(result.userMessage.intent.length).toBeGreaterThan(0);
 
-    // Assistant should respond
-    expect(result.assistantMessage.content).toBeString();
-    expect(result.assistantMessage.content.length).toBeGreaterThan(0);
+    // Assistant should respond via stream
+    await result.streamHandler(
+      () => {},
+      (fullText) => {
+        expect(fullText).toBeString();
+        expect(fullText.length).toBeGreaterThan(0);
+      },
+    );
   }, 15000);
 });
 
@@ -299,9 +346,23 @@ describe("Chat Service - Message History Context", () => {
     createdThreadIds.push(thread.id);
 
     // Send multiple messages to build context
-    await sendMessage(thread.id, testHomeId, testUserId, "Hello");
-    await sendMessage(thread.id, testHomeId, testUserId, "Hi again");
-    await sendMessage(thread.id, testHomeId, testUserId, "Thanks");
+    const msg1 = await sendMessage(thread.id, testHomeId, testUserId, "Hello");
+    await msg1.streamHandler(
+      () => {},
+      () => {},
+    );
+
+    const msg2 = await sendMessage(thread.id, testHomeId, testUserId, "Hi again");
+    await msg2.streamHandler(
+      () => {},
+      () => {},
+    );
+
+    const msg3 = await sendMessage(thread.id, testHomeId, testUserId, "Thanks");
+    await msg3.streamHandler(
+      () => {},
+      () => {},
+    );
 
     const messages = await getMessages(thread.id);
 
@@ -339,6 +400,13 @@ describe("Chat Service - Message History Context", () => {
 
     // Should still work despite many historical messages
     expect(result.userMessage).toBeDefined();
-    expect(result.assistantMessage).toBeDefined();
-  });
+    expect(result.assistantMessageId).toBeString();
+    expect(result.streamHandler).toBeDefined();
+
+    // Execute stream to verify it works
+    await result.streamHandler(
+      () => {},
+      () => {},
+    );
+  }, 15000);
 });

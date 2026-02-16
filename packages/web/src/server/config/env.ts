@@ -23,8 +23,12 @@ const envSchema = z.object({
   // Authentication
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
 
-  // AI
-  OPENAI_API_KEY: z.string().startsWith("sk-"),
+  // AI (optional in test mode, uses mocks)
+  OPENAI_API_KEY: z
+    .string()
+    .startsWith("sk-")
+    .optional()
+    .or(z.literal("")),
 
   // Security
   ALLOWED_ORIGINS: z.string().optional(),

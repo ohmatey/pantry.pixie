@@ -52,6 +52,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pantry_pixie_test
       JWT_SECRET: test-jwt-secret-key-for-ci-only
       NODE_ENV: test
+      # OPENAI_API_KEY not needed - tests use mocks in test mode
 
     steps:
       - uses: actions/checkout@v6
