@@ -118,7 +118,7 @@ export function CreateListSheet({
                     "bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100",
                     "placeholder:text-pixie-charcoal-100/50 dark:placeholder:text-pixie-mist-300/50",
                     "focus:outline-none focus:ring-2 focus:ring-pixie-sage-400 dark:focus:ring-pixie-glow-sage",
-                    "text-sm"
+                    "text-sm",
                   )}
                 />
               </div>
@@ -131,13 +131,17 @@ export function CreateListSheet({
                       "relative w-10 h-6 rounded-full transition-colors",
                       hasSchedule
                         ? "bg-pixie-sage-500 dark:bg-pixie-glow-sage"
-                        : "bg-gray-300 dark:bg-gray-600"
+                        : "bg-gray-300 dark:bg-gray-600",
                     )}
                     onClick={() => setHasSchedule(!hasSchedule)}
                   >
                     <motion.div
                       animate={{ x: hasSchedule ? 18 : 2 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
                       className="absolute top-1 w-4 h-4 rounded-full bg-white shadow"
                     />
                   </div>
@@ -173,14 +177,14 @@ export function CreateListSheet({
                                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                                 frequency === f
                                   ? "bg-pixie-sage-500 dark:bg-pixie-glow-sage text-white"
-                                  : "bg-pixie-cream-100 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200"
+                                  : "bg-pixie-cream-100 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200",
                               )}
                             >
                               {f === "biweekly"
                                 ? "Biweekly"
                                 : f.charAt(0).toUpperCase() + f.slice(1)}
                             </button>
-                          )
+                          ),
                         )}
                       </div>
                     </div>
@@ -201,7 +205,7 @@ export function CreateListSheet({
                                 "w-9 h-9 rounded-full text-xs font-medium transition-colors",
                                 dayOfWeek === i
                                   ? "bg-pixie-sage-500 dark:bg-pixie-glow-sage text-white"
-                                  : "bg-pixie-cream-100 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200"
+                                  : "bg-pixie-cream-100 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200",
                               )}
                             >
                               {day}
@@ -224,7 +228,7 @@ export function CreateListSheet({
                           className={cn(
                             "px-3 py-2 rounded-lg border border-pixie-cream-200 dark:border-pixie-dusk-300",
                             "bg-white dark:bg-pixie-dusk-200 text-pixie-charcoal-300 dark:text-pixie-mist-100",
-                            "text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-400"
+                            "text-sm focus:outline-none focus:ring-2 focus:ring-pixie-sage-400",
                           )}
                         >
                           {Array.from({ length: 28 }, (_, i) => i + 1).map(
@@ -232,7 +236,7 @@ export function CreateListSheet({
                               <option key={d} value={d}>
                                 {d}
                               </option>
-                            )
+                            ),
                           )}
                         </select>
                       </div>
@@ -248,7 +252,7 @@ export function CreateListSheet({
                 className={cn(
                   "w-full py-3 rounded-lg text-sm font-semibold transition-colors",
                   "bg-pixie-sage-500 hover:bg-pixie-sage-600 dark:bg-pixie-glow-sage dark:hover:bg-pixie-sage-500 text-white",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
               >
                 {isCreating ? "Creating..." : "Create List"}

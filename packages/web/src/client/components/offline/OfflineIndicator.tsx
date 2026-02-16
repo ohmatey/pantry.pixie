@@ -31,7 +31,8 @@ export function OfflineIndicator() {
                 <span className="font-medium text-sm">Offline Mode</span>
                 {pendingCount > 0 && (
                   <span className="text-xs opacity-90">
-                    {pendingCount} change{pendingCount !== 1 ? 's' : ''} waiting to sync
+                    {pendingCount} change{pendingCount !== 1 ? "s" : ""} waiting
+                    to sync
                   </span>
                 )}
               </div>
@@ -51,7 +52,7 @@ export function OfflineIndicator() {
                     Syncing...
                   </>
                 ) : (
-                  'Retry Now'
+                  "Retry Now"
                 )}
               </Button>
             )}

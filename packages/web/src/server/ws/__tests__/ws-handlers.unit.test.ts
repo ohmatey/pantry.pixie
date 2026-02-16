@@ -6,10 +6,17 @@
 import { describe, it, expect, mock } from "bun:test";
 import type { ServerWebSocket } from "bun";
 import type { WSData, WebSocketMessage, ChatWebSocketMessage } from "../index";
-import { handleWebSocketOpen, handleWebSocketMessage, handleWebSocketClose } from "../index";
+import {
+  handleWebSocketOpen,
+  handleWebSocketMessage,
+  handleWebSocketClose,
+} from "../index";
 
 // Mock WebSocket for testing
-function createMockWebSocket(userId: string, homeId: string): ServerWebSocket<WSData> {
+function createMockWebSocket(
+  userId: string,
+  homeId: string,
+): ServerWebSocket<WSData> {
   const sentMessages: string[] = [];
 
   return {
@@ -133,7 +140,11 @@ describe("WebSocket Handlers - handleWebSocketMessage()", () => {
 
   it("should include timestamp in pong response", () => {
     const ws = createMockWebSocket("user-1", "home-1");
-    const pingMessage = JSON.stringify({ type: "ping", payload: {}, timestamp: new Date().toISOString() });
+    const pingMessage = JSON.stringify({
+      type: "ping",
+      payload: {},
+      timestamp: new Date().toISOString(),
+    });
 
     handleWebSocketMessage(ws, pingMessage);
 
@@ -182,7 +193,11 @@ describe("WebSocket Handlers - Message Type Routing", () => {
     const ws = createMockWebSocket("user-1", "home-1");
 
     // Ping should be handled
-    const pingMessage = JSON.stringify({ type: "ping", payload: {}, timestamp: new Date().toISOString() });
+    const pingMessage = JSON.stringify({
+      type: "ping",
+      payload: {},
+      timestamp: new Date().toISOString(),
+    });
     handleWebSocketMessage(ws, pingMessage);
 
     expect(ws.send).toHaveBeenCalled();
@@ -220,7 +235,11 @@ describe("WebSocket Handlers - Message Structure", () => {
 
   it("should create properly formatted pong messages", () => {
     const ws = createMockWebSocket("user-1", "home-1");
-    const pingMessage = JSON.stringify({ type: "ping", payload: {}, timestamp: new Date().toISOString() });
+    const pingMessage = JSON.stringify({
+      type: "ping",
+      payload: {},
+      timestamp: new Date().toISOString(),
+    });
 
     handleWebSocketMessage(ws, pingMessage);
 
@@ -316,7 +335,11 @@ describe("WebSocket Handlers - Error Handling", () => {
     handleWebSocketMessage(ws, "invalid");
 
     // Send valid message
-    const validMessage = JSON.stringify({ type: "ping", payload: {}, timestamp: new Date().toISOString() });
+    const validMessage = JSON.stringify({
+      type: "ping",
+      payload: {},
+      timestamp: new Date().toISOString(),
+    });
     handleWebSocketMessage(ws, validMessage);
 
     // Should have received both error and pong

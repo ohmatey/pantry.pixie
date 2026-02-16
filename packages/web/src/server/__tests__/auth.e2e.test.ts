@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { seedTestUser, TEST_EMAIL, TEST_PASSWORD } from "@pantry-pixie/core";
-import { startServer, loginSeedUser, authedFetch, type TestServer } from "./helpers";
+import {
+  startServer,
+  loginSeedUser,
+  authedFetch,
+  type TestServer,
+} from "./helpers";
 
 let server: TestServer;
 
@@ -71,7 +76,8 @@ describe("POST /api/auth/login", () => {
 // ---------------------------------------------------------------------------
 
 describe("POST /api/auth/register", () => {
-  const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@test.com`;
+  const uniqueEmail = () =>
+    `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@test.com`;
 
   it("returns 201 + token for a new user", async () => {
     const email = uniqueEmail();
@@ -93,7 +99,11 @@ describe("POST /api/auth/register", () => {
     const res = await fetch(`${server.url}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: TEST_EMAIL, password: "dup123", name: "Dup" }),
+      body: JSON.stringify({
+        email: TEST_EMAIL,
+        password: "dup123",
+        name: "Dup",
+      }),
     });
 
     expect(res.status).toBe(409);
@@ -135,7 +145,11 @@ describe("GET /api/auth/me", () => {
   });
 
   it("returns 401 with an invalid token", async () => {
-    const res = await authedFetch(server.url, "/api/auth/me", "bogus.jwt.token");
+    const res = await authedFetch(
+      server.url,
+      "/api/auth/me",
+      "bogus.jwt.token",
+    );
     expect(res.status).toBe(401);
   });
 });

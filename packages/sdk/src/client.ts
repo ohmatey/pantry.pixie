@@ -78,7 +78,7 @@ export class PantryPixieClient {
   async request<T>(
     method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
     path: string,
-    data?: unknown
+    data?: unknown,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
@@ -106,9 +106,7 @@ export class PantryPixieClient {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      throw new Error(
-        `API Error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
     return response.json() as Promise<T>;
@@ -144,7 +142,7 @@ export class HomeClient {
       name: string;
       description: string;
       monthlyBudget: number;
-    }>
+    }>,
   ): Promise<ApiResponse<Home>> {
     return this.client.request("PUT", `/api/homes/${homeId}`, data);
   }
@@ -163,7 +161,7 @@ export class ItemClient {
 
   async list(
     homeId: string,
-    options?: { page?: number; limit?: number }
+    options?: { page?: number; limit?: number },
   ): Promise<ApiResponse<PaginatedResponse<Item>>> {
     const params = new URLSearchParams();
     if (options?.page) params.append("page", options.page.toString());
@@ -180,7 +178,7 @@ export class ItemClient {
 
   async create(
     homeId: string,
-    data: CreateItemInput
+    data: CreateItemInput,
   ): Promise<ApiResponse<Item>> {
     return this.client.request("POST", `/api/homes/${homeId}/items`, data);
   }
@@ -188,20 +186,23 @@ export class ItemClient {
   async update(
     homeId: string,
     itemId: string,
-    data: UpdateItemInput
+    data: UpdateItemInput,
   ): Promise<ApiResponse<Item>> {
     return this.client.request(
       "PUT",
       `/api/homes/${homeId}/items/${itemId}`,
-      data
+      data,
     );
   }
 
   async delete(
     homeId: string,
-    itemId: string
+    itemId: string,
   ): Promise<ApiResponse<{ success: boolean }>> {
-    return this.client.request("DELETE", `/api/homes/${homeId}/items/${itemId}`);
+    return this.client.request(
+      "DELETE",
+      `/api/homes/${homeId}/items/${itemId}`,
+    );
   }
 }
 
@@ -214,7 +215,7 @@ export class GroceryListClient {
 
   async list(
     homeId: string,
-    options?: { page?: number; limit?: number }
+    options?: { page?: number; limit?: number },
   ): Promise<ApiResponse<PaginatedResponse<GroceryList>>> {
     const params = new URLSearchParams();
     if (options?.page) params.append("page", options.page.toString());
@@ -231,7 +232,7 @@ export class GroceryListClient {
 
   async create(
     homeId: string,
-    data: CreateGroceryListInput
+    data: CreateGroceryListInput,
   ): Promise<ApiResponse<GroceryList>> {
     return this.client.request("POST", `/api/homes/${homeId}/lists`, data);
   }
@@ -239,22 +240,22 @@ export class GroceryListClient {
   async update(
     homeId: string,
     listId: string,
-    data: Partial<CreateGroceryListInput>
+    data: Partial<CreateGroceryListInput>,
   ): Promise<ApiResponse<GroceryList>> {
     return this.client.request(
       "PUT",
       `/api/homes/${homeId}/lists/${listId}`,
-      data
+      data,
     );
   }
 
   async delete(
     homeId: string,
-    listId: string
+    listId: string,
   ): Promise<ApiResponse<{ success: boolean }>> {
     return this.client.request(
       "DELETE",
-      `/api/homes/${homeId}/lists/${listId}`
+      `/api/homes/${homeId}/lists/${listId}`,
     );
   }
 }
@@ -272,37 +273,41 @@ export class ChatClient {
 
   async getThread(
     homeId: string,
-    threadId: string
+    threadId: string,
   ): Promise<ApiResponse<ChatThread>> {
     return this.client.request(
       "GET",
-      `/api/homes/${homeId}/chat/threads/${threadId}`
+      `/api/homes/${homeId}/chat/threads/${threadId}`,
     );
   }
 
   async createThread(
     homeId: string,
-    data?: CreateChatThreadInput
+    data?: CreateChatThreadInput,
   ): Promise<ApiResponse<ChatThread>> {
-    return this.client.request("POST", `/api/homes/${homeId}/chat/threads`, data || {});
+    return this.client.request(
+      "POST",
+      `/api/homes/${homeId}/chat/threads`,
+      data || {},
+    );
   }
 
   async sendMessage(
     homeId: string,
     threadId: string,
-    data: SendChatMessageInput
+    data: SendChatMessageInput,
   ): Promise<ApiResponse<ChatMessage>> {
     return this.client.request(
       "POST",
       `/api/homes/${homeId}/chat/threads/${threadId}/messages`,
-      data
+      data,
     );
   }
 
   async getMessages(
     homeId: string,
     threadId: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<ApiResponse<ChatMessage[]>> {
     const params = new URLSearchParams();
     if (options?.limit) params.append("limit", options.limit.toString());

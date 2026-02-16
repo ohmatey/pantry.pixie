@@ -119,7 +119,9 @@ export const items = pgTable("items", {
   notes: text("notes"),
 
   // Timestamps
-  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`now()`)
+    .notNull(),
   updatedAt: timestamp("updated_at")
     .default(sql`now()`)
     .notNull()
@@ -148,11 +150,15 @@ export const itemUsageHistory = pgTable("item_usage_history", {
 
   // Usage details
   quantityUsed: decimal("quantity_used", { precision: 10, scale: 2 }).notNull(),
-  usageDate: timestamp("usage_date").default(sql`now()`).notNull(),
+  usageDate: timestamp("usage_date")
+    .default(sql`now()`)
+    .notNull(),
   notes: text("notes"),
 
   // Timestamps
-  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`now()`)
+    .notNull(),
 });
 
 // Relations
@@ -183,7 +189,7 @@ export const itemUsageHistoryRelations = relations(
       fields: [itemUsageHistory.markedBy],
       references: [users.id],
     }),
-  })
+  }),
 );
 
 export type Item = typeof items.$inferSelect;

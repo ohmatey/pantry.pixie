@@ -7,11 +7,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-pixie-sage-600 text-white hover:bg-pixie-sage-700 dark:bg-pixie-glow-sage dark:text-pixie-dusk-50 dark:hover:bg-pixie-sage-400",
+        default:
+          "bg-pixie-sage-600 text-white hover:bg-pixie-sage-700 dark:bg-pixie-glow-sage dark:text-pixie-dusk-50 dark:hover:bg-pixie-sage-400",
         destructive: "bg-red-500 text-white hover:bg-red-600",
-        outline: "border border-pixie-cream-300 bg-pixie-cream-50 hover:bg-pixie-cream-200 hover:text-pixie-charcoal-400 dark:border-pixie-dusk-300 dark:bg-pixie-dusk-100 dark:hover:bg-pixie-dusk-200 dark:text-pixie-mist-100",
-        secondary: "bg-pixie-cream-200 text-pixie-charcoal-300 hover:bg-pixie-cream-300 dark:bg-pixie-dusk-200 dark:text-pixie-mist-100 dark:hover:bg-pixie-dusk-300",
-        ghost: "hover:bg-pixie-sage-50 hover:text-pixie-charcoal-400 dark:hover:bg-pixie-dusk-200 dark:hover:text-pixie-mist-100",
+        outline:
+          "border border-pixie-cream-300 bg-pixie-cream-50 hover:bg-pixie-cream-200 hover:text-pixie-charcoal-400 dark:border-pixie-dusk-300 dark:bg-pixie-dusk-100 dark:hover:bg-pixie-dusk-200 dark:text-pixie-mist-100",
+        secondary:
+          "bg-pixie-cream-200 text-pixie-charcoal-300 hover:bg-pixie-cream-300 dark:bg-pixie-dusk-200 dark:text-pixie-mist-100 dark:hover:bg-pixie-dusk-300",
+        ghost:
+          "hover:bg-pixie-sage-50 hover:text-pixie-charcoal-400 dark:hover:bg-pixie-dusk-200 dark:hover:text-pixie-mist-100",
         link: "text-pixie-sage-600 underline-offset-4 hover:underline dark:text-pixie-glow-sage",
       },
       size: {
@@ -25,11 +29,12 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -41,7 +46,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     );
-  }
+  },
 );
 Button.displayName = "Button";
 

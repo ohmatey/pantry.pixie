@@ -17,7 +17,9 @@ export function useInventorySync() {
         queryClient.invalidateQueries({ queryKey: ["items", user?.homeId] });
       }
       if (msg.type === "list_update") {
-        queryClient.invalidateQueries({ queryKey: ["grocery-lists", user?.homeId] });
+        queryClient.invalidateQueries({
+          queryKey: ["grocery-lists", user?.homeId],
+        });
       }
     },
   });

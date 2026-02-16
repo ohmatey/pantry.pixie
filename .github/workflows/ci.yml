@@ -67,6 +67,9 @@ jobs:
       - name: Run database migrations
         run: bun run db:push
 
+      - name: Build core package
+        run: bun run build:core
+
       - name: Run tests
         run: bun test
 

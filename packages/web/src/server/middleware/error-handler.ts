@@ -2,9 +2,9 @@
  * Error handling and sanitization middleware
  */
 
-import { logger } from '../lib/logger';
+import { logger } from "../lib/logger";
 
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export interface AppError extends Error {
   status?: number;
@@ -30,15 +30,15 @@ export function sanitizeError(error: AppError) {
   if (status >= 400 && status < 500) {
     // Client errors: safe to show message
     return {
-      error: error.message || 'Bad Request',
+      error: error.message || "Bad Request",
       code: error.code,
     };
   }
 
   // Server errors: hide details
   return {
-    error: 'Internal Server Error',
-    message: 'An unexpected error occurred. Please try again later.',
+    error: "Internal Server Error",
+    message: "An unexpected error occurred. Please try again later.",
   };
 }
 
@@ -53,23 +53,20 @@ export function errorResponse(error: AppError, request?: Request): Response {
       method: request?.method,
       status,
     },
-    'Request error'
+    "Request error",
   );
 
-  return new Response(
-    JSON.stringify(sanitizeError(error)),
-    {
-      status,
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
+  return new Response(JSON.stringify(sanitizeError(error)), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 export function createError(
   message: string,
   status: number = 500,
   code?: string,
-  details?: unknown
+  details?: unknown,
 ): AppError {
   const error = new Error(message) as AppError;
   error.status = status;

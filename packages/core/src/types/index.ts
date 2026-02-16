@@ -78,7 +78,6 @@ export interface ItemWithStatus extends Item {
   onActiveList: boolean;
 }
 
-
 export type RecurringInterval = "daily" | "weekly" | "biweekly" | "monthly";
 
 export interface RecurringItem extends Item {
@@ -97,7 +96,6 @@ export interface GroceryListWithItems extends GroceryList {
   totalItems: number;
 }
 
-
 export interface ListStats {
   totalItems: number;
   completedItems: number;
@@ -113,6 +111,7 @@ export interface ListStats {
 export type MessageRole = "user" | "assistant";
 
 export type PixieIntent =
+  | "add_to_list"
   | "add_item"
   | "remove_item"
   | "set_recurring"

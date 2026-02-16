@@ -19,16 +19,16 @@
     "checkJs": false,
     "noEmit": false,
     "paths": {
-      "@pixie/core": ["packages/core/src"],
-      "@pixie/core/*": ["packages/core/src/*"],
-      "@pixie/sdk": ["packages/sdk/src"],
-      "@pixie/sdk/*": ["packages/sdk/src/*"],
-      "@pixie/server": ["packages/server/src"],
-      "@pixie/server/*": ["packages/server/src/*"],
-      "@pixie/cli": ["packages/cli/src"],
-      "@pixie/cli/*": ["packages/cli/src/*"],
-      "@pixie/web": ["packages/web/src"],
-      "@pixie/web/*": ["packages/web/src/*"]
+      "@pantry-pixie/core": ["packages/core/src"],
+      "@pantry-pixie/core/*": ["packages/core/src/*"],
+      "@pantry-pixie/sdk": ["packages/sdk/src"],
+      "@pantry-pixie/sdk/*": ["packages/sdk/src/*"],
+      "@pantry-pixie/server": ["packages/server/src"],
+      "@pantry-pixie/server/*": ["packages/server/src/*"],
+      "@pantry-pixie/cli": ["packages/cli/src"],
+      "@pantry-pixie/cli/*": ["packages/cli/src/*"],
+      "@pantry-pixie/web": ["packages/web/src"],
+      "@pantry-pixie/web/*": ["packages/web/src/*"]
     }
   },
   "include": ["src/**/*"],

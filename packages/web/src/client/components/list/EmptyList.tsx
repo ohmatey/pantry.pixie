@@ -8,7 +8,7 @@ export function EmptyList() {
         <Sparkles className="w-7 h-7 text-pixie-sage-400 dark:text-pixie-glow-sage animate-sparkle" />
       </div>
       <p className="text-sm text-pixie-charcoal-200 dark:text-pixie-mist-200 max-w-[260px] leading-relaxed">
-        Your kitchen is a blank canvas. Chat with Pixie to add your first item.
+        Your pantry is a blank canvas. Chat with Pixie to add your first item.
       </p>
       <Link
         to="/chat"

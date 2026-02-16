@@ -59,12 +59,8 @@
           "name": "chat_messages_thread_id_chat_threads_id_fk",
           "tableFrom": "chat_messages",
           "tableTo": "chat_threads",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -119,12 +115,8 @@
           "name": "chat_threads_home_id_homes_id_fk",
           "tableFrom": "chat_threads",
           "tableTo": "homes",
-          "columnsFrom": [
-            "home_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["home_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -203,12 +195,8 @@
           "name": "grocery_lists_home_id_homes_id_fk",
           "tableFrom": "grocery_lists",
           "tableTo": "homes",
-          "columnsFrom": [
-            "home_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["home_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -263,12 +251,8 @@
           "name": "home_members_home_id_homes_id_fk",
           "tableFrom": "home_members",
           "tableTo": "homes",
-          "columnsFrom": [
-            "home_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["home_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -276,12 +260,8 @@
           "name": "home_members_user_id_users_id_fk",
           "tableFrom": "home_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -386,12 +366,8 @@
           "name": "homes_owner_id_users_id_fk",
           "tableFrom": "homes",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -527,12 +503,8 @@
           "name": "items_home_id_homes_id_fk",
           "tableFrom": "items",
           "tableTo": "homes",
-          "columnsFrom": [
-            "home_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["home_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -612,12 +584,8 @@
           "name": "list_items_list_id_grocery_lists_id_fk",
           "tableFrom": "list_items",
           "tableTo": "grocery_lists",
-          "columnsFrom": [
-            "list_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["list_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -625,12 +593,8 @@
           "name": "list_items_item_id_items_id_fk",
           "tableFrom": "list_items",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -706,9 +670,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
