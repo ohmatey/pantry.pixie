@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 export async function apiFetch<T = any>(
   path: string,
   token: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<{ success: boolean; data?: T; error?: string; timestamp?: string }> {
   const res = await fetch(path, {
     ...options,
@@ -24,7 +24,12 @@ export async function apiFetch<T = any>(
     throw new Error("Session expired");
   }
 
-  const json = await res.json() as { success: boolean; data?: T; error?: string; timestamp?: string };
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: T;
+    error?: string;
+    timestamp?: string;
+  };
   if (!json.success) {
     throw new Error(json.error || "Request failed");
   }

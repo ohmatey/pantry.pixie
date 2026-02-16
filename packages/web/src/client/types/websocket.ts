@@ -41,8 +41,8 @@ export interface ListEditorUI {
     totalBudget?: number;
     estimatedCost?: number;
     items: Array<{
-      id: string;           // listItemId
-      itemId: string;       // pantry item ID
+      id: string; // listItemId
+      itemId: string; // pantry item ID
       name: string;
       quantity: number;
       unit?: string;
@@ -62,7 +62,15 @@ export type SerializedUI =
   | { type: "list-editor"; data: ListEditorUI };
 
 export interface WebSocketMessage {
-  type: "message" | "ui_message" | "status" | "inventory_update" | "list_update" | "ping" | "pong" | "error";
+  type:
+    | "message"
+    | "ui_message"
+    | "status"
+    | "inventory_update"
+    | "list_update"
+    | "ping"
+    | "pong"
+    | "error";
   payload: unknown;
   timestamp: string;
 }

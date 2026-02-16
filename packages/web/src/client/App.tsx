@@ -46,18 +46,16 @@ export function App() {
           position="top-center"
           toastOptions={{
             style: {
-              background: '#F4EFE6',
-              color: '#2B2B2B',
-              border: '1px solid #8FAF9D',
+              background: "#F4EFE6",
+              color: "#2B2B2B",
+              border: "1px solid #8FAF9D",
             },
-            className: 'font-sans',
+            className: "font-sans",
           }}
         />
 
         <main id="main-content" className="h-screen">
-          <Routes>
-            {renderRoutes(routes)}
-          </Routes>
+          <Routes>{renderRoutes(routes)}</Routes>
         </main>
 
         {/* PWA Install & Update Prompts */}

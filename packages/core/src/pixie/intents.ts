@@ -19,7 +19,13 @@ export interface IntentPattern {
 export const intentPatterns: IntentPattern[] = [
   {
     intent: "add_to_list",
-    keywords: ["shopping list", "grocery list", "to my list", "on my list", "to the list"],
+    keywords: [
+      "shopping list",
+      "grocery list",
+      "to my list",
+      "on my list",
+      "to the list",
+    ],
     patterns: [
       /add\s+(.+)\s+to\s+(my|the)?\s*(shopping|grocery)?\s*list/i,
       /put\s+(.+)\s+on\s+(my|the)?\s*list/i,

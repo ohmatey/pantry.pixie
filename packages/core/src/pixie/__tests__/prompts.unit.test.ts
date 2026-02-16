@@ -132,7 +132,9 @@ describe("generateSystemPrompt() - with budget consciousness", () => {
 
   it("should not add budget context for medium", () => {
     const basePrompt = generateSystemPrompt();
-    const mediumPrompt = generateSystemPrompt({ budgetConsciousness: "medium" });
+    const mediumPrompt = generateSystemPrompt({
+      budgetConsciousness: "medium",
+    });
     expect(mediumPrompt).toBe(basePrompt);
   });
 });
@@ -308,7 +310,9 @@ describe("responseTemplates", () => {
   });
 
   it("should format helpfulSuggestion correctly", () => {
-    const result = responseTemplates.helpfulSuggestion("Try freezing the extra berries");
+    const result = responseTemplates.helpfulSuggestion(
+      "Try freezing the extra berries",
+    );
     expect(result).toContain("Try freezing the extra berries");
   });
 });

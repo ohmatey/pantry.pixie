@@ -15,7 +15,11 @@ interface ChatBubbleWithUIProps {
   ui?: SerializedUI;
   onToggleItem?: (listItemId: string) => void;
   onSelectList?: (listId: string, listName: string) => void;
-  onAddItemToList?: (listId: string, itemName: string, quantity: number) => void;
+  onAddItemToList?: (
+    listId: string,
+    itemName: string,
+    quantity: number,
+  ) => void;
   onRemoveItemFromList?: (listId: string, listItemId: string) => void;
 }
 
@@ -54,7 +58,11 @@ export const ChatBubbleWithUI = memo(function ChatBubbleWithUI({
         >
           {(() => {
             try {
-              console.log("[ChatBubbleWithUI] Rendering UI type:", ui.type, ui.data);
+              console.log(
+                "[ChatBubbleWithUI] Rendering UI type:",
+                ui.type,
+                ui.data,
+              );
 
               if (ui.type === "grocery-list") {
                 return (
@@ -100,10 +108,15 @@ export const ChatBubbleWithUI = memo(function ChatBubbleWithUI({
                 </div>
               );
             } catch (error) {
-              console.error("[ChatBubbleWithUI] Error rendering UI:", error, ui);
+              console.error(
+                "[ChatBubbleWithUI] Error rendering UI:",
+                error,
+                ui,
+              );
               return (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                  Error rendering component: {error instanceof Error ? error.message : "Unknown error"}
+                  Error rendering component:{" "}
+                  {error instanceof Error ? error.message : "Unknown error"}
                 </div>
               );
             }

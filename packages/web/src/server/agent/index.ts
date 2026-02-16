@@ -41,13 +41,17 @@ export async function createPixieResponse(
   homeId: string,
   messages: AgentMessage[],
   userPreferences?: UserPreferences,
-  listId?: string | null
+  listId?: string | null,
 ): Promise<StreamedResponse> {
   const systemPrompt = generateSystemPrompt(userPreferences);
 
   // Classify the last user message intent for metadata
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
-  const intent = lastUserMessage ? classifyIntent(lastUserMessage.content) : "other";
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user");
+  const intent = lastUserMessage
+    ? classifyIntent(lastUserMessage.content)
+    : "other";
 
   const tools = {
     addItem: createAddItemTool(homeId),

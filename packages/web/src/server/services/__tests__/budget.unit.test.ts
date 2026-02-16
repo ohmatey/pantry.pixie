@@ -111,7 +111,12 @@ describe("Budget Service - type contracts", () => {
     const summary = {
       total: 100.0,
       period: "month" as TimePeriod,
-      byCategory: [] as Array<{ category: string; total: number; itemCount: number; averagePerItem: number }>,
+      byCategory: [] as Array<{
+        category: string;
+        total: number;
+        itemCount: number;
+        averagePerItem: number;
+      }>,
       itemCount: 10,
       averagePerItem: 10.0,
       endDate: new Date(),

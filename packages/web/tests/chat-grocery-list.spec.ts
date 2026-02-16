@@ -6,7 +6,9 @@ test.describe("Grocery List in Chat", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("should display grocery list component after adding items via chat", async ({ page }) => {
+  test("should display grocery list component after adding items via chat", async ({
+    page,
+  }) => {
     // Skip for now - requires full auth setup
     test.skip(true, "Requires authentication and OpenAI API key");
 
@@ -20,10 +22,15 @@ test.describe("Grocery List in Chat", () => {
     await input.press("Enter");
 
     // Wait for assistant response
-    await page.waitForSelector('[role="status"]', { state: "hidden", timeout: 10000 });
+    await page.waitForSelector('[role="status"]', {
+      state: "hidden",
+      timeout: 10000,
+    });
 
     // Verify grocery list component appears in chat
-    await expect(page.locator('[data-testid="grocery-list-in-chat"]')).toBeVisible({
+    await expect(
+      page.locator('[data-testid="grocery-list-in-chat"]'),
+    ).toBeVisible({
       timeout: 5000,
     });
 
@@ -33,8 +40,12 @@ test.describe("Grocery List in Chat", () => {
 
     // Verify item names
     const itemNames = await listItems.allTextContents();
-    expect(itemNames.some((name) => name.toLowerCase().includes("milk"))).toBeTruthy();
-    expect(itemNames.some((name) => name.toLowerCase().includes("eggs"))).toBeTruthy();
+    expect(
+      itemNames.some((name) => name.toLowerCase().includes("milk")),
+    ).toBeTruthy();
+    expect(
+      itemNames.some((name) => name.toLowerCase().includes("eggs")),
+    ).toBeTruthy();
   });
 
   test("should allow toggling items in chat grocery list", async ({ page }) => {
@@ -55,7 +66,7 @@ test.describe("Grocery List in Chat", () => {
     // Verify optimistic update
     await expect(checkbox).toHaveAttribute(
       "aria-checked",
-      (!wasChecked).toString()
+      (!wasChecked).toString(),
     );
 
     // Wait for backend confirmation (progress bar should update)
@@ -64,7 +75,7 @@ test.describe("Grocery List in Chat", () => {
     // Verify state persisted
     await expect(checkbox).toHaveAttribute(
       "aria-checked",
-      (!wasChecked).toString()
+      (!wasChecked).toString(),
     );
   });
 
@@ -79,18 +90,18 @@ test.describe("Grocery List in Chat", () => {
     await input.press("Enter");
 
     // Should see typing indicator immediately
-    await expect(
-      page.locator('text="Pixie is thinking..."')
-    ).toBeVisible({ timeout: 1000 });
+    await expect(page.locator('text="Pixie is thinking..."')).toBeVisible({
+      timeout: 1000,
+    });
 
     // Should see text message before UI component
-    await expect(
-      page.locator('[role="assistant"]').last()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[role="assistant"]').last()).toBeVisible({
+      timeout: 10000,
+    });
 
     // UI component should appear after text
     await expect(
-      page.locator('[data-testid="grocery-list-in-chat"]')
+      page.locator('[data-testid="grocery-list-in-chat"]'),
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -132,9 +143,7 @@ test.describe("Grocery List in Chat", () => {
     await expect(progressBar).toBeVisible();
 
     // Check initial percentage (assume 0%)
-    const initialWidth = await progressBar.evaluate((el) =>
-      el.style.width
-    );
+    const initialWidth = await progressBar.evaluate((el) => el.style.width);
     expect(initialWidth).toBe("0%");
 
     // Toggle first item
@@ -144,9 +153,7 @@ test.describe("Grocery List in Chat", () => {
     await page.waitForTimeout(300);
 
     // Progress should update (1/3 = 33%)
-    const updatedWidth = await progressBar.evaluate((el) =>
-      el.style.width
-    );
+    const updatedWidth = await progressBar.evaluate((el) => el.style.width);
     expect(updatedWidth).toContain("33");
   });
 });

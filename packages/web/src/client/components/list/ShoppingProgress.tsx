@@ -13,18 +13,25 @@ export function ShoppingProgress({ checked, total }: ShoppingProgressProps) {
 
   // Milestone messages based on progress
   const milestone =
-    percentage === 100 ? "All done! 🎉" :
-    percentage >= 75 ? "Almost there!" :
-    percentage >= 50 ? "Halfway done!" :
-    percentage >= 25 ? "Great start!" :
-    "Let's do this!";
+    percentage === 100
+      ? "All done! 🎉"
+      : percentage >= 75
+        ? "Almost there!"
+        : percentage >= 50
+          ? "Halfway done!"
+          : percentage >= 25
+            ? "Great start!"
+            : "Let's do this!";
 
   // Color gradient based on progress
   const progressColor =
-    percentage >= 75 ? "from-pixie-sage-600 to-pixie-glow-sage" :
-    percentage >= 50 ? "from-pixie-sage-500 to-pixie-sage-600" :
-    percentage >= 25 ? "from-pixie-sage-400 to-pixie-sage-500" :
-    "from-pixie-sage-300 to-pixie-sage-400";
+    percentage >= 75
+      ? "from-pixie-sage-600 to-pixie-glow-sage"
+      : percentage >= 50
+        ? "from-pixie-sage-500 to-pixie-sage-600"
+        : percentage >= 25
+          ? "from-pixie-sage-400 to-pixie-sage-500"
+          : "from-pixie-sage-300 to-pixie-sage-400";
 
   return (
     <div className="px-4 py-3 border-b border-pixie-cream-200 dark:border-pixie-dusk-300">
@@ -53,7 +60,7 @@ export function ShoppingProgress({ checked, total }: ShoppingProgressProps) {
             className={cn(
               "h-full rounded-full bg-gradient-to-r",
               progressColor,
-              percentage === 100 && "shadow-lg shadow-pixie-sage-500/50"
+              percentage === 100 && "shadow-lg shadow-pixie-sage-500/50",
             )}
           />
         </div>

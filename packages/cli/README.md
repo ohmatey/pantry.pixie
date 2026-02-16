@@ -18,19 +18,19 @@ pixie <command> [options]
 
 ### Commands
 
-| Command | Description |
-|---|---|
-| `pixie item` | Manage pantry items |
-| `pixie list` | Manage grocery lists |
-| `pixie home` | Manage homes |
+| Command        | Description            |
+| -------------- | ---------------------- |
+| `pixie item`   | Manage pantry items    |
+| `pixie list`   | Manage grocery lists   |
+| `pixie home`   | Manage homes           |
 | `pixie config` | Configure Pantry Pixie |
 
 ### Options
 
-| Flag | Description |
-|---|---|
-| `--help`, `-h` | Show help message |
-| `--version`, `-v` | Show version |
+| Flag              | Description       |
+| ----------------- | ----------------- |
+| `--help`, `-h`    | Show help message |
+| `--version`, `-v` | Show version      |
 
 ### Examples
 
@@ -119,9 +119,9 @@ abstract class BaseCommand implements Command {
   abstract usage: string;
   abstract execute(args: string[]): Promise<void>;
 
-  protected logSuccess(message: string): void;  // "✓ ..."
-  protected logError(message: string): void;    // "✗ ..." + exit(1)
-  protected logInfo(message: string): void;     // "ℹ ..."
+  protected logSuccess(message: string): void; // "✓ ..."
+  protected logError(message: string): void; // "✗ ..." + exit(1)
+  protected logInfo(message: string): void; // "ℹ ..."
 }
 ```
 

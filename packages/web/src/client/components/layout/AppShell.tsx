@@ -3,7 +3,11 @@ import { ShoppingCart, Plus, Sparkles, User, Home, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInventorySync } from "@/hooks/useInventorySync";
 import { useAuth } from "@/hooks/useAuth";
-import { DropdownMenu, DropdownItem, DropdownSeparator } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownItem,
+  DropdownSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export function AppShell() {
   // Global WS→cache bridge for inventory updates
@@ -17,9 +21,7 @@ export function AppShell() {
     navigate("/login");
   };
 
-  const initials = user?.name
-    ? user.name.charAt(0).toUpperCase()
-    : "?";
+  const initials = user?.name ? user.name.charAt(0).toUpperCase() : "?";
 
   return (
     <div className="flex flex-col h-[100dvh]">
@@ -30,7 +32,9 @@ export function AppShell() {
           <div className="w-8 h-8 rounded-full bg-pixie-sage-100 dark:bg-pixie-dusk-200 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-pixie-sage-500 dark:text-pixie-glow-sage" />
           </div>
-          <span className="text-lg font-semibold text-pixie-sage-600 font-display dark:text-pixie-glow-sage">Pixie</span>
+          <span className="text-lg font-semibold text-pixie-sage-600 font-display dark:text-pixie-glow-sage">
+            Pixie
+          </span>
         </NavLink>
 
         {/* Nav buttons */}
@@ -42,7 +46,7 @@ export function AppShell() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
                 isActive
                   ? "bg-pixie-sage-100 text-pixie-sage-600 dark:bg-pixie-dusk-200 dark:text-pixie-glow-sage"
-                  : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200"
+                  : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200",
               )
             }
           >
@@ -56,7 +60,7 @@ export function AppShell() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
                 isActive
                   ? "bg-pixie-sage-100 text-pixie-sage-600 dark:bg-pixie-dusk-200 dark:text-pixie-glow-sage"
-                  : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200"
+                  : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200",
               )
             }
           >

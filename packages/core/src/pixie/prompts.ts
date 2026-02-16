@@ -154,7 +154,8 @@ export function generateSystemPrompt(userPreferences?: {
     const skillContext = {
       beginner:
         "The user is new to cooking. Keep recipe suggestions simple and encouraging. Break down steps.",
-      intermediate: "The user has some cooking experience. Feel free to suggest slightly more complex recipes.",
+      intermediate:
+        "The user has some cooking experience. Feel free to suggest slightly more complex recipes.",
       advanced:
         "The user is an experienced cook. You can suggest creative, complex recipes and advanced techniques.",
     };
@@ -201,7 +202,8 @@ export const encouragingMessages = {
   organizedPantry:
     "Look at you keeping things organized! That's how you avoid the expired peanut butter situation.",
   budgetOnTrack: "You're crushing your budget this month. Keep it up!",
-  budgetAtRisk: "You're getting close to your budget limit. Want to strategize?",
+  budgetAtRisk:
+    "You're getting close to your budget limit. Want to strategize?",
   expiringSoon:
     "Quick heads up: some stuff is getting close to the expiration deadline. Want ideas on how to use it?",
   emptyPantry:

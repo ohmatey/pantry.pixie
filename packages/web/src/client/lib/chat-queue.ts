@@ -3,7 +3,7 @@
  * Stores unsent chat messages when offline and sends when connection restored
  */
 
-import { db } from './db';
+import { db } from "./db";
 
 export interface QueuedChatMessage {
   id: string;
@@ -33,29 +33,33 @@ class ChatQueue {
     // Store in IndexedDB
     await db.chatQueue.add(message);
 
-    console.log('[ChatQueue] Message queued:', id);
+    console.log("[ChatQueue] Message queued:", id);
     return id;
   }
 
   /**
    * Process all pending messages
    */
-  async process(sendMessage: (threadId: string, content: string) => void): Promise<void> {
+  async process(
+    sendMessage: (threadId: string, content: string) => void,
+  ): Promise<void> {
     if (this.processing) {
-      console.log('[ChatQueue] Already processing, skipping...');
+      console.log("[ChatQueue] Already processing, skipping...");
       return;
     }
 
     this.processing = true;
 
     try {
-      const pending = await db.chatQueue.orderBy('timestamp').toArray();
+      const pending = await db.chatQueue.orderBy("timestamp").toArray();
 
       if (pending.length === 0) {
         return;
       }
 
-      console.log(`[ChatQueue] Processing ${pending.length} queued message(s)...`);
+      console.log(
+        `[ChatQueue] Processing ${pending.length} queued message(s)...`,
+      );
 
       for (const message of pending) {
         try {
@@ -64,18 +68,21 @@ class ChatQueue {
 
           // Remove from queue on success
           await db.chatQueue.delete(message.id);
-          console.log('[ChatQueue] Message sent:', message.id);
+          console.log("[ChatQueue] Message sent:", message.id);
         } catch (error) {
-          console.error('[ChatQueue] Failed to send message:', error);
+          console.error("[ChatQueue] Failed to send message:", error);
 
           // Retry logic with exponential backoff
           if (message.retryCount >= 5) {
-            console.error('[ChatQueue] Max retries reached, removing:', message.id);
+            console.error(
+              "[ChatQueue] Max retries reached, removing:",
+              message.id,
+            );
             await db.chatQueue.delete(message.id);
           } else {
             await db.chatQueue.update(message.id, {
               retryCount: message.retryCount + 1,
-              error: error instanceof Error ? error.message : 'Unknown error',
+              error: error instanceof Error ? error.message : "Unknown error",
             });
           }
         }
@@ -89,10 +96,7 @@ class ChatQueue {
    * Get all pending messages for a thread
    */
   async getPending(threadId: string): Promise<QueuedChatMessage[]> {
-    return db.chatQueue
-      .where('threadId')
-      .equals(threadId)
-      .sortBy('timestamp');
+    return db.chatQueue.where("threadId").equals(threadId).sortBy("timestamp");
   }
 
   /**

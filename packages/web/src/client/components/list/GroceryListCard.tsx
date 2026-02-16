@@ -81,7 +81,7 @@ export function GroceryListCard({
           <ChevronDown
             className={cn(
               "w-4 h-4 text-pixie-charcoal-100 dark:text-pixie-mist-300 transition-transform duration-200",
-              collapsed && "-rotate-90"
+              collapsed && "-rotate-90",
             )}
           />
         </div>
@@ -156,7 +156,7 @@ export function GroceryListCard({
                   ? "from-pixie-sage-600 to-pixie-glow-sage"
                   : list.completionPercentage >= 50
                     ? "from-pixie-sage-500 to-pixie-sage-600"
-                    : "from-pixie-sage-300 to-pixie-sage-400"
+                    : "from-pixie-sage-300 to-pixie-sage-400",
               )}
             />
           </div>

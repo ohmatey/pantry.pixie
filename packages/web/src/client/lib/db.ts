@@ -8,7 +8,7 @@
  * - Sync metadata (sync state tracking)
  */
 
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type EntityTable } from "dexie";
 
 // ============================================================================
 // TypeScript Interfaces
@@ -31,7 +31,7 @@ export interface IDBItem {
   // Sync metadata
   _localVersion: number;
   _serverVersion: number | null;
-  _syncStatus: 'synced' | 'pending' | 'conflict';
+  _syncStatus: "synced" | "pending" | "conflict";
   _lastModified: number;
   _deleted: boolean; // Soft delete marker
 }
@@ -40,20 +40,20 @@ export interface IDBMessage {
   id: string;
   threadId: string;
   homeId: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: number;
   // Sync metadata
   _localVersion: number;
   _serverVersion: number | null;
-  _syncStatus: 'synced' | 'pending' | 'conflict';
+  _syncStatus: "synced" | "pending" | "conflict";
   _lastModified: number;
 }
 
 export interface MutationQueueEntry {
   id: string; // UUID
-  type: 'CREATE' | 'UPDATE' | 'DELETE';
-  entity: 'item' | 'list_item' | 'message';
+  type: "CREATE" | "UPDATE" | "DELETE";
+  entity: "item" | "list_item" | "message";
   entityId: string;
   homeId: string;
   payload: any;
@@ -65,7 +65,7 @@ export interface MutationQueueEntry {
 
 export interface SyncMeta {
   homeId: string;
-  entity: 'items' | 'messages';
+  entity: "items" | "messages";
   lastSyncAt: number;
   lastServerVersion: number;
   conflictCount: number;
@@ -86,34 +86,34 @@ export interface QueuedChatMessage {
 
 class PixieDatabase extends Dexie {
   // Typed tables
-  items!: EntityTable<IDBItem, 'id'>;
-  messages!: EntityTable<IDBMessage, 'id'>;
-  mutationQueue!: EntityTable<MutationQueueEntry, 'id'>;
-  syncMeta!: EntityTable<SyncMeta, 'homeId'>;
-  chatQueue!: EntityTable<QueuedChatMessage, 'id'>;
+  items!: EntityTable<IDBItem, "id">;
+  messages!: EntityTable<IDBMessage, "id">;
+  mutationQueue!: EntityTable<MutationQueueEntry, "id">;
+  syncMeta!: EntityTable<SyncMeta, "homeId">;
+  chatQueue!: EntityTable<QueuedChatMessage, "id">;
 
   constructor() {
-    super('PixieDB');
+    super("PixieDB");
 
     // Schema version 1
     this.version(1).stores({
       // Items: primary key + compound indexes for efficient queries
-      items: 'id, homeId, [homeId+isChecked], [homeId+category], _lastModified',
+      items: "id, homeId, [homeId+isChecked], [homeId+category], _lastModified",
 
       // Messages: primary key + compound indexes
-      messages: 'id, threadId, homeId, timestamp, [threadId+timestamp]',
+      messages: "id, threadId, homeId, timestamp, [threadId+timestamp]",
 
       // Mutation queue: auto-increment id + indexes for processing
-      mutationQueue: '++id, timestamp, homeId, [homeId+timestamp], _syncStatus',
+      mutationQueue: "++id, timestamp, homeId, [homeId+timestamp], _syncStatus",
 
       // Sync metadata: homeId as primary key
-      syncMeta: 'homeId, entity, lastSyncAt',
+      syncMeta: "homeId, entity, lastSyncAt",
     });
 
     // Schema version 2: Add chat queue for offline messages
     this.version(2).stores({
       // Chat queue: primary key + indexes for processing
-      chatQueue: 'id, threadId, timestamp, [threadId+timestamp]',
+      chatQueue: "id, threadId, timestamp, [threadId+timestamp]",
     });
   }
 
@@ -132,7 +132,7 @@ class PixieDatabase extends Dexie {
    */
   async getGroceryList(homeId: string): Promise<IDBItem[]> {
     return this.items
-      .where('[homeId+isChecked]')
+      .where("[homeId+isChecked]")
       .equals([homeId, false])
       .and((item) => !item._deleted)
       .toArray();
@@ -142,7 +142,7 @@ class PixieDatabase extends Dexie {
    * Get messages for a thread
    */
   async getThreadMessages(threadId: string): Promise<IDBMessage[]> {
-    return this.messages.where({ threadId }).sortBy('timestamp');
+    return this.messages.where({ threadId }).sortBy("timestamp");
   }
 
   /**
@@ -153,7 +153,7 @@ class PixieDatabase extends Dexie {
       ? this.mutationQueue.where({ homeId })
       : this.mutationQueue.toCollection();
 
-    return query.sortBy('timestamp');
+    return query.sortBy("timestamp");
   }
 
   /**
@@ -173,7 +173,7 @@ class PixieDatabase extends Dexie {
    * Get database size estimate
    */
   async getStorageEstimate(): Promise<{ usage: number; quota: number }> {
-    if ('storage' in navigator && 'estimate' in navigator.storage) {
+    if ("storage" in navigator && "estimate" in navigator.storage) {
       const estimate = await navigator.storage.estimate();
       return {
         usage: estimate.usage || 0,
@@ -199,7 +199,7 @@ export const db = new PixieDatabase();
  */
 export function isIndexedDBAvailable(): boolean {
   try {
-    return typeof window !== 'undefined' && 'indexedDB' in window;
+    return typeof window !== "undefined" && "indexedDB" in window;
   } catch {
     return false;
   }
@@ -218,9 +218,9 @@ export async function isStorageQuotaHigh(): Promise<boolean> {
  * Format bytes to human-readable string
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
 }

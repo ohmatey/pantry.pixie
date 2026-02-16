@@ -48,7 +48,7 @@ export interface SendMessageResult {
   assistantMessageId: string;
   streamHandler: (
     onChunk: (text: string) => void,
-    onComplete: (fullText: string, ui?: SerializedUI) => void
+    onComplete: (fullText: string, ui?: SerializedUI) => void,
   ) => Promise<void>;
 }
 
@@ -57,7 +57,7 @@ export async function sendMessage(
   homeId: string,
   userId: string,
   content: string,
-  listId?: string | null
+  listId?: string | null,
 ): Promise<SendMessageResult> {
   // Classify intent for metadata
   const intent = classifyIntent(content);
@@ -113,7 +113,12 @@ export async function sendMessage(
     streamHandler: async (onChunk, onComplete) => {
       try {
         logger.info({ threadId, homeId, listId }, "Creating Pixie response");
-        const result = await createPixieResponse(homeId, agentMessages, undefined, listId);
+        const result = await createPixieResponse(
+          homeId,
+          agentMessages,
+          undefined,
+          listId,
+        );
 
         // Consume text stream (AI SDK returns ReadableStream<string>)
         let fullText = "";
@@ -122,16 +127,29 @@ export async function sendMessage(
           onChunk(chunk);
         }
 
-        logger.info({ threadId, fullTextLength: fullText.length }, "Text stream consumed");
+        logger.info(
+          { threadId, fullTextLength: fullText.length },
+          "Text stream consumed",
+        );
 
         // Wait for tool results to extract UI data
         const toolResults = await result.toolResults;
-        logger.info({ threadId, toolResultsCount: toolResults.length }, "Tool results received");
+        logger.info(
+          { threadId, toolResultsCount: toolResults.length },
+          "Tool results received",
+        );
         let uiData: SerializedUI | undefined;
 
         // Extract UI data from tool results
         for (const toolResult of toolResults) {
-          logger.info({ threadId, toolName: toolResult.toolName, hasResult: !!toolResult.result }, "Processing tool result");
+          logger.info(
+            {
+              threadId,
+              toolName: toolResult.toolName,
+              hasResult: !!toolResult.result,
+            },
+            "Processing tool result",
+          );
 
           if (
             toolResult.result &&
@@ -155,12 +173,18 @@ export async function sendMessage(
               type: "grocery-list",
               data: (toolResult.result as any).listData,
             };
-            logger.info({ threadId, uiType: "grocery-list" }, "Extracted listData from addToList");
+            logger.info(
+              { threadId, uiType: "grocery-list" },
+              "Extracted listData from addToList",
+            );
             break;
           }
         }
 
-        logger.info({ threadId, fullText, hasUiData: !!uiData }, "Completing stream");
+        logger.info(
+          { threadId, fullText, hasUiData: !!uiData },
+          "Completing stream",
+        );
 
         // Update assistant message with final text
         await db

@@ -78,7 +78,6 @@ export interface ItemWithStatus extends Item {
   onActiveList: boolean;
 }
 
-
 export type RecurringInterval = "daily" | "weekly" | "biweekly" | "monthly";
 
 export interface RecurringItem extends Item {
@@ -96,7 +95,6 @@ export interface GroceryListWithItems extends GroceryList {
   completedItems: number;
   totalItems: number;
 }
-
 
 export interface ListStats {
   totalItems: number;

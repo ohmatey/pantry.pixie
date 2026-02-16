@@ -47,9 +47,11 @@ export function GroceryListsOverview({ data, onSelectList }: Props) {
                 animate={{ width: `${list.completionPercentage}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className={`h-full rounded-full ${
-                  list.completionPercentage >= 75 ? "bg-pixie-sage-600" :
-                  list.completionPercentage >= 50 ? "bg-pixie-sage-500" :
-                  "bg-pixie-sage-300"
+                  list.completionPercentage >= 75
+                    ? "bg-pixie-sage-600"
+                    : list.completionPercentage >= 50
+                      ? "bg-pixie-sage-500"
+                      : "bg-pixie-sage-300"
                 }`}
               />
             </div>

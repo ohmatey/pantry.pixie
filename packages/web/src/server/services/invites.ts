@@ -2,7 +2,13 @@
  * Invite service — in-memory invite code management for MVP
  */
 
-import { db, eq, homesTable, homeMembersTable, usersTable } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  homesTable,
+  homeMembersTable,
+  usersTable,
+} from "@pantry-pixie/core";
 import { randomBytes } from "crypto";
 
 interface InviteEntry {
@@ -28,7 +34,10 @@ function cleanExpired() {
   }
 }
 
-export function createInvite(homeId: string, inviterId: string): { code: string; expiresAt: Date } {
+export function createInvite(
+  homeId: string,
+  inviterId: string,
+): { code: string; expiresAt: Date } {
   cleanExpired();
 
   const code = generateCode();
@@ -39,7 +48,10 @@ export function createInvite(homeId: string, inviterId: string): { code: string;
   return { code, expiresAt };
 }
 
-export async function acceptInvite(code: string, userId: string): Promise<{ homeId: string; homeName: string }> {
+export async function acceptInvite(
+  code: string,
+  userId: string,
+): Promise<{ homeId: string; homeName: string }> {
   cleanExpired();
 
   const entry = invites.get(code);
@@ -82,7 +94,9 @@ export async function acceptInvite(code: string, userId: string): Promise<{ home
   return { homeId: entry.homeId, homeName: home?.name || "Kitchen" };
 }
 
-export async function getInviteInfo(code: string): Promise<{ homeName: string; inviterName: string; expiresAt: Date } | null> {
+export async function getInviteInfo(
+  code: string,
+): Promise<{ homeName: string; inviterName: string; expiresAt: Date } | null> {
   cleanExpired();
 
   const entry = invites.get(code);

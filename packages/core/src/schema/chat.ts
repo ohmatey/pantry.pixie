@@ -31,13 +31,16 @@ export const chatMessagesTable = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const chatThreadRelations = relations(chatThreadsTable, ({ one, many }) => ({
-  home: one(homesTable, {
-    fields: [chatThreadsTable.homeId],
-    references: [homesTable.id],
+export const chatThreadRelations = relations(
+  chatThreadsTable,
+  ({ one, many }) => ({
+    home: one(homesTable, {
+      fields: [chatThreadsTable.homeId],
+      references: [homesTable.id],
+    }),
+    messages: many(chatMessagesTable),
   }),
-  messages: many(chatMessagesTable),
-}));
+);
 
 export const chatMessageRelations = relations(chatMessagesTable, ({ one }) => ({
   thread: one(chatThreadsTable, {

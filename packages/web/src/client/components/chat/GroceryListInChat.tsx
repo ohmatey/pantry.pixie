@@ -8,7 +8,10 @@ interface GroceryListInChatProps {
   onToggleItem: (listItemId: string) => void;
 }
 
-export function GroceryListInChat({ list, onToggleItem }: GroceryListInChatProps) {
+export function GroceryListInChat({
+  list,
+  onToggleItem,
+}: GroceryListInChatProps) {
   return (
     <div className="bg-white dark:bg-pixie-dusk-100 rounded-lg border border-pixie-cream-200 dark:border-pixie-dusk-300 overflow-hidden shadow-pixie-soft max-w-md">
       {/* Header */}
@@ -37,7 +40,7 @@ export function GroceryListInChat({ list, onToggleItem }: GroceryListInChatProps
                   ? "from-pixie-sage-600 to-pixie-glow-sage"
                   : list.completionPercentage >= 50
                     ? "from-pixie-sage-500 to-pixie-sage-600"
-                    : "from-pixie-sage-300 to-pixie-sage-400"
+                    : "from-pixie-sage-300 to-pixie-sage-400",
               )}
             />
           </div>

@@ -1,5 +1,12 @@
-import { motion } from 'framer-motion';
-import { ShoppingCart, Package, CalendarClock, HelpCircle, Utensils, Sparkles } from 'lucide-react';
+import { motion } from "framer-motion";
+import {
+  ShoppingCart,
+  Package,
+  CalendarClock,
+  HelpCircle,
+  Utensils,
+  Sparkles,
+} from "lucide-react";
 
 interface StarterPromptsProps {
   onSelectPrompt: (prompt: string) => void;

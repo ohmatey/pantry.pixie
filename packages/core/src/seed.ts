@@ -4,7 +4,12 @@
  */
 
 import { db } from "./db";
-import { usersTable, homesTable, homeMembersTable, chatThreadsTable } from "./schema";
+import {
+  usersTable,
+  homesTable,
+  homeMembersTable,
+  chatThreadsTable,
+} from "./schema";
 
 async function seed() {
   console.log("Seeding database...");

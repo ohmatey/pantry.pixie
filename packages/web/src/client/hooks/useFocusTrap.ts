@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 /**
  * Hook to trap focus within a container (for modals, dialogs)
@@ -12,7 +12,7 @@ export function useFocusTrap(isActive: boolean) {
 
     const container = containerRef.current;
     const focusableElements = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     const firstElement = focusableElements[0];
@@ -22,7 +22,7 @@ export function useFocusTrap(isActive: boolean) {
     firstElement?.focus();
 
     const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       if (e.shiftKey) {
         // Shift + Tab
@@ -39,8 +39,8 @@ export function useFocusTrap(isActive: boolean) {
       }
     };
 
-    container.addEventListener('keydown', handleTabKey);
-    return () => container.removeEventListener('keydown', handleTabKey);
+    container.addEventListener("keydown", handleTabKey);
+    return () => container.removeEventListener("keydown", handleTabKey);
   }, [isActive]);
 
   return containerRef;

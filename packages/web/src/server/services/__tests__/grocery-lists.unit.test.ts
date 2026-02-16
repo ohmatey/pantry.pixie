@@ -5,7 +5,13 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { db, eq, groceryListsTable, listItemsTable, itemsTable } from "@pantry-pixie/core";
+import {
+  db,
+  eq,
+  groceryListsTable,
+  listItemsTable,
+  itemsTable,
+} from "@pantry-pixie/core";
 import { addItem } from "../items";
 import {
   createList,
@@ -138,7 +144,10 @@ describe("Grocery Lists Service - getList()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const list = await getList(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const list = await getList(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(list).toBeUndefined();
   });
@@ -176,9 +185,13 @@ describe("Grocery Lists Service - updateList()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const updated = await updateList(testHomeId, "00000000-0000-0000-0000-000000000000", {
-      name: "No List",
-    });
+    const updated = await updateList(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+      {
+        name: "No List",
+      },
+    );
 
     expect(updated).toBeUndefined();
   });
@@ -199,7 +212,10 @@ describe("Grocery Lists Service - deleteList()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const deleted = await deleteList(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const deleted = await deleteList(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(deleted).toBeUndefined();
   });
@@ -222,7 +238,10 @@ describe("Grocery Lists Service - completeList()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const completed = await completeList(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const completed = await completeList(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(completed).toBeUndefined();
   });
@@ -268,9 +287,13 @@ describe("Grocery Lists Service - addListItem()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const listItem = await addListItem("00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", {
-      itemId,
-    });
+    const listItem = await addListItem(
+      "00000000-0000-0000-0000-000000000000",
+      "00000000-0000-0000-0000-000000000000",
+      {
+        itemId,
+      },
+    );
 
     expect(listItem).toBeUndefined();
   });
@@ -306,7 +329,11 @@ describe("Grocery Lists Service - removeListItem()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const removed = await removeListItem("00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000");
+    const removed = await removeListItem(
+      "00000000-0000-0000-0000-000000000000",
+      "00000000-0000-0000-0000-000000000000",
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(removed).toBeUndefined();
   });
@@ -356,7 +383,11 @@ describe("Grocery Lists Service - toggleListItem()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const toggled = await toggleListItem("00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000");
+    const toggled = await toggleListItem(
+      "00000000-0000-0000-0000-000000000000",
+      "00000000-0000-0000-0000-000000000000",
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(toggled).toBeUndefined();
   });
@@ -408,7 +439,10 @@ describe("Grocery Lists Service - getListStats()", () => {
   });
 
   it("should return undefined for non-existent list", async () => {
-    const stats = await getListStats(testHomeId, "00000000-0000-0000-0000-000000000000");
+    const stats = await getListStats(
+      testHomeId,
+      "00000000-0000-0000-0000-000000000000",
+    );
 
     expect(stats).toBeUndefined();
   });

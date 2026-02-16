@@ -7,12 +7,15 @@ interface ListSelectorProps {
   onSelectList: (listId: string | null) => void;
 }
 
-export function ListSelector({ selectedListId, onSelectList }: ListSelectorProps) {
+export function ListSelector({
+  selectedListId,
+  onSelectList,
+}: ListSelectorProps) {
   const { lists, isLoading } = useGroceryLists();
 
   const selectedList = useMemo(
     () => lists.find((l) => l.id === selectedListId),
-    [lists, selectedListId]
+    [lists, selectedListId],
   );
 
   if (isLoading) {
@@ -37,7 +40,9 @@ export function ListSelector({ selectedListId, onSelectList }: ListSelectorProps
             <option key={list.id} value={list.id}>
               {list.name}
               {list.isDefault ? " (Default)" : ""}
-              {list.totalItems > 0 ? ` (${list.completedItems}/${list.totalItems})` : ""}
+              {list.totalItems > 0
+                ? ` (${list.completedItems}/${list.totalItems})`
+                : ""}
             </option>
           ))}
         </select>

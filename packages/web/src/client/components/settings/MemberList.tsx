@@ -15,8 +15,10 @@ interface Member {
 
 const ROLE_COLORS: Record<string, string> = {
   owner: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  admin: "bg-pixie-sage-100 text-pixie-sage-700 dark:bg-pixie-sage-900/30 dark:text-pixie-glow-sage",
-  member: "bg-pixie-cream-200 text-pixie-charcoal-300 dark:bg-pixie-dusk-300 dark:text-pixie-mist-200",
+  admin:
+    "bg-pixie-sage-100 text-pixie-sage-700 dark:bg-pixie-sage-900/30 dark:text-pixie-glow-sage",
+  member:
+    "bg-pixie-cream-200 text-pixie-charcoal-300 dark:bg-pixie-dusk-300 dark:text-pixie-mist-200",
   viewer: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
 };
 
@@ -26,7 +28,10 @@ export function MemberList() {
   const { data: members = [] } = useQuery({
     queryKey: ["members", user?.homeId],
     queryFn: async () => {
-      const res = await apiGet<Member[]>(`/api/homes/${user!.homeId}/members`, token!);
+      const res = await apiGet<Member[]>(
+        `/api/homes/${user!.homeId}/members`,
+        token!,
+      );
       return res.data || [];
     },
     enabled: !!token && !!user?.homeId,
@@ -56,7 +61,9 @@ export function MemberList() {
               <p className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100 truncate">
                 {member.name}
                 {member.userId === user?.id && (
-                  <span className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300 ml-1">(you)</span>
+                  <span className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300 ml-1">
+                    (you)
+                  </span>
                 )}
               </p>
               <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
@@ -66,7 +73,7 @@ export function MemberList() {
             <span
               className={cn(
                 "px-2.5 py-1 rounded-full text-xs font-medium capitalize",
-                ROLE_COLORS[member.role.toLowerCase()] || ROLE_COLORS.member
+                ROLE_COLORS[member.role.toLowerCase()] || ROLE_COLORS.member,
               )}
             >
               {member.role}
