@@ -21,7 +21,7 @@
     "build:sdk": "bun run --cwd packages/sdk build",
     "build:cli": "bun run --cwd packages/cli build",
     "build:web": "bun run --cwd packages/web build",
-    "test": "bun run build:core && bun test",
+    "test": "bun run build:core && bun test packages/*/src/**/__tests__/**/*.test.ts",
     "test:e2e": "bun test packages/web/src/server/__tests__/",
     "db:generate": "bun run --cwd packages/core db:generate",
     "db:push": "bun run --cwd packages/core db:push",
