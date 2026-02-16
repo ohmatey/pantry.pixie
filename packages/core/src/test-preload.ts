@@ -1,11 +1,14 @@
 /**
  * Test preload — creates SQLite tables in the in-memory database before tests run.
  * Referenced in bunfig.toml [test] preload.
+ *
+ * IMPORTANT: We import from @pantry-pixie/core (the dist build) rather than
+ * from ./db (the source) so that the singleton DB instance is shared with
+ * test files that also import from @pantry-pixie/core.
  */
 
-import { getDb } from "./db";
+import { db } from "@pantry-pixie/core";
 
-const db = getDb();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const client = (db as any).$client;
 
