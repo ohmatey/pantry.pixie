@@ -2,7 +2,7 @@
  * Shared API fetch utility with auth token injection
  */
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 export async function apiFetch<T = any>(
   path: string,

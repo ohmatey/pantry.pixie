@@ -41,7 +41,11 @@ export function createAddToListTool(
           "Name of the list (optional, defaults to scoped list or 'Quick Items')",
         ),
     }),
-    execute: async ({ items, listName }) => {
+    execute: async (params: {
+      items: Array<{ name: string; quantity?: number; unit?: string }>;
+      listName?: string;
+    }) => {
+      const { items, listName } = params;
       // 1. Get or create list (we only need the id, so we don't need the full type)
       let listId: string;
       if (scopedListId) {

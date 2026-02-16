@@ -64,7 +64,7 @@ export async function createPixieResponse(
     showGroceryListEditor: createShowGroceryListEditorTool(homeId, listId),
   };
 
-  const result = streamText({
+  const result = await streamText({
     model: openai("gpt-4o-mini"),
     system: systemPrompt,
     messages,
@@ -75,8 +75,19 @@ export async function createPixieResponse(
   return {
     textStream: result.textStream,
     intent,
-    fullText: result.text,
-    toolResults: result.toolResults,
+    fullText: result.text.then((t) => t),
+    toolResults: result.response.then((r) =>
+      r.messages
+        .filter((m) => m.role === 'assistant' && m.content)
+        .flatMap((m) =>
+          m.content
+            .filter((c) => c.type === 'tool-call')
+            .map((c: any) => ({
+              toolName: c.toolName,
+              result: c.result,
+            }))
+        )
+    ),
   };
 }
 

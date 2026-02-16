@@ -36,15 +36,16 @@ export function createAddItemTool(homeId: string) {
           "Price in Thai Baht (฿). Extract from phrases like 'for 50 baht', '฿60', or 'costs 75'",
         ),
     }),
-    execute: async ({
-      name,
-      quantity,
-      unit,
-      category,
-      location,
-      expiresInDays,
-      price,
+    execute: async (params: {
+      name: string;
+      quantity: number;
+      unit?: string;
+      category?: string;
+      location?: string;
+      expiresInDays?: number;
+      price?: number;
     }) => {
+      const { name, quantity, unit, category, location, expiresInDays, price } = params;
       const expiresAt = expiresInDays
         ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
         : undefined;
@@ -56,7 +57,7 @@ export function createAddItemTool(homeId: string) {
         category: category || "other",
         location,
         expiresAt,
-        estimatedCost: price,
+        price,
       });
 
       const priceMessage = price ? ` (฿${price})` : "";

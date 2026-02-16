@@ -9,7 +9,8 @@ export function createRemoveItemTool(homeId: string) {
     parameters: z.object({
       name: z.string().describe("Name of the item to remove"),
     }),
-    execute: async ({ name }) => {
+    execute: async (params: { name: string }) => {
+      const { name } = params;
       const item = await itemsService.findItemByName(homeId, name);
 
       if (!item) {

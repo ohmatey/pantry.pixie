@@ -12,7 +12,8 @@ export function createSetRecurringTool(homeId: string) {
         .enum(["daily", "weekly", "biweekly", "monthly"])
         .describe("How often the item should be restocked"),
     }),
-    execute: async ({ name, interval }) => {
+    execute: async (params: { name: string; interval: "daily" | "weekly" | "biweekly" | "monthly" }) => {
+      const { name, interval } = params;
       const item = await itemsService.findItemByName(homeId, name);
 
       if (!item) {

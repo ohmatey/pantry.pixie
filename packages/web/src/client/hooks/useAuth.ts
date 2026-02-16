@@ -7,7 +7,7 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => {
+const useAuthStore = create<AuthState>((set) => {
   const stored = localStorage.getItem("pp_token");
   const storedUser = localStorage.getItem("pp_user");
 
@@ -26,3 +26,6 @@ export const useAuth = create<AuthState>((set) => {
     },
   };
 });
+
+// Convenience hook that works like the old API
+export const useAuth = () => useAuthStore((state) => state);

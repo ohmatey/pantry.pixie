@@ -9,7 +9,8 @@ export function createCheckItemTool(homeId: string) {
     parameters: z.object({
       name: z.string().describe("Name of the item to check"),
     }),
-    execute: async ({ name }) => {
+    execute: async (params: { name: string }) => {
+      const { name } = params;
       const items = await itemsService.listItems(homeId, { search: name });
 
       if (items.length === 0) {

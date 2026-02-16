@@ -18,7 +18,8 @@ export function createShowGroceryListEditorTool(
         .optional()
         .describe("The name of the list to show (alternative to listId)"),
     }),
-    execute: async ({ listId, listName }) => {
+    execute: async (params: { listId?: string; listName?: string }) => {
+      const { listId, listName } = params;
       let list;
 
       // Find list by ID or name (priority: explicit ID > explicit name > scoped list > default)

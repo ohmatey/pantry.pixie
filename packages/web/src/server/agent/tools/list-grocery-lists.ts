@@ -15,7 +15,8 @@ export function createListGroceryListsTool(homeId: string) {
         .default(false)
         .describe("Include completed lists in the results"),
     }),
-    execute: async ({ includeCompleted }) => {
+    execute: async (params: { includeCompleted?: boolean }) => {
+      const { includeCompleted = false } = params;
       const allLists = await groceryListsService.getLists(homeId);
 
       // Filter based on status

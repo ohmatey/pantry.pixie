@@ -15,7 +15,8 @@ export function createListItemsTool(homeId: string) {
         ),
       search: z.string().optional().describe("Search for items by name"),
     }),
-    execute: async ({ category, search }) => {
+    execute: async (params: { category?: string; search?: string }) => {
+      const { category, search } = params;
       const items = await itemsService.listItems(homeId, { category, search });
 
       const now = new Date();
