@@ -1023,6 +1023,7 @@ async function handleGetPreferences(
           : [],
         cookingSkillLevel: user.cookingSkillLevel || null,
         budgetConsciousness: user.budgetConsciousness || null,
+        householdSize: user.householdSize ?? null,
       },
       timestamp: new Date(),
     });
@@ -1038,7 +1039,7 @@ async function handleUpdatePreferences(
 ): Promise<Response> {
   try {
     const body = await request.json();
-    const updates: Record<string, string | null> = {};
+    const updates: Record<string, string | number | null> = {};
 
     if ("dietaryRestrictions" in body) {
       updates.dietaryRestrictions = Array.isArray(body.dietaryRestrictions)
@@ -1056,6 +1057,10 @@ async function handleUpdatePreferences(
       updates.budgetConsciousness = valid.includes(body.budgetConsciousness)
         ? body.budgetConsciousness
         : null;
+    }
+    if ("householdSize" in body) {
+      const size = Number(body.householdSize);
+      updates.householdSize = !isNaN(size) && size >= 1 && size <= 20 ? size : null;
     }
 
     if (Object.keys(updates).length === 0) {

@@ -62,7 +62,7 @@ export default function SettingsPage() {
   const { data: prefsData } = useQuery({
     queryKey: ["preferences", user?.id],
     queryFn: () =>
-      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null }>(
+      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null; householdSize: number | null }>(
         "/api/users/me/preferences",
         token!,
       ),
@@ -279,6 +279,39 @@ export default function SettingsPage() {
                   {lvl.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Household size */}
+          <div>
+            <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-2 block">
+              Household Size
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const next = Math.max(1, (prefs?.householdSize ?? 1) - 1);
+                  updatePref.mutate({ householdSize: next });
+                }}
+                className="w-8 h-8 rounded-full border border-pixie-cream-200 dark:border-pixie-dusk-300 flex items-center justify-center text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300 transition-colors text-lg leading-none"
+              >
+                −
+              </button>
+              <span className="text-sm font-semibold text-pixie-charcoal-300 dark:text-pixie-mist-100 w-8 text-center">
+                {prefs?.householdSize ?? 1}
+              </span>
+              <button
+                onClick={() => {
+                  const next = Math.min(20, (prefs?.householdSize ?? 1) + 1);
+                  updatePref.mutate({ householdSize: next });
+                }}
+                className="w-8 h-8 rounded-full border border-pixie-cream-200 dark:border-pixie-dusk-300 flex items-center justify-center text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300 transition-colors text-lg leading-none"
+              >
+                +
+              </button>
+              <span className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                {(prefs?.householdSize ?? 1) === 1 ? "person" : "people"}
+              </span>
             </div>
           </div>
 
