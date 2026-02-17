@@ -23,6 +23,25 @@ export interface Item {
   price: string | null;
 }
 
+function calcNextScheduledAt(interval: string | null): number | null {
+  if (!interval) return null;
+  const next = new Date();
+  switch (interval) {
+    case "daily":
+      next.setDate(next.getDate() + 1);
+      break;
+    case "weekly":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "monthly":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    default:
+      return null;
+  }
+  return next.getTime();
+}
+
 /**
  * Convert server Item to IndexedDB Item
  */
@@ -40,7 +59,7 @@ function toIDBItem(item: Item): IDBItem {
       ? {
           enabled: true,
           interval: item.recurringInterval,
-          nextScheduledAt: null, // TODO: Calculate from recurringInterval
+          nextScheduledAt: calcNextScheduledAt(item.recurringInterval),
         }
       : null,
     _localVersion: Date.now(),
