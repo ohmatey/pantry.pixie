@@ -3,9 +3,10 @@
  * Tests CRUD operations, filtering, search, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test, mock } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
 import { db, eq, itemsTable } from "@pantry-pixie/core";
+import { eventBus } from "../events";
 import {
   addItem,
   listItems,
@@ -116,6 +117,37 @@ describe("Items Service - addItem()", () => {
 
     expect(item.name).toBe("Yogurt");
     expect(item.expiresAt).toEqual(expiresAt);
+  });
+
+  it("should include actorId in inventory:updated event when provided", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    const item = await addItem(testHomeId, { name: "Tracked Item" }, "user-actor-123");
+    createdItemIds.push(item.id);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBe("user-actor-123");
+    expect(emitted.action).toBe("added");
+    expect(emitted.homeId).toBe(testHomeId);
+
+    unsub();
+  });
+
+  it("should emit event without actorId when not provided", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    const item = await addItem(testHomeId, { name: "Untracked Item" });
+    createdItemIds.push(item.id);
+
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBeUndefined();
+
+    unsub();
   });
 });
 
@@ -342,6 +374,23 @@ describe("Items Service - removeItem()", () => {
     // Verify it still exists
     const found = await getItem(testHomeId, item.id);
     expect(found).toBeDefined();
+  });
+
+  it("should include actorId in inventory:updated event on remove", async () => {
+    const item = await addItem(testHomeId, { name: "To Remove Tracked" });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    await removeItem(testHomeId, item.id, "user-remover-456");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBe("user-remover-456");
+    expect(emitted.action).toBe("removed");
+
+    unsub();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -41,7 +41,13 @@ interface SyncList {
   items: SyncListItem[];
 }
 
-function groupByDay(events: ActivityEvent[]) {
+const LOADING_SPINNER = (
+  <div className="flex items-center justify-center py-16">
+    <div className="animate-spin w-6 h-6 border-2 border-pixie-sage-500 border-t-transparent rounded-full" />
+  </div>
+);
+
+export function groupByDay(events: ActivityEvent[]) {
   const groups: { label: string; events: ActivityEvent[] }[] = [];
   const map = new Map<string, ActivityEvent[]>();
 
@@ -63,7 +69,7 @@ function groupByDay(events: ActivityEvent[]) {
   return groups;
 }
 
-function ActivityItem({
+const ActivityItem = memo(function ActivityItem({
   event,
   onClick,
 }: {
@@ -119,7 +125,7 @@ function ActivityItem({
       )}
     </button>
   );
-}
+});
 
 function SundaySyncModal({
   homeId,
@@ -162,24 +168,22 @@ function SundaySyncModal({
   const items = (data?.items ?? []).filter((i) => !i.isCompleted);
   const pending = items.filter((i) => !removedIds.has(i.id));
 
-  const handleKeep = (id: string) => {
+  const handleKeep = useCallback((id: string) => {
     setRemovedIds((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
-  };
+  }, []);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = useCallback((id: string) => {
     setRemovedIds((prev) => new Set([...prev, id]));
-  };
+  }, []);
 
-  const handleFinish = async () => {
-    for (const id of removedIds) {
-      await removeMutation.mutateAsync(id);
-    }
+  const handleFinish = useCallback(async () => {
+    await Promise.all([...removedIds].map((id) => removeMutation.mutateAsync(id)));
     setDone(true);
-  };
+  }, [removedIds, removeMutation]);
 
   if (done) {
     return (
@@ -232,11 +236,7 @@ function SundaySyncModal({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="animate-spin w-6 h-6 border-2 border-pixie-sage-500 border-t-transparent rounded-full" />
-          </div>
-        ) : items.length === 0 ? (
+        {isLoading ? LOADING_SPINNER : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
             <CalendarCheck className="w-12 h-12 text-pixie-sage-400 dark:text-pixie-glow-sage" />
             <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
@@ -396,11 +396,7 @@ export default function ActivityPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="animate-spin w-6 h-6 border-2 border-pixie-sage-500 border-t-transparent rounded-full" />
-          </div>
-        ) : allEvents.length === 0 ? (
+        {isLoading ? LOADING_SPINNER : allEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
             <div className="w-16 h-16 rounded-full bg-pixie-sage-100 dark:bg-pixie-dusk-200 flex items-center justify-center">
               <Activity className="w-8 h-8 text-pixie-sage-400 dark:text-pixie-glow-sage" />
