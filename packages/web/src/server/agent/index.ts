@@ -47,6 +47,7 @@ export async function createPixieResponse(
   messages: AgentMessage[],
   userPreferences?: UserPreferences,
   listId?: string | null,
+  actorId?: string,
 ): Promise<StreamedResponse> {
   // Use mock in test mode
   if (USE_MOCK) {
@@ -67,9 +68,9 @@ export async function createPixieResponse(
     : "other";
 
   const tools = {
-    addItem: createAddItemTool(homeId),
+    addItem: createAddItemTool(homeId, actorId),
     listItems: createListItemsTool(homeId),
-    removeItem: createRemoveItemTool(homeId),
+    removeItem: createRemoveItemTool(homeId, actorId),
     checkItem: createCheckItemTool(homeId),
     setRecurring: createSetRecurringTool(homeId),
     addToList: createAddToListTool(homeId, listId),

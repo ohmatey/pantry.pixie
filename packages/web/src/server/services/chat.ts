@@ -123,6 +123,7 @@ export async function sendMessage(
       : undefined,
     cookingSkillLevel: userRecord.cookingSkillLevel as "beginner" | "intermediate" | "advanced" | undefined,
     budgetConsciousness: userRecord.budgetConsciousness as "low" | "medium" | "high" | undefined,
+    homeSize: userRecord.householdSize ?? undefined,
   } : undefined;
 
   return {
@@ -137,6 +138,7 @@ export async function sendMessage(
           agentMessages,
           userPreferences,
           listId,
+          userId,
         );
 
         // Consume text stream (AI SDK returns ReadableStream<string>)

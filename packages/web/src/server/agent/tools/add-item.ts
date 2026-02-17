@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import * as itemsService from "../../services/items";
 
-export function createAddItemTool(homeId: string) {
+export function createAddItemTool(homeId: string, actorId?: string) {
   const schema = z.object({
     name: z
       .string()
@@ -51,7 +51,7 @@ export function createAddItemTool(homeId: string) {
         location,
         expiresAt,
         price: price ? parseFloat(price) : undefined,
-      });
+      }, actorId);
 
       const priceMessage = price ? ` (฿${price})` : "";
       return {

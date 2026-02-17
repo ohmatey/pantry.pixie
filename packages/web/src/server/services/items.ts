@@ -48,6 +48,7 @@ export interface ItemFilters {
 export async function addItem(
   homeId: string,
   data: AddItemData,
+  actorId?: string,
 ): Promise<Item> {
   const [item] = await db
     .insert(itemsTable)
@@ -64,7 +65,7 @@ export async function addItem(
     })
     .returning();
 
-  eventBus.emit("inventory:updated", { action: "added", item, homeId });
+  eventBus.emit("inventory:updated", { action: "added", item, homeId, actorId });
   return item;
 }
 
@@ -126,6 +127,7 @@ export async function updateItem(
 export async function removeItem(
   homeId: string,
   itemId: string,
+  actorId?: string,
 ): Promise<Item | undefined> {
   const [item] = await db
     .delete(itemsTable)
@@ -133,7 +135,7 @@ export async function removeItem(
     .returning();
 
   if (item) {
-    eventBus.emit("inventory:updated", { action: "removed", item, homeId });
+    eventBus.emit("inventory:updated", { action: "removed", item, homeId, actorId });
   }
   return item;
 }

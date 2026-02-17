@@ -129,12 +129,27 @@ const homeConnections = new Map<string, Set<ServerWebSocket<WSData>>>();
 eventBus.on(
   "inventory:updated",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (data: { action: string; item: any; homeId: string }) => {
+  (data: { action: string; item: any; homeId: string; actorId?: string }) => {
     broadcastToHome(data.homeId, {
       type: "inventory_update",
       payload: { action: data.action, item: data.item, homeId: data.homeId },
       timestamp: new Date().toISOString(),
     });
+
+    // Broadcast partner activity for item mutations triggered by an actor
+    if (data.actorId && (data.action === "added" || data.action === "removed")) {
+      db.query.usersTable.findFirst({ where: eq(usersTable.id, data.actorId) })
+        .then((user) => {
+          broadcastPartnerActivity(data.homeId, {
+            actorName: user?.name || null,
+            actorId: data.actorId!,
+            action: data.action === "added" ? "item_added" : "item_removed",
+            subject: data.item.name,
+            itemId: data.item.id,
+          });
+        })
+        .catch(() => {/* ignore activity broadcast errors */});
+    }
   },
 );
 
