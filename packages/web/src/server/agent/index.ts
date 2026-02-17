@@ -3,7 +3,7 @@
  * In test mode, uses mock responses instead of OpenAI API
  */
 
-import { streamText } from "ai";
+import { streamText, generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { generateSystemPrompt, classifyIntent } from "@pantry-pixie/core";
 import { logger } from "../lib/logger";
@@ -80,8 +80,7 @@ export async function createPixieResponse(
   };
 
   const result = await streamText({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    model: openai("gpt-4o-mini") as any,
+    model: openai("gpt-4o-mini"),
     system: systemPrompt,
     messages,
     tools,
@@ -90,22 +89,17 @@ export async function createPixieResponse(
   return {
     textStream: result.textStream,
     intent,
-    fullText: Promise.resolve(result.text).then((t) => t),
+    fullText: Promise.resolve(result.text),
     toolResults: Promise.resolve(result.response).then((r) =>
-      r.messages
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((m: any) => m.role === 'assistant' && Array.isArray(m.content))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .flatMap((m: any) =>
-          m.content
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .filter((c: any) => c.type === 'tool-call')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map((c: any) => ({
-              toolName: c.toolName,
-              result: c.result,
-            }))
-        )
+      (r.messages ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((m: any) => m.role === "tool")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .flatMap((m: any) => (Array.isArray(m.content) ? m.content : []))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((c: any) => c.type === "tool-result")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((c: any) => ({ toolName: c.toolName, result: c.result })),
     ),
   };
 }
@@ -114,4 +108,26 @@ export async function initializeAgent(): Promise<boolean> {
   const hasKey = !!process.env.OPENAI_API_KEY;
   logger.info({ openaiConfigured: hasKey }, "Pantry Pixie agent initialized");
   return hasKey;
+}
+
+export async function generateThreadTitle(
+  userMessage: string,
+  assistantReply: string,
+): Promise<string | null> {
+  if (USE_MOCK) return null;
+  try {
+    const { text } = await generateText({
+      model: openai("gpt-4o-mini"),
+      prompt: `Create a short chat title (4–6 words, no punctuation) that captures what this conversation is about.
+
+User: ${userMessage.slice(0, 200)}
+Pixie: ${assistantReply.slice(0, 200)}
+
+Title:`,
+      maxOutputTokens: 20,
+    });
+    return text.trim().replace(/^["'.]+|["'.]+$/g, "").trim() || null;
+  } catch {
+    return null;
+  }
 }

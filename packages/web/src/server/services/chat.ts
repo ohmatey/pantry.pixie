@@ -12,7 +12,7 @@ import {
   classifyIntent,
 } from "@pantry-pixie/core";
 import type { ChatMessage } from "@pantry-pixie/core";
-import { createPixieResponse, type AgentMessage } from "../agent";
+import { createPixieResponse, generateThreadTitle, type AgentMessage } from "../agent";
 import type { SerializedUI } from "../ws";
 import { logger } from "../lib/logger";
 
@@ -224,6 +224,20 @@ export async function sendMessage(
             intent: result.intent,
           })
           .where(eq(chatMessagesTable.id, assistantMessage.id));
+
+        // Auto-generate a descriptive thread title after the first exchange
+        if (isFirstMessage && fullText) {
+          generateThreadTitle(content, fullText)
+            .then((title) => {
+              if (title) {
+                return db
+                  .update(chatThreadsTable)
+                  .set({ title })
+                  .where(eq(chatThreadsTable.id, threadId));
+              }
+            })
+            .catch(() => {/* non-critical, ignore */});
+        }
 
         onComplete(fullText, uiData);
       } catch (err) {

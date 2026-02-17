@@ -18,7 +18,10 @@ function initializeDb(): DbType {
 
   const databaseUrl = process.env.DATABASE_URL;
 
-  if (databaseUrl) {
+  if (process.env.NODE_ENV === "test") {
+    // Always use in-memory DB for tests, regardless of DATABASE_URL
+    dbPath = ":memory:";
+  } else if (databaseUrl) {
     if (databaseUrl.startsWith("sqlite:")) {
       dbPath = databaseUrl.replace("sqlite:", "");
     } else if (databaseUrl === ":memory:") {
@@ -28,10 +31,7 @@ function initializeDb(): DbType {
       dbPath = databaseUrl;
     }
   } else {
-    // Default: use ./data/pantry.db for development, :memory: for tests
-    dbPath = process.env.NODE_ENV === "test"
-      ? ":memory:"
-      : path.join(process.cwd(), "data", "pantry.db");
+    dbPath = path.join(process.cwd(), "data", "pantry.db");
   }
 
   // Create data directory if using file-based DB
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS \`users\` (
   \`dietary_restrictions\` text,
   \`cooking_skill_level\` text,
   \`budget_consciousness\` text,
+  \`household_size\` integer,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   \`updated_at\` integer NOT NULL DEFAULT (unixepoch())
 );
