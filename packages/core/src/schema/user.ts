@@ -9,6 +9,10 @@ export const usersTable = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   isVerified: integer("is_verified", { mode: "boolean" }).default(false).notNull(),
   preferredLanguage: text("preferred_language").default("en").notNull(),
+  // Pixie personalization preferences
+  dietaryRestrictions: text("dietary_restrictions"), // JSON array stored as text
+  cookingSkillLevel: text("cooking_skill_level"), // "beginner" | "intermediate" | "advanced"
+  budgetConsciousness: text("budget_consciousness"), // "low" | "medium" | "high"
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });

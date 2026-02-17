@@ -23,9 +23,19 @@
       "default": "./dist/pixie/index.js"
     }
   },
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ohmatey/pantry.pixie.git",
+    "directory": "packages/core"
+  },
+  "keywords": ["pantry", "grocery", "household", "typescript"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "prepublishOnly": "bun run build",
     "db:generate": "set -a; [ -f ../../.env ] && . ../../.env; drizzle-kit generate",
     "db:push": "set -a; [ -f ../../.env ] && . ../../.env; drizzle-kit push",
     "db:studio": "set -a; [ -f ../../.env ] && . ../../.env; drizzle-kit studio",

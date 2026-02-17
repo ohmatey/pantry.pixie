@@ -67,6 +67,9 @@ CREATE TABLE IF NOT EXISTS \`users\` (
   \`password_hash\` text NOT NULL,
   \`is_verified\` integer DEFAULT 0 NOT NULL,
   \`preferred_language\` text DEFAULT 'en' NOT NULL,
+  \`dietary_restrictions\` text,
+  \`cooking_skill_level\` text,
+  \`budget_consciousness\` text,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   \`updated_at\` integer NOT NULL DEFAULT (unixepoch())
 );
