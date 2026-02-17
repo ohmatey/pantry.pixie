@@ -6,6 +6,7 @@ import type { ServerWebSocket } from "bun";
 import * as chatService from "../services/chat";
 import { eventBus } from "../services/events";
 import { logger, logWebSocket } from "../lib/logger";
+import { db, eq, usersTable } from "@pantry-pixie/core";
 
 export interface GroceryListUI {
   id: string;
@@ -72,11 +73,24 @@ export interface WebSocketMessage {
     | "status"
     | "inventory_update"
     | "list_update"
+    | "partner_activity"
     | "ping"
     | "pong"
     | "error";
   payload: unknown;
   timestamp: string;
+}
+
+export interface PartnerActivityMessage extends WebSocketMessage {
+  type: "partner_activity";
+  payload: {
+    actorName: string | null;
+    actorId: string | null;
+    action: "chat_started" | "chat_continued" | "item_added" | "item_removed";
+    subject: string;
+    threadId?: string;
+    itemId?: string;
+  };
 }
 
 export interface ChatWebSocketMessage extends WebSocketMessage {
@@ -261,6 +275,23 @@ async function handleChatMessage(
       ws, // exclude sender
     );
 
+    // Broadcast partner activity (get actor name from DB)
+    db.query.usersTable.findFirst({ where: eq(usersTable.id, userId) })
+      .then((user) => {
+        broadcastPartnerActivity(
+          homeId,
+          {
+            actorName: user?.name || null,
+            actorId: userId,
+            action: result.isFirstMessage ? "chat_started" : "chat_continued",
+            subject: result.userMessage.content.slice(0, 60),
+            threadId,
+          },
+          ws,
+        );
+      })
+      .catch(() => {/* ignore activity broadcast errors */});
+
     // Start streaming the assistant response
     let accumulatedText = "";
 
@@ -338,4 +369,20 @@ function broadcastToHome(
       ws.send(data);
     }
   }
+}
+
+export function broadcastPartnerActivity(
+  homeId: string,
+  payload: PartnerActivityMessage["payload"],
+  excludeWs?: ServerWebSocket<WSData>,
+): void {
+  broadcastToHome(
+    homeId,
+    {
+      type: "partner_activity",
+      payload,
+      timestamp: new Date().toISOString(),
+    },
+    excludeWs,
+  );
 }

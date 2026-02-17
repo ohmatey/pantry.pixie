@@ -15,6 +15,7 @@ import {
   type WSData,
 } from "./ws";
 import { initializeAgent } from "./agent";
+import { startScheduler } from "./scheduler";
 import { jwtVerify } from "jose";
 import path from "path";
 import fs from "fs";
@@ -38,6 +39,9 @@ const STATIC_DIR = path.resolve(import.meta.dir, "../../dist/client");
 // Initialize agent (Bun allows top-level await)
 let agentReady = false;
 initializeAgent().then(ready => { agentReady = ready; });
+
+// Start recurring item scheduler
+startScheduler();
 
 function matchRoute(
   pathname: string,

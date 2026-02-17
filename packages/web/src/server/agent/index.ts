@@ -16,6 +16,7 @@ import {
   createAddToListTool,
   createListGroceryListsTool,
   createShowGroceryListEditorTool,
+  createQueryBudgetTool,
 } from "./tools";
 
 // Use mock in test mode
@@ -74,6 +75,7 @@ export async function createPixieResponse(
     addToList: createAddToListTool(homeId, listId),
     listGroceryLists: createListGroceryListsTool(homeId),
     showGroceryListEditor: createShowGroceryListEditorTool(homeId, listId),
+    queryBudget: createQueryBudgetTool(homeId),
   };
 
   const result = await streamText({

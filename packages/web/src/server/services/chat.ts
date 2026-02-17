@@ -8,6 +8,7 @@ import {
   desc,
   chatThreadsTable,
   chatMessagesTable,
+  usersTable,
   classifyIntent,
 } from "@pantry-pixie/core";
 import type { ChatMessage } from "@pantry-pixie/core";
@@ -46,6 +47,7 @@ export async function getMessages(threadId: string, limit = 50) {
 export interface SendMessageResult {
   userMessage: ChatMessage;
   assistantMessageId: string;
+  isFirstMessage: boolean;
   streamHandler: (
     onChunk: (text: string) => void,
     onComplete: (fullText: string, ui?: SerializedUI) => void,
@@ -81,6 +83,9 @@ export async function sendMessage(
     limit: 20,
   });
 
+  // Check if this is the first user message in the thread
+  const isFirstMessage = recentMessages.filter((m) => m.role === "user").length === 0;
+
   // Build conversation for agent
   const agentMessages: AgentMessage[] = recentMessages
     .reverse()
@@ -107,16 +112,30 @@ export async function sendMessage(
     .set({ updatedAt: new Date() })
     .where(eq(chatThreadsTable.id, threadId));
 
+  // Fetch user preferences for Pixie personalization
+  const userRecord = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, userId),
+  });
+  const userPreferences = userRecord ? {
+    name: userRecord.name,
+    dietaryRestrictions: userRecord.dietaryRestrictions
+      ? JSON.parse(userRecord.dietaryRestrictions) as string[]
+      : undefined,
+    cookingSkillLevel: userRecord.cookingSkillLevel as "beginner" | "intermediate" | "advanced" | undefined,
+    budgetConsciousness: userRecord.budgetConsciousness as "low" | "medium" | "high" | undefined,
+  } : undefined;
+
   return {
     userMessage,
     assistantMessageId: assistantMessage.id,
+    isFirstMessage,
     streamHandler: async (onChunk, onComplete) => {
       try {
         logger.info({ threadId, homeId, listId }, "Creating Pixie response");
         const result = await createPixieResponse(
           homeId,
           agentMessages,
-          undefined,
+          userPreferences,
           listId,
         );
 

@@ -16,8 +16,13 @@ import * as budgetService from "../services/budget";
 import {
   db,
   eq,
+  desc,
   homesTable,
   homeMembersTable,
+  usersTable,
+  chatThreadsTable,
+  chatMessagesTable,
+  itemsTable,
 } from "@pantry-pixie/core";
 import {
   createInvite,
@@ -88,6 +93,10 @@ export function registerApiRoutes(): Route[] {
     { method: "POST", path: "/api/auth/register", handler: handleRegister },
     { method: "POST", path: "/api/auth/login", handler: handleLogin },
     { method: "GET", path: "/api/auth/me", handler: withAuth(handleGetMe) },
+
+    // User preference routes
+    { method: "GET", path: "/api/users/me/preferences", handler: withAuth(handleGetPreferences) },
+    { method: "PATCH", path: "/api/users/me/preferences", handler: withAuth(handleUpdatePreferences) },
 
     // Home routes
     { method: "GET", path: "/api/homes", handler: withAuth(handleListHomes) },
@@ -250,6 +259,13 @@ export function registerApiRoutes(): Route[] {
       method: "GET",
       path: "/api/homes/:homeId/budget",
       handler: withAuth(handleGetBudget),
+    },
+
+    // Activity routes
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/activity",
+      handler: withAuth(handleGetActivity),
     },
   ];
 }
@@ -984,6 +1000,77 @@ async function handleSendMessage(
 }
 
 // ============================================================================
+// User preference handlers
+// ============================================================================
+
+async function handleGetPreferences(
+  _request: Request,
+  _params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    const user = await db.query.usersTable.findFirst({
+      where: eq(usersTable.id, auth.userId),
+    });
+    if (!user) {
+      return json({ success: false, error: "User not found" }, 404);
+    }
+    return json({
+      success: true,
+      data: {
+        dietaryRestrictions: user.dietaryRestrictions
+          ? JSON.parse(user.dietaryRestrictions)
+          : [],
+        cookingSkillLevel: user.cookingSkillLevel || null,
+        budgetConsciousness: user.budgetConsciousness || null,
+      },
+      timestamp: new Date(),
+    });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+async function handleUpdatePreferences(
+  request: Request,
+  _params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    const body = await request.json();
+    const updates: Record<string, string | null> = {};
+
+    if ("dietaryRestrictions" in body) {
+      updates.dietaryRestrictions = Array.isArray(body.dietaryRestrictions)
+        ? JSON.stringify(body.dietaryRestrictions)
+        : null;
+    }
+    if ("cookingSkillLevel" in body) {
+      const valid = ["beginner", "intermediate", "advanced"];
+      updates.cookingSkillLevel = valid.includes(body.cookingSkillLevel)
+        ? body.cookingSkillLevel
+        : null;
+    }
+    if ("budgetConsciousness" in body) {
+      const valid = ["low", "medium", "high"];
+      updates.budgetConsciousness = valid.includes(body.budgetConsciousness)
+        ? body.budgetConsciousness
+        : null;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return json({ success: false, error: "No valid fields to update" }, 400);
+    }
+
+    await db.update(usersTable).set(updates).where(eq(usersTable.id, auth.userId));
+
+    return json({ success: true, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
 // Budget handlers
 // ============================================================================
 
@@ -996,6 +1083,111 @@ async function handleGetBudget(
     await assertHomeMembership(params.homeId, auth.userId);
     const budgetSummary = await budgetService.getBudgetSummary(params.homeId);
     return json({ success: true, data: budgetSummary, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Activity handlers
+// ============================================================================
+
+async function handleGetActivity(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+
+    // Get recent chat threads
+    const threads = await db.query.chatThreadsTable.findMany({
+      where: eq(chatThreadsTable.homeId, params.homeId),
+      orderBy: [desc(chatThreadsTable.updatedAt)],
+      limit: 30,
+    });
+
+    // Build activity events from threads
+    const activities = await Promise.all(
+      threads.map(async (thread) => {
+        // Get first user message to find creator + get last user message for "continued" events
+        const messages = await db.query.chatMessagesTable.findMany({
+          where: eq(chatMessagesTable.threadId, thread.id),
+          orderBy: [desc(chatMessagesTable.createdAt)],
+          limit: 20,
+        });
+
+        const userMessages = messages.filter((m) => m.role === "user");
+        const firstMsg = userMessages[userMessages.length - 1]; // oldest
+        const lastMsg = userMessages[0]; // newest
+
+        // Get actor name from metadata
+        const getActorName = async (msg: typeof firstMsg | undefined) => {
+          if (!msg?.metadata) return null;
+          const meta = msg.metadata as Record<string, unknown>;
+          if (!meta.userId) return null;
+          const user = await db.query.usersTable.findFirst({
+            where: eq(usersTable.id, meta.userId as string),
+          });
+          return user?.name || null;
+        };
+
+        const events = [];
+
+        // Thread created event
+        if (firstMsg) {
+          const actorName = await getActorName(firstMsg);
+          events.push({
+            type: "chat_started" as const,
+            threadId: thread.id,
+            threadTitle: thread.title,
+            actorName,
+            timestamp: thread.createdAt,
+          });
+        }
+
+        // Thread continued event (if last message is different from first)
+        if (lastMsg && firstMsg && lastMsg.id !== firstMsg.id) {
+          const actorName = await getActorName(lastMsg);
+          events.push({
+            type: "chat_continued" as const,
+            threadId: thread.id,
+            threadTitle: thread.title,
+            actorName,
+            timestamp: lastMsg.createdAt,
+          });
+        }
+
+        return events;
+      }),
+    );
+
+    // Also include recent items
+    const recentItems = await db.query.itemsTable.findMany({
+      where: eq(itemsTable.homeId, params.homeId),
+      orderBy: [desc(itemsTable.dateAdded)],
+      limit: 20,
+    });
+
+    const itemActivities = recentItems.map((item) => ({
+      type: "item_added" as const,
+      itemId: item.id,
+      itemName: item.name,
+      actorName: null as string | null,
+      timestamp: item.dateAdded,
+    }));
+
+    // Flatten and sort by timestamp desc
+    const allActivities = [
+      ...activities.flat(),
+      ...itemActivities,
+    ].sort((a, b) => {
+      const ta = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const tb = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      return tb - ta;
+    }).slice(0, 50);
+
+    return json({ success: true, data: allActivities, timestamp: new Date() });
   } catch (err) {
     return handleError(err);
   }
