@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { apiGet, apiPut } from "@/lib/api";
+import { apiGet, apiPut, apiPatch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { InviteCard } from "@/components/settings/InviteCard";
 import { MemberList } from "@/components/settings/MemberList";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { toast } from "sonner";
 import {
   Home,
   LogOut,
@@ -19,11 +20,30 @@ import {
   Download,
   Share,
   CheckCircle,
+  Sparkles,
 } from "lucide-react";
+
+const SKILL_LEVELS = [
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+];
+
+const BUDGET_LEVELS = [
+  { value: "low", label: "Budget-conscious" },
+  { value: "medium", label: "Balanced" },
+  { value: "high", label: "Premium" },
+];
+
+const DIETARY_OPTIONS = [
+  "Vegetarian", "Vegan", "Gluten-free", "Dairy-free",
+  "Nut-free", "Halal", "Kosher", "Low-carb", "Keto",
+];
 
 export default function SettingsPage() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [editingName, setEditingName] = useState(false);
   const [homeName, setHomeName] = useState("");
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
@@ -37,6 +57,28 @@ export default function SettingsPage() {
       return res.data;
     },
     enabled: !!token && !!user?.homeId,
+  });
+
+  const { data: prefsData } = useQuery({
+    queryKey: ["preferences", user?.id],
+    queryFn: () =>
+      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null }>(
+        "/api/users/me/preferences",
+        token!,
+      ),
+    enabled: !!token,
+  });
+
+  const prefs = prefsData?.data;
+
+  const updatePref = useMutation({
+    mutationFn: (updates: Record<string, unknown>) =>
+      apiPatch("/api/users/me/preferences", token!, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preferences"] });
+      toast.success("Preferences saved");
+    },
+    onError: () => toast.error("Failed to save preferences"),
   });
 
   const handleLogout = () => {
@@ -186,6 +228,93 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Pixie Preferences */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
+            <CardTitle className="text-lg">Pixie Preferences</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Cooking skill */}
+          <div>
+            <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-2 block">
+              Cooking Skill
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {SKILL_LEVELS.map((lvl) => (
+                <button
+                  key={lvl.value}
+                  onClick={() => updatePref.mutate({ cookingSkillLevel: lvl.value })}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                    prefs?.cookingSkillLevel === lvl.value
+                      ? "bg-pixie-sage-500 text-white border-pixie-sage-500"
+                      : "border-pixie-cream-200 dark:border-pixie-dusk-300 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300"
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Budget consciousness */}
+          <div>
+            <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-2 block">
+              Budget Style
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {BUDGET_LEVELS.map((lvl) => (
+                <button
+                  key={lvl.value}
+                  onClick={() => updatePref.mutate({ budgetConsciousness: lvl.value })}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                    prefs?.budgetConsciousness === lvl.value
+                      ? "bg-pixie-sage-500 text-white border-pixie-sage-500"
+                      : "border-pixie-cream-200 dark:border-pixie-dusk-300 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300"
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dietary restrictions */}
+          <div>
+            <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-2 block">
+              Dietary Restrictions
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {DIETARY_OPTIONS.map((opt) => {
+                const active = (prefs?.dietaryRestrictions ?? []).includes(opt);
+                const toggle = () => {
+                  const current = prefs?.dietaryRestrictions ?? [];
+                  const updated = active
+                    ? current.filter((x) => x !== opt)
+                    : [...current, opt];
+                  updatePref.mutate({ dietaryRestrictions: updated });
+                };
+                return (
+                  <button
+                    key={opt}
+                    onClick={toggle}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                      active
+                        ? "bg-pixie-sage-500 text-white border-pixie-sage-500"
+                        : "border-pixie-cream-200 dark:border-pixie-dusk-300 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Danger Zone */}
       <Card className="border-red-200 dark:border-red-900/30">

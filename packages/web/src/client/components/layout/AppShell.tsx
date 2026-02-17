@@ -1,5 +1,5 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { ShoppingCart, Plus, Sparkles, User, Home, LogOut } from "lucide-react";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { ShoppingCart, MessageSquare, Sparkles, User, Home, LogOut, Package, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInventorySync } from "@/hooks/useInventorySync";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ export function AppShell() {
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -40,6 +41,20 @@ export function AppShell() {
         {/* Nav buttons */}
         <div className="flex items-center gap-1">
           <NavLink
+            to="/pantry"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-pixie-sage-100 text-pixie-sage-600 dark:bg-pixie-dusk-200 dark:text-pixie-glow-sage"
+                  : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200",
+              )
+            }
+          >
+            <Package className="w-4 h-4" />
+            <span>Pantry</span>
+          </NavLink>
+          <NavLink
             to="/list"
             className={({ isActive }) =>
               cn(
@@ -54,18 +69,18 @@ export function AppShell() {
             <span>Lists</span>
           </NavLink>
           <NavLink
-            to="/chat"
+            to="/chats"
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                isActive
+                isActive || location.pathname.startsWith("/chat/")
                   ? "bg-pixie-sage-100 text-pixie-sage-600 dark:bg-pixie-dusk-200 dark:text-pixie-glow-sage"
                   : "text-pixie-charcoal-200 hover:bg-pixie-cream-100 dark:text-pixie-mist-200 dark:hover:bg-pixie-dusk-200",
               )
             }
           >
-            <Plus className="w-4 h-4" />
-            <span>New Chat</span>
+            <MessageSquare className="w-4 h-4" />
+            <span>Chats</span>
           </NavLink>
 
           {/* User profile dropdown */}
@@ -93,6 +108,10 @@ export function AppShell() {
             <DropdownItem onClick={() => navigate("/settings")}>
               <Home className="w-4 h-4" />
               My Pantries
+            </DropdownItem>
+            <DropdownItem onClick={() => navigate("/activity")}>
+              <Activity className="w-4 h-4" />
+              Activity
             </DropdownItem>
 
             <DropdownSeparator />
