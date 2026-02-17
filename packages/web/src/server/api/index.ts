@@ -6,6 +6,7 @@ import {
   register,
   login,
   withAuth,
+  assertHomeMembership,
   type AuthPayload,
 } from "../auth";
 import * as chatService from "../services/chat";
@@ -38,6 +39,8 @@ import {
   createThreadSchema,
   sendMessageSchema,
 } from "./validation";
+import { type AppError } from "../middleware/error-handler";
+import { logger } from "../lib/logger";
 
 export interface RouteHandler {
   (
@@ -57,6 +60,23 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+/**
+ * Sanitize errors before returning to client.
+ * AppErrors (with explicit status) expose their message for 4xx responses.
+ * All other errors are logged server-side and return a generic message.
+ */
+function handleError(err: unknown): Response {
+  const appErr = err as AppError;
+  if (appErr?.status !== undefined) {
+    const status = appErr.status;
+    if (status >= 400 && status < 500) {
+      return json({ success: false, error: appErr.message, code: appErr.code }, status);
+    }
+  }
+  logger.error({ err }, "Unexpected error in API handler");
+  return json({ success: false, error: "An unexpected error occurred" }, 500);
 }
 
 /**
@@ -247,10 +267,12 @@ async function handleRegister(request: Request): Promise<Response> {
     const { email, password, name } = parsed.data;
     const result = await register(email, password, name);
     return json({ success: true, data: result, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    const status = err.message === "Email already registered" ? 409 : 500;
-    return json({ success: false, error: err.message }, status);
+  } catch (err) {
+    const appErr = err as AppError;
+    if (appErr?.message === "Email already registered") {
+      return json({ success: false, error: appErr.message }, 409);
+    }
+    return handleError(err);
   }
 }
 
@@ -263,9 +285,8 @@ async function handleLogin(request: Request): Promise<Response> {
     const { email, password } = parsed.data;
     const result = await login(email, password);
     return json({ success: true, data: result, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 401);
+  } catch (err) {
+    return json({ success: false, error: "Invalid email or password" }, 401);
   }
 }
 
@@ -309,18 +330,19 @@ async function handleListHomes(
     }
 
     return json({ success: true, data: homes, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetHome(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.id, auth.userId);
+
     const home = await db.query.homesTable.findFirst({
       where: eq(homesTable.id, params.id),
     });
@@ -330,9 +352,8 @@ async function handleGetHome(
     }
 
     return json({ success: true, data: home, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -359,18 +380,19 @@ async function handleCreateHome(
     });
 
     return json({ success: true, data: home, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleUpdateHome(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.id, auth.userId, "admin");
+
     const body = await request.json();
     const parsed = validateBody(updateHomeSchema, body);
     if (!parsed.success) return parsed.response;
@@ -387,9 +409,8 @@ async function handleUpdateHome(
     }
 
     return json({ success: true, data: home, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -398,16 +419,16 @@ async function handleUpdateHome(
 // ============================================================================
 
 async function handleListMembers(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const members = await getHomeMembers(params.homeId);
     return json({ success: true, data: members, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -416,48 +437,49 @@ async function handleListMembers(
 // ============================================================================
 
 async function handleCreateInvite(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId, "admin");
     const invite = createInvite(params.homeId, auth.userId);
     return json({ success: true, data: invite, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleAcceptInvite(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
     const result = await acceptInvite(params.code, auth.userId);
     return json({ success: true, data: result, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 400);
+  } catch (err) {
+    const appErr = err as AppError;
+    if (appErr?.status !== undefined && appErr.status >= 400 && appErr.status < 500) {
+      return json({ success: false, error: appErr.message }, appErr.status);
+    }
+    return json({ success: false, error: "Invalid or expired invite" }, 400);
   }
 }
 
 async function handleGetInviteInfo(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
 ): Promise<Response> {
   try {
-    // Import the invite store to look up the code
     const { getInviteInfo } = await import("../services/invites");
     const info = await getInviteInfo(params.code);
     if (!info) {
       return json({ success: false, error: "Invalid or expired invite" }, 404);
     }
     return json({ success: true, data: info, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -468,9 +490,10 @@ async function handleGetInviteInfo(
 async function handleListItems(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const url = new URL(request.url);
     const category = url.searchParams.get("category") || undefined;
     const search = url.searchParams.get("search") || undefined;
@@ -480,52 +503,52 @@ async function handleListItems(
       search,
     });
     return json({ success: true, data: items, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetItem(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const item = await itemsService.getItem(params.homeId, params.id);
     if (!item) {
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleCreateItem(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(createItemSchema, body);
     if (!parsed.success) return parsed.response;
     const item = await itemsService.addItem(params.homeId, parsed.data);
     return json({ success: true, data: item, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleUpdateItem(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(updateItemSchema, body);
     if (!parsed.success) return parsed.response;
@@ -538,57 +561,56 @@ async function handleUpdateItem(
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleToggleItem(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const item = await itemsService.toggleItemCheck(params.homeId, params.id);
     if (!item) {
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, data: item, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleDeleteItem(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const item = await itemsService.removeItem(params.homeId, params.id);
     if (!item) {
       return json({ success: false, error: "Item not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetItemStats(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const stats = await itemsService.getStats(params.homeId);
     return json({ success: true, data: stats, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -597,42 +619,43 @@ async function handleGetItemStats(
 // ============================================================================
 
 async function handleListGroceryLists(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const lists = await groceryListsService.getLists(params.homeId);
     return json({ success: true, data: lists, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetGroceryList(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const list = await groceryListsService.getList(params.homeId, params.id);
     if (!list) {
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleCreateGroceryList(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(createGroceryListSchema, body);
     if (!parsed.success) return parsed.response;
@@ -642,18 +665,18 @@ async function handleCreateGroceryList(
       parsed.data,
     );
     return json({ success: true, data: list, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleUpdateGroceryList(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(updateGroceryListSchema, body);
     if (!parsed.success) return parsed.response;
@@ -666,35 +689,35 @@ async function handleUpdateGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleDeleteGroceryList(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId, "admin");
     const list = await groceryListsService.deleteList(params.homeId, params.id);
     if (!list) {
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleCompleteGroceryList(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const list = await groceryListsService.completeList(
       params.homeId,
       params.id,
@@ -703,64 +726,62 @@ async function handleCompleteGroceryList(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetDefaultList(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const list = await groceryListsService.getOrCreateDefaultList(
       params.homeId,
     );
     return json({ success: true, data: list, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleResetGroceryList(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId, "admin");
     const list = await groceryListsService.resetScheduledList(params.id);
     if (!list) {
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: list, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleAddListItemByName(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(addListItemByNameSchema, body);
     if (!parsed.success) return parsed.response;
 
     const { name, quantity } = parsed.data;
 
-    // Find or create the item in the pantry
     const item = await groceryListsService.findOrCreateItem(
       params.homeId,
       name,
     );
 
-    // Add it to the list
     const listItem = await groceryListsService.addListItem(
       params.homeId,
       params.listId,
@@ -777,18 +798,18 @@ async function handleAddListItemByName(
       { success: true, data: { listItem, item }, timestamp: new Date() },
       201,
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetListStats(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const stats = await groceryListsService.getListStats(
       params.homeId,
       params.id,
@@ -797,18 +818,18 @@ async function handleGetListStats(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: stats, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleAddListItem(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(addListItemSchema, body);
     if (!parsed.success) return parsed.response;
@@ -822,18 +843,18 @@ async function handleAddListItem(
       return json({ success: false, error: "List not found" }, 404);
     }
     return json({ success: true, data: listItem, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleRemoveListItem(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const listItem = await groceryListsService.removeListItem(
       params.homeId,
       params.listId,
@@ -843,18 +864,18 @@ async function handleRemoveListItem(
       return json({ success: false, error: "List item not found" }, 404);
     }
     return json({ success: true, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleToggleListItem(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const listItem = await groceryListsService.toggleListItem(
       params.homeId,
       params.listId,
@@ -864,9 +885,8 @@ async function handleToggleListItem(
       return json({ success: false, error: "List item not found" }, 404);
     }
     return json({ success: true, data: listItem, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -875,16 +895,16 @@ async function handleToggleListItem(
 // ============================================================================
 
 async function handleListChatThreads(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
-    const threads = await chatService.getThreads(params.homeId || auth.homeId);
+    await assertHomeMembership(params.homeId, auth.userId);
+    const threads = await chatService.getThreads(params.homeId);
     return json({ success: true, data: threads, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -894,33 +914,34 @@ async function handleCreateChatThread(
   auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json().catch(() => ({}));
     const parsed = validateBody(createThreadSchema, body);
     if (!parsed.success) return parsed.response;
     const thread = await chatService.createThread(
-      params.homeId || auth.homeId,
+      params.homeId,
       parsed.data.title,
     );
     return json({ success: true, data: thread, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
 async function handleGetMessages(
   request: Request,
   params: Record<string, string>,
-  _auth: AuthPayload,
+  auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get("limit") || "50");
+    const rawLimit = parseInt(url.searchParams.get("limit") || "50", 10);
+    const limit = Number.isNaN(rawLimit) || rawLimit <= 0 ? 50 : Math.min(rawLimit, 100);
     const messages = await chatService.getMessages(params.threadId, limit);
     return json({ success: true, data: messages, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -930,21 +951,35 @@ async function handleSendMessage(
   auth: AuthPayload,
 ): Promise<Response> {
   try {
+    await assertHomeMembership(params.homeId, auth.userId);
     const body = await request.json();
     const parsed = validateBody(sendMessageSchema, body);
     if (!parsed.success) return parsed.response;
 
     const result = await chatService.sendMessage(
       params.threadId,
-      params.homeId || auth.homeId,
+      params.homeId,
       auth.userId,
       parsed.data.content,
     );
 
-    return json({ success: true, data: result, timestamp: new Date() }, 201);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+    // HTTP endpoint awaits the full response (streaming is for WebSocket path)
+    let assistantText = "";
+    await result.streamHandler(
+      () => {},
+      (fullText) => { assistantText = fullText; },
+    );
+
+    return json(
+      {
+        success: true,
+        data: { userMessage: result.userMessage, assistantText },
+        timestamp: new Date(),
+      },
+      201,
+    );
+  } catch (err) {
+    return handleError(err);
   }
 }
 
@@ -953,17 +988,15 @@ async function handleSendMessage(
 // ============================================================================
 
 async function handleGetBudget(
-  request: Request,
+  _request: Request,
   params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
   try {
-    const budgetSummary = await budgetService.getBudgetSummary(
-      params.homeId || auth.homeId,
-    );
+    await assertHomeMembership(params.homeId, auth.userId);
+    const budgetSummary = await budgetService.getBudgetSummary(params.homeId);
     return json({ success: true, data: budgetSummary, timestamp: new Date() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return json({ success: false, error: err.message }, 500);
+  } catch (err) {
+    return handleError(err);
   }
 }
