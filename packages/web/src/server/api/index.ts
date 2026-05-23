@@ -14,6 +14,7 @@ import * as itemsService from "../services/items";
 import * as groceryListsService from "../services/grocery-lists";
 import * as budgetService from "../services/budget";
 import * as notificationsService from "../services/notifications";
+import * as predictionsService from "../services/predictions";
 import {
   db,
   eq,
@@ -279,6 +280,13 @@ export function registerApiRoutes(): Route[] {
       method: "PATCH",
       path: "/api/homes/:homeId/notifications/:id/read",
       handler: withAuth(handleMarkNotificationRead),
+    },
+
+    // Prediction routes
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/predictions",
+      handler: withAuth(handleGetPredictions),
     },
   ];
 }
@@ -1324,6 +1332,34 @@ async function handleMarkNotificationRead(
       return json({ success: false, error: "Notification not found" }, 404);
     }
     return json({ success: true, data: notification, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Prediction handlers
+// ============================================================================
+
+async function handleGetPredictions(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const period =
+      Number(new URL(request.url).searchParams.get("period")) || 7;
+    const all = await predictionsService.predictAllDepletions(params.homeId);
+    const cutoff = Date.now() + period * 24 * 60 * 60 * 1000;
+    const predictions = all.filter(
+      (p) => p.predictedDepletionDate.getTime() <= cutoff,
+    );
+    return json({
+      success: true,
+      data: { predictions, period, generatedAt: new Date() },
+      timestamp: new Date(),
+    });
   } catch (err) {
     return handleError(err);
   }
