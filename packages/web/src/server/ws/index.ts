@@ -4,6 +4,7 @@
 
 import type { ServerWebSocket } from "bun";
 import * as chatService from "../services/chat";
+import * as notificationsService from "../services/notifications";
 import { eventBus } from "../services/events";
 import { logger, logWebSocket } from "../lib/logger";
 import { db, eq, usersTable } from "@pantry-pixie/core";
@@ -140,6 +141,7 @@ eventBus.on(
     if (data.actorId && (data.action === "added" || data.action === "removed")) {
       db.query.usersTable.findFirst({ where: eq(usersTable.id, data.actorId) })
         .then((user) => {
+          const actorName = user?.name || "Your partner";
           broadcastPartnerActivity(data.homeId, {
             actorName: user?.name || null,
             actorId: data.actorId!,
@@ -147,6 +149,14 @@ eventBus.on(
             subject: data.item.name,
             itemId: data.item.id,
           });
+          // Persist a notification so an offline partner sees it later.
+          notificationsService
+            .notifyPartners(data.homeId, data.actorId, {
+              type: "partner_activity",
+              title: `${actorName} ${data.action === "added" ? "added" : "used up"} ${data.item.name}`,
+              refId: data.item.id,
+            })
+            .catch(() => {/* non-critical */});
         })
         .catch(() => {/* ignore activity broadcast errors */});
     }

@@ -13,7 +13,8 @@ export const usersTable = sqliteTable("users", {
   dietaryRestrictions: text("dietary_restrictions"), // JSON array stored as text
   cookingSkillLevel: text("cooking_skill_level"), // "beginner" | "intermediate" | "advanced"
   budgetConsciousness: text("budget_consciousness"), // "low" | "medium" | "high"
-  householdSize: integer("household_size"), // number of people in household
+  // NOTE: household size is a property of the HOME (shared by both partners),
+  // not the user — see homesTable.householdSize.
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });

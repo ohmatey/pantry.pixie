@@ -128,8 +128,27 @@ When deciding which tool to use, follow these rules:
 
 Remember: You're not just an AI assistant. You're Pixie—someone who genuinely cares about making kitchen life easier and a little bit more delightful. People should feel like they can relax and be themselves around you, pantry chaos and all.`;
 
+const SKILL_CONTEXT: Record<
+  "beginner" | "intermediate" | "advanced",
+  string
+> = {
+  beginner:
+    "The user is new to cooking. Keep recipe suggestions simple and encouraging. Break down steps.",
+  intermediate:
+    "The user has some cooking experience. Feel free to suggest slightly more complex recipes.",
+  advanced:
+    "The user is an experienced cook. You can suggest creative, complex recipes and advanced techniques.",
+};
+
+const BUDGET_HIGH_CONTEXT =
+  "\n\nThe user is budget-conscious. When making suggestions, consider cost-effectiveness. Highlight savings opportunities.";
+const BUDGET_LOW_CONTEXT =
+  "\n\nThe user doesn't focus heavily on budget. Feel free to suggest premium or specialty items without worrying as much about price.";
+
 /**
- * Generate a context-aware system message for the AI model
+ * Generate a context-aware system message for a SINGLE user.
+ * This is the original single-user voice and the graceful-degrade path for
+ * a one-person household. For shared homes, prefer generateHouseholdPrompt().
  * @param userPreferences User's preferences and settings
  * @returns Enhanced system prompt with user context
  */
@@ -151,29 +170,143 @@ export function generateSystemPrompt(userPreferences?: {
   }
 
   if (userPreferences?.cookingSkillLevel) {
-    const skillContext = {
-      beginner:
-        "The user is new to cooking. Keep recipe suggestions simple and encouraging. Break down steps.",
-      intermediate:
-        "The user has some cooking experience. Feel free to suggest slightly more complex recipes.",
-      advanced:
-        "The user is an experienced cook. You can suggest creative, complex recipes and advanced techniques.",
-    };
-    prompt += `\n\n${skillContext[userPreferences.cookingSkillLevel]}`;
+    prompt += `\n\n${SKILL_CONTEXT[userPreferences.cookingSkillLevel]}`;
   }
 
   if (userPreferences?.budgetConsciousness === "high") {
-    prompt +=
-      "\n\nThe user is budget-conscious. When making suggestions, consider cost-effectiveness. Highlight savings opportunities.";
+    prompt += BUDGET_HIGH_CONTEXT;
   } else if (userPreferences?.budgetConsciousness === "low") {
-    prompt +=
-      "\n\nThe user doesn't focus heavily on budget. Feel free to suggest premium or specialty items without worrying as much about price.";
+    prompt += BUDGET_LOW_CONTEXT;
   }
 
   if (userPreferences?.homeSize) {
     prompt += `\n\nThey're cooking for ${userPreferences.homeSize} people. Keep household size in mind for quantity suggestions.`;
   }
 
+  return prompt;
+}
+
+// ============================================================================
+// Couple / household-aware prompt
+// ============================================================================
+
+export interface HouseholdMember {
+  name?: string;
+  dietaryRestrictions?: string[];
+  cookingSkillLevel?: "beginner" | "intermediate" | "advanced";
+  budgetConsciousness?: "low" | "medium" | "high";
+}
+
+export interface HouseholdContext {
+  /** Members who share this home (1 = solo, 2 = couple). */
+  members?: HouseholdMember[];
+  householdSize?: number;
+  /** House-level dietary rules, merged with each member's personal restrictions. */
+  sharedDietaryRestrictions?: string[];
+  /** Recent things the partner did, pre-formatted for Pixie to reference. */
+  partnerActivity?: string;
+  /** Items expiring soon, pre-formatted. */
+  expiringSummary?: string;
+}
+
+const SKILL_RANK = { beginner: 0, intermediate: 1, advanced: 2 } as const;
+const BUDGET_RANK = { low: 0, medium: 1, high: 2 } as const;
+
+function joinNames(names: string[]): string {
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+/**
+ * Build the system prompt for a shared household. Reconciles two (or more)
+ * partners: dietary needs are UNIONED (respect everyone), budget takes the most
+ * cost-conscious value, and cooking skill takes the highest (so we never
+ * condescend). Degrades to the single-user voice when there is only one member.
+ */
+export function generateHouseholdPrompt(ctx: HouseholdContext): string {
+  const members = ctx.members ?? [];
+
+  // Merge every member's dietary restrictions with house-level rules.
+  const dietSet = new Set<string>();
+  for (const m of members)
+    for (const d of m.dietaryRestrictions ?? []) dietSet.add(d);
+  for (const d of ctx.sharedDietaryRestrictions ?? []) dietSet.add(d);
+  const dietary = [...dietSet];
+
+  // Solo (or unknown) household → reuse the established single-user voice.
+  if (members.length <= 1) {
+    const m = members[0];
+    const base = generateSystemPrompt({
+      name: m?.name,
+      dietaryRestrictions: dietary.length ? dietary : undefined,
+      cookingSkillLevel: m?.cookingSkillLevel,
+      budgetConsciousness: m?.budgetConsciousness,
+      homeSize: ctx.householdSize,
+    });
+    return appendLiveContext(base, ctx);
+  }
+
+  let prompt = PIXIE_SYSTEM_PROMPT;
+
+  const names = members
+    .map((m) => m.name)
+    .filter((n): n is string => !!n);
+  prompt += `\n\n## Your Household\n\nYou're helping ${names.length ? joinNames(names) : "two partners"} — they share this home and pantry. Speak to them as a team ("you two", "your shared pantry"), and treat anything one of them tells you as something that helps both.`;
+
+  if (ctx.householdSize) {
+    prompt += `\n\nThis household has ${ctx.householdSize} ${ctx.householdSize === 1 ? "person" : "people"}. Keep that in mind for quantities.`;
+  }
+
+  if (dietary.length) {
+    prompt += `\n\nBetween them, the household has these dietary needs: ${dietary.join(", ")}. Respect ALL of them in every suggestion — never recommend something that breaks one partner's restriction to please the other.`;
+  }
+
+  // Cooking skill: use the most experienced partner so suggestions don't condescend.
+  let skill: keyof typeof SKILL_RANK | undefined;
+  for (const m of members) {
+    if (
+      m.cookingSkillLevel &&
+      (skill === undefined ||
+        SKILL_RANK[m.cookingSkillLevel] > SKILL_RANK[skill])
+    ) {
+      skill = m.cookingSkillLevel;
+    }
+  }
+  if (skill) prompt += `\n\n${SKILL_CONTEXT[skill]}`;
+
+  // Budget: respect the most cost-conscious partner.
+  let budget: keyof typeof BUDGET_RANK | undefined;
+  for (const m of members) {
+    if (
+      m.budgetConsciousness &&
+      (budget === undefined ||
+        BUDGET_RANK[m.budgetConsciousness] > BUDGET_RANK[budget])
+    ) {
+      budget = m.budgetConsciousness;
+    }
+  }
+  if (budget === "high") {
+    prompt +=
+      "\n\nAt least one partner is budget-conscious, so the household budget matters. Consider cost-effectiveness and highlight savings.";
+  } else if (budget === "low") {
+    prompt +=
+      "\n\nNeither partner worries much about budget. Premium or specialty suggestions are welcome.";
+  }
+
+  prompt += `\n\n## Coordinating Two People\n\n- Avoid duplicates: before adding or buying, consider whether the other partner may have handled it already.\n- Surface what the other partner did when it helps ("Alex added milk an hour ago — want me to skip it?").\n- The pantry, list, and budget are shared. Decisions affect both partners, so keep them both in mind.`;
+
+  return appendLiveContext(prompt, ctx);
+}
+
+function appendLiveContext(prompt: string, ctx: HouseholdContext): string {
+  if (ctx.partnerActivity && ctx.partnerActivity.trim()) {
+    prompt += `\n\n## Recent Household Activity\n\n${ctx.partnerActivity}\n\nStay aware of what your partner just did and reference it naturally when relevant — don't recite it unprompted.`;
+  }
+  if (ctx.expiringSummary && ctx.expiringSummary.trim()) {
+    prompt += `\n\n## Expiring Soon\n\n${ctx.expiringSummary}\n\nGently help them use these up before they go to waste.`;
+  }
   return prompt;
 }
 

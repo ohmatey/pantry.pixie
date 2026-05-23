@@ -8,7 +8,14 @@ import { MessageSquare, Package, Activity, CalendarCheck, Check, X, ArrowRight }
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 
 interface ActivityEvent {
-  type: "chat_started" | "chat_continued" | "item_added";
+  type:
+    | "chat_started"
+    | "chat_continued"
+    | "item_added"
+    | "item_removed"
+    | "item_checked"
+    | "item_unchecked"
+    | "item_updated";
   threadId?: string;
   threadTitle?: string | null;
   itemId?: string;
@@ -78,6 +85,7 @@ const ActivityItem = memo(function ActivityItem({
 }) {
   const actor = event.actorName || "Someone";
   const isChat = event.type === "chat_started" || event.type === "chat_continued";
+  const isItem = event.type.startsWith("item_");
 
   return (
     <button
@@ -112,6 +120,18 @@ const ActivityItem = memo(function ActivityItem({
           {event.type === "item_added" && (
             <>added <span className="font-medium">{event.itemName}</span> to the pantry</>
           )}
+          {event.type === "item_removed" && (
+            <>used up <span className="font-medium">{event.itemName}</span></>
+          )}
+          {event.type === "item_checked" && (
+            <>checked off <span className="font-medium">{event.itemName}</span></>
+          )}
+          {event.type === "item_unchecked" && (
+            <>unchecked <span className="font-medium">{event.itemName}</span></>
+          )}
+          {event.type === "item_updated" && (
+            <>updated <span className="font-medium">{event.itemName}</span></>
+          )}
         </p>
         <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300 mt-0.5">
           {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
@@ -120,7 +140,7 @@ const ActivityItem = memo(function ActivityItem({
       {isChat && (
         <MessageSquare className="w-4 h-4 text-pixie-charcoal-100 dark:text-pixie-mist-300 shrink-0 mt-0.5" />
       )}
-      {event.type === "item_added" && (
+      {isItem && (
         <Package className="w-4 h-4 text-pixie-charcoal-100 dark:text-pixie-mist-300 shrink-0 mt-0.5" />
       )}
     </button>
@@ -349,13 +369,12 @@ export default function ActivityPage() {
   const handleWSMessage = useCallback((msg: any) => {
     if (msg.type === "partner_activity") {
       const p = msg.payload as PartnerActivityPayload;
+      const isItemAction = p.action.startsWith("item_");
       const newEvent: ActivityEvent = {
-        type: p.action === "item_added" || p.action === "item_removed"
-          ? "item_added"
-          : p.action,
+        type: p.action,
         threadId: p.threadId,
         itemId: p.itemId,
-        itemName: p.action === "item_added" ? p.subject : undefined,
+        itemName: isItemAction ? p.subject : undefined,
         actorName: p.actorName,
         timestamp: msg.timestamp || new Date().toISOString(),
       };

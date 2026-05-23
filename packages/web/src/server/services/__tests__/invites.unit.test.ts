@@ -153,6 +153,8 @@ describe("Invite Service - acceptInvite()", () => {
 
     expect(result.homeId).toBe(testHomeId);
     expect(result.homeName).toBeString();
+    // A freshly-joined partner should be routed through preferences setup.
+    expect(result.needsOnboarding).toBe(true);
   });
 
   it("should add user as member role", async () => {

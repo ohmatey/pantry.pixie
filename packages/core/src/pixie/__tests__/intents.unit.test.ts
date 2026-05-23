@@ -358,13 +358,42 @@ describe("getIntentInfo()", () => {
   });
 });
 
+describe("classifyIntent() - couple intents", () => {
+  it("should classify partner activity questions", () => {
+    expect(classifyIntent("What did my partner add?")).toBe("partner_activity");
+    expect(classifyIntent("Has my partner bought milk yet?")).toBe(
+      "partner_activity",
+    );
+  });
+
+  it("should classify shared household status questions", () => {
+    expect(classifyIntent("What do we need this week?")).toBe(
+      "household_status",
+    );
+    expect(classifyIntent("Are we low on eggs?")).toBe("household_status");
+  });
+
+  it("should classify shared reminders", () => {
+    expect(classifyIntent("Remind us to restock coffee")).toBe("remind_us");
+    expect(classifyIntent("We need to remember to buy milk")).toBe("remind_us");
+  });
+
+  it("should not let couple intents shadow single-user actions", () => {
+    expect(classifyIntent("I just bought milk")).toBe("add_item");
+    expect(classifyIntent("add milk to my shopping list")).toBe("add_to_list");
+    expect(classifyIntent("Remind me to buy eggs monthly")).toBe(
+      "set_recurring",
+    );
+  });
+});
+
 // ============================================================================
 // intentPatterns structure
 // ============================================================================
 
 describe("intentPatterns structure", () => {
-  it("should have 9 intent patterns", () => {
-    expect(intentPatterns.length).toBe(9);
+  it("should have 12 intent patterns", () => {
+    expect(intentPatterns.length).toBe(12);
   });
 
   it("should cover all action intents", () => {
@@ -376,6 +405,9 @@ describe("intentPatterns structure", () => {
     expect(intents).toContain("ask_status");
     expect(intents).toContain("budget_question");
     expect(intents).toContain("meal_planning");
+    expect(intents).toContain("partner_activity");
+    expect(intents).toContain("household_status");
+    expect(intents).toContain("remind_us");
     expect(intents).toContain("greeting");
     expect(intents).toContain("clarification_needed");
   });

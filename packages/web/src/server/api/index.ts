@@ -13,6 +13,7 @@ import * as chatService from "../services/chat";
 import * as itemsService from "../services/items";
 import * as groceryListsService from "../services/grocery-lists";
 import * as budgetService from "../services/budget";
+import * as notificationsService from "../services/notifications";
 import {
   db,
   eq,
@@ -22,7 +23,7 @@ import {
   usersTable,
   chatThreadsTable,
   chatMessagesTable,
-  itemsTable,
+  itemUsageHistoryTable,
 } from "@pantry-pixie/core";
 import {
   createInvite,
@@ -266,6 +267,18 @@ export function registerApiRoutes(): Route[] {
       method: "GET",
       path: "/api/homes/:homeId/activity",
       handler: withAuth(handleGetActivity),
+    },
+
+    // Notification routes
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/notifications",
+      handler: withAuth(handleGetNotifications),
+    },
+    {
+      method: "PATCH",
+      path: "/api/homes/:homeId/notifications/:id/read",
+      handler: withAuth(handleMarkNotificationRead),
     },
   ];
 }
@@ -551,7 +564,7 @@ async function handleCreateItem(
     const body = await request.json();
     const parsed = validateBody(createItemSchema, body);
     if (!parsed.success) return parsed.response;
-    const item = await itemsService.addItem(params.homeId, parsed.data);
+    const item = await itemsService.addItem(params.homeId, parsed.data, auth.userId);
     return json({ success: true, data: item, timestamp: new Date() }, 201);
   } catch (err) {
     return handleError(err);
@@ -589,7 +602,7 @@ async function handleToggleItem(
 ): Promise<Response> {
   try {
     await assertHomeMembership(params.homeId, auth.userId);
-    const item = await itemsService.toggleItemCheck(params.homeId, params.id);
+    const item = await itemsService.toggleItemCheck(params.homeId, params.id, auth.userId);
     if (!item) {
       return json({ success: false, error: "Item not found" }, 404);
     }
@@ -606,7 +619,7 @@ async function handleDeleteItem(
 ): Promise<Response> {
   try {
     await assertHomeMembership(params.homeId, auth.userId);
-    const item = await itemsService.removeItem(params.homeId, params.id);
+    const item = await itemsService.removeItem(params.homeId, params.id, auth.userId);
     if (!item) {
       return json({ success: false, error: "Item not found" }, 404);
     }
@@ -1003,6 +1016,21 @@ async function handleSendMessage(
 // User preference handlers
 // ============================================================================
 
+/**
+ * Resolve the home a user's shared preferences (e.g. household size) belong to.
+ * Prefers a home they own, else their first membership. Returns null if none.
+ */
+async function getUserPrimaryHomeId(userId: string): Promise<string | null> {
+  const owned = await db.query.homesTable.findFirst({
+    where: eq(homesTable.ownerId, userId),
+  });
+  if (owned) return owned.id;
+  const membership = await db.query.homeMembersTable.findFirst({
+    where: eq(homeMembersTable.userId, userId),
+  });
+  return membership?.homeId ?? null;
+}
+
 async function handleGetPreferences(
   _request: Request,
   _params: Record<string, string>,
@@ -1015,6 +1043,11 @@ async function handleGetPreferences(
     if (!user) {
       return json({ success: false, error: "User not found" }, 404);
     }
+    // Household size is a shared, home-level property.
+    const homeId = await getUserPrimaryHomeId(auth.userId);
+    const home = homeId
+      ? await db.query.homesTable.findFirst({ where: eq(homesTable.id, homeId) })
+      : null;
     return json({
       success: true,
       data: {
@@ -1023,7 +1056,7 @@ async function handleGetPreferences(
           : [],
         cookingSkillLevel: user.cookingSkillLevel || null,
         budgetConsciousness: user.budgetConsciousness || null,
-        householdSize: user.householdSize ?? null,
+        householdSize: home?.householdSize ?? null,
       },
       timestamp: new Date(),
     });
@@ -1058,16 +1091,30 @@ async function handleUpdatePreferences(
         ? body.budgetConsciousness
         : null;
     }
+    // Household size is shared at the home level, not per-user.
+    let householdSizeUpdate: number | null | undefined;
     if ("householdSize" in body) {
       const size = Number(body.householdSize);
-      updates.householdSize = !isNaN(size) && size >= 1 && size <= 20 ? size : null;
+      householdSizeUpdate = !isNaN(size) && size >= 1 && size <= 20 ? size : null;
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && householdSizeUpdate === undefined) {
       return json({ success: false, error: "No valid fields to update" }, 400);
     }
 
-    await db.update(usersTable).set(updates).where(eq(usersTable.id, auth.userId));
+    if (Object.keys(updates).length > 0) {
+      await db.update(usersTable).set(updates).where(eq(usersTable.id, auth.userId));
+    }
+
+    if (householdSizeUpdate !== undefined) {
+      const homeId = await getUserPrimaryHomeId(auth.userId);
+      if (homeId) {
+        await db
+          .update(homesTable)
+          .set({ householdSize: householdSizeUpdate })
+          .where(eq(homesTable.id, homeId));
+      }
+    }
 
     return json({ success: true, timestamp: new Date() });
   } catch (err) {
@@ -1126,13 +1173,16 @@ async function handleGetActivity(
         const firstMsg = userMessages[userMessages.length - 1]; // oldest
         const lastMsg = userMessages[0]; // newest
 
-        // Get actor name from metadata
+        // Resolve actor: prefer the first-class userId column, fall back to
+        // legacy metadata for messages written before the column existed.
         const getActorName = async (msg: typeof firstMsg | undefined) => {
-          if (!msg?.metadata) return null;
-          const meta = msg.metadata as Record<string, unknown>;
-          if (!meta.userId) return null;
+          if (!msg) return null;
+          const meta = msg.metadata as Record<string, unknown> | null;
+          const userId =
+            msg.userId ?? (meta?.userId as string | undefined) ?? null;
+          if (!userId) return null;
           const user = await db.query.usersTable.findFirst({
-            where: eq(usersTable.id, meta.userId as string),
+            where: eq(usersTable.id, userId),
           });
           return user?.name || null;
         };
@@ -1167,19 +1217,33 @@ async function handleGetActivity(
       }),
     );
 
-    // Also include recent items
-    const recentItems = await db.query.itemsTable.findMany({
-      where: eq(itemsTable.homeId, params.homeId),
-      orderBy: [desc(itemsTable.dateAdded)],
-      limit: 20,
+    // Item activity from the durable usage log (who added / used / checked what).
+    const history = await db.query.itemUsageHistoryTable.findMany({
+      where: eq(itemUsageHistoryTable.homeId, params.homeId),
+      orderBy: [desc(itemUsageHistoryTable.createdAt)],
+      limit: 40,
     });
 
-    const itemActivities = recentItems.map((item) => ({
-      type: "item_added" as const,
-      itemId: item.id,
-      itemName: item.name,
-      actorName: null as string | null,
-      timestamp: item.dateAdded,
+    // Resolve actor names for item events from home membership.
+    const itemActorIds = [
+      ...new Set(
+        history.map((h) => h.markedBy).filter((id): id is string => !!id),
+      ),
+    ];
+    const itemActors = new Map<string, string>();
+    for (const id of itemActorIds) {
+      const user = await db.query.usersTable.findFirst({
+        where: eq(usersTable.id, id),
+      });
+      if (user) itemActors.set(id, user.name);
+    }
+
+    const itemActivities = history.map((h) => ({
+      type: `item_${h.action}` as `item_${string}`,
+      itemId: h.itemId,
+      itemName: h.itemName,
+      actorName: (h.markedBy && itemActors.get(h.markedBy)) || null,
+      timestamp: h.createdAt,
     }));
 
     // Flatten and sort by timestamp desc
@@ -1193,6 +1257,47 @@ async function handleGetActivity(
     }).slice(0, 50);
 
     return json({ success: true, data: allActivities, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Notification handlers
+// ============================================================================
+
+async function handleGetNotifications(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const notifications = await notificationsService.listNotifications(
+      params.homeId,
+      auth.userId,
+    );
+    return json({ success: true, data: notifications, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+async function handleMarkNotificationRead(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const notification = await notificationsService.markNotificationRead(
+      params.homeId,
+      params.id,
+    );
+    if (!notification) {
+      return json({ success: false, error: "Notification not found" }, 404);
+    }
+    return json({ success: true, data: notification, timestamp: new Date() });
   } catch (err) {
     return handleError(err);
   }

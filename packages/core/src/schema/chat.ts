@@ -5,6 +5,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { homesTable } from "./home";
+import { usersTable } from "./user";
 
 export const chatThreadsTable = sqliteTable("chat_threads", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -24,6 +25,9 @@ export const chatMessagesTable = sqliteTable("chat_messages", {
   role: text("role").notNull(), // "user" or "assistant"
   content: text("content").notNull(),
   intent: text("intent"), // classified intent: add_item, set_recurring, ask_status, budget_question, clarification_needed
+  // Which household member sent this message (null for assistant messages).
+  // First-class column so a shared thread can attribute each turn to a partner.
+  userId: text("user_id").references(() => usersTable.id, { onDelete: "set null" }),
   metadata: text("metadata", { mode: "json" }), // arbitrary metadata for the message
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
@@ -43,6 +47,10 @@ export const chatMessageRelations = relations(chatMessagesTable, ({ one }) => ({
   thread: one(chatThreadsTable, {
     fields: [chatMessagesTable.threadId],
     references: [chatThreadsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [chatMessagesTable.userId],
+    references: [usersTable.id],
   }),
 }));
 

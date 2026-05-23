@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, test, mock } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { db, eq, itemsTable } from "@pantry-pixie/core";
+import { db, eq, itemsTable, itemUsageHistoryTable } from "@pantry-pixie/core";
 import { eventBus } from "../events";
 import {
   addItem,
@@ -29,11 +29,13 @@ if (skipTests) {
 } else {
 
 let testHomeId: string;
+let testUserId: string;
 let createdItemIds: string[] = [];
 
 beforeAll(async () => {
   const seed = await seedTestUser();
   testHomeId = seed.home.id;
+  testUserId = seed.user.id;
 });
 
 afterAll(async () => {
@@ -124,12 +126,12 @@ describe("Items Service - addItem()", () => {
     const handler = mock((data: any) => data);
     const unsub = eventBus.on("inventory:updated", handler);
 
-    const item = await addItem(testHomeId, { name: "Tracked Item" }, "user-actor-123");
+    const item = await addItem(testHomeId, { name: "Tracked Item" }, testUserId);
     createdItemIds.push(item.id);
 
     expect(handler).toHaveBeenCalledTimes(1);
     const emitted = handler.mock.calls[0][0];
-    expect(emitted.actorId).toBe("user-actor-123");
+    expect(emitted.actorId).toBe(testUserId);
     expect(emitted.action).toBe("added");
     expect(emitted.homeId).toBe(testHomeId);
 
@@ -148,6 +150,30 @@ describe("Items Service - addItem()", () => {
     expect(emitted.actorId).toBeUndefined();
 
     unsub();
+  });
+
+  it("should persist addedBy and write a usage-history row", async () => {
+    const item = await addItem(
+      testHomeId,
+      { name: "Attributed Milk", quantity: 2 },
+      testUserId,
+    );
+    createdItemIds.push(item.id);
+
+    const [stored] = await db
+      .select()
+      .from(itemsTable)
+      .where(eq(itemsTable.id, item.id));
+    expect(stored.addedBy).toBe(testUserId);
+
+    const history = await db
+      .select()
+      .from(itemUsageHistoryTable)
+      .where(eq(itemUsageHistoryTable.itemId, item.id));
+    const added = history.find((h) => h.action === "added");
+    expect(added).toBeDefined();
+    expect(added!.markedBy).toBe(testUserId);
+    expect(added!.itemName).toBe("Attributed Milk");
   });
 });
 
@@ -383,11 +409,11 @@ describe("Items Service - removeItem()", () => {
     const handler = mock((data: any) => data);
     const unsub = eventBus.on("inventory:updated", handler);
 
-    await removeItem(testHomeId, item.id, "user-remover-456");
+    await removeItem(testHomeId, item.id, testUserId);
 
     expect(handler).toHaveBeenCalledTimes(1);
     const emitted = handler.mock.calls[0][0];
-    expect(emitted.actorId).toBe("user-remover-456");
+    expect(emitted.actorId).toBe(testUserId);
     expect(emitted.action).toBe("removed");
 
     unsub();

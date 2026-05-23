@@ -23,6 +23,9 @@ export const homesTable = sqliteTable("homes", {
   timezone: text("timezone").default("UTC").notNull(),
   currency: text("currency").default("USD").notNull(),
   monthlyBudget: integer("monthly_budget"),
+  // Shared household properties (both partners share these).
+  householdSize: integer("household_size"), // number of people in the home
+  sharedDietaryRestrictions: text("shared_dietary_restrictions"), // JSON array as text — house-level rules
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
