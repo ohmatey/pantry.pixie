@@ -8,6 +8,7 @@ import {
   DropdownItem,
   DropdownSeparator,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsBell } from "./NotificationsBell";
 
 export function AppShell() {
   // Global WS→cache bridge for inventory updates
@@ -82,6 +83,9 @@ export function AppShell() {
             <MessageSquare className="w-4 h-4" />
             <span>Chats</span>
           </NavLink>
+
+          {/* Notifications */}
+          <NotificationsBell />
 
           {/* User profile dropdown */}
           <DropdownMenu

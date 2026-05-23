@@ -45,6 +45,7 @@ export function generateRoutes() {
   const PantryPage = lazy(() => import("../pages/(app)/pantry"));
   const ListPage = lazy(() => import("../pages/(app)/list"));
   const ActivityPage = lazy(() => import("../pages/(app)/activity"));
+  const NotificationsPage = lazy(() => import("../pages/(app)/notifications"));
   const SettingsPage = lazy(() => import("../pages/(app)/settings"));
 
   // Guards
@@ -150,6 +151,10 @@ export function generateRoutes() {
         {
           path: "activity",
           element: withSuspense(ActivityPage),
+        },
+        {
+          path: "notifications",
+          element: withSuspense(NotificationsPage),
         },
         {
           path: "settings",
