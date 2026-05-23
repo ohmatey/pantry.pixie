@@ -7,6 +7,7 @@ import {
   Users,
   CalendarCheck,
   CheckCheck,
+  TrendingDown,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -26,6 +27,10 @@ const TYPE_META: Record<
   },
   expiring_soon: {
     icon: Clock,
+    tint: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+  running_low: {
+    icon: TrendingDown,
     tint: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
   },
   partner_activity: {
@@ -110,6 +115,7 @@ export default function NotificationsPage() {
           navigate("/activity");
           break;
         case "recurring_due":
+        case "running_low":
           navigate("/list");
           break;
         case "expiring_soon":

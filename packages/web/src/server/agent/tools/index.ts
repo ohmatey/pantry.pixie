@@ -8,3 +8,4 @@ export { createListGroceryListsTool } from "./list-grocery-lists";
 export { createShowGroceryListEditorTool } from "./show-grocery-list-editor";
 export { createQueryBudgetTool } from "./query-budget";
 export { createSuggestMealsTool } from "./suggest-meals";
+export { createCheckPredictionsTool } from "./check-predictions";

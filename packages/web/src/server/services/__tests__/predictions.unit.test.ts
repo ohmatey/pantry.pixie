@@ -96,6 +96,20 @@ if (skipTests) {
       expect(fastIdx).toBeLessThan(slowIdx);
     });
 
+    it("flags a well-established item as due soon with high confidence", async () => {
+      // 8 purchases at a 7-day cadence, last one 6 days ago → next due ~1 day
+      // out. This is the trigger condition the scheduler's low-stock pass uses
+      // (confidence >= 0.5 AND due within 3 days).
+      await seedAdded(homeId, "PredCadence", [55, 48, 41, 34, 27, 20, 13, 6]);
+      const pred = await predictItemDepletion(homeId, "PredCadence");
+      expect(pred).not.toBeNull();
+      expect(pred!.confidence).toBeGreaterThanOrEqual(0.5);
+      const dueInDays =
+        (pred!.predictedDepletionDate.getTime() - Date.now()) / DAY_MS;
+      expect(dueInDays).toBeLessThanOrEqual(3);
+      expect(dueInDays).toBeGreaterThan(-1);
+    });
+
     it("returns null for an item with no history", async () => {
       const stats = await getItemFrequencyStats(homeId, "NeverBoughtXYZ");
       expect(stats).toBeNull();

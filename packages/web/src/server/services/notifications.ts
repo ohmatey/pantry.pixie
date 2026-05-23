@@ -18,7 +18,8 @@ export type NotificationType =
   | "recurring_due"
   | "expiring_soon"
   | "partner_activity"
-  | "sunday_sync";
+  | "sunday_sync"
+  | "running_low";
 
 export interface NewNotificationInput {
   homeId: string;
