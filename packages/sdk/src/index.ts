@@ -10,6 +10,8 @@ export {
   GroceryListClient,
   ChatClient,
   type PantryPixieClientConfig,
+  type AddListItemInput,
+  type AddListItemByNameInput,
 } from "./client";
 
 // Re-export core types for convenience
@@ -18,6 +20,7 @@ export type {
   Home,
   Item,
   GroceryList,
+  ListItem,
   ChatThread,
   ChatMessage,
   CreateItemInput,

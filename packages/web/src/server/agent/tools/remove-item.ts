@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import * as itemsService from "../../services/items";
 
-export function createRemoveItemTool(homeId: string) {
+export function createRemoveItemTool(homeId: string, actorId?: string) {
   const schema = z.object({
     name: z.string().describe("Name of the item to remove"),
   });
@@ -21,7 +21,7 @@ export function createRemoveItemTool(homeId: string) {
         };
       }
 
-      await itemsService.removeItem(homeId, item.id);
+      await itemsService.removeItem(homeId, item.id, actorId);
 
       return {
         success: true,

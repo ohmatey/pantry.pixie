@@ -10,6 +10,7 @@ import {
   ListCommand,
   HomeCommand,
   ConfigCommand,
+  SyncCommand,
   type Command,
 } from "./commands";
 
@@ -18,6 +19,7 @@ const commands: Map<string, Command> = new Map([
   ["list", new ListCommand()],
   ["home", new HomeCommand()],
   ["config", new ConfigCommand()],
+  ["sync", new SyncCommand()],
 ]);
 
 async function main(): Promise<void> {
@@ -72,6 +74,7 @@ COMMANDS
   list          Manage grocery lists
   home          Manage homes
   config        Configure Pantry Pixie
+  sync          Sync low-stock items to grocery list
 
 OPTIONS
   --help, -h    Show this help message

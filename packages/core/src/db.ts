@@ -18,7 +18,10 @@ function initializeDb(): DbType {
 
   const databaseUrl = process.env.DATABASE_URL;
 
-  if (databaseUrl) {
+  if (process.env.NODE_ENV === "test") {
+    // Always use in-memory DB for tests, regardless of DATABASE_URL
+    dbPath = ":memory:";
+  } else if (databaseUrl) {
     if (databaseUrl.startsWith("sqlite:")) {
       dbPath = databaseUrl.replace("sqlite:", "");
     } else if (databaseUrl === ":memory:") {
@@ -28,10 +31,7 @@ function initializeDb(): DbType {
       dbPath = databaseUrl;
     }
   } else {
-    // Default: use ./data/pantry.db for development, :memory: for tests
-    dbPath = process.env.NODE_ENV === "test"
-      ? ":memory:"
-      : path.join(process.cwd(), "data", "pantry.db");
+    dbPath = path.join(process.cwd(), "data", "pantry.db");
   }
 
   // Create data directory if using file-based DB
@@ -67,6 +67,9 @@ CREATE TABLE IF NOT EXISTS \`users\` (
   \`password_hash\` text NOT NULL,
   \`is_verified\` integer DEFAULT 0 NOT NULL,
   \`preferred_language\` text DEFAULT 'en' NOT NULL,
+  \`dietary_restrictions\` text,
+  \`cooking_skill_level\` text,
+  \`budget_consciousness\` text,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   \`updated_at\` integer NOT NULL DEFAULT (unixepoch())
 );
@@ -83,6 +86,8 @@ CREATE TABLE IF NOT EXISTS \`homes\` (
   \`timezone\` text DEFAULT 'UTC' NOT NULL,
   \`currency\` text DEFAULT 'USD' NOT NULL,
   \`monthly_budget\` integer,
+  \`household_size\` integer,
+  \`shared_dietary_restrictions\` text,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   \`updated_at\` integer NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (\`owner_id\`) REFERENCES \`users\`(\`id\`) ON DELETE cascade
@@ -115,6 +120,7 @@ CREATE TABLE IF NOT EXISTS \`items\` (
   \`price\` real,
   \`notes\` text,
   \`is_checked\` integer DEFAULT 0 NOT NULL,
+  \`added_by\` text REFERENCES \`users\`(\`id\`) ON DELETE set null,
   FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade
 );
 CREATE TABLE IF NOT EXISTS \`grocery_lists\` (
@@ -163,9 +169,35 @@ CREATE TABLE IF NOT EXISTS \`chat_messages\` (
   \`role\` text NOT NULL,
   \`content\` text NOT NULL,
   \`intent\` text,
+  \`user_id\` text REFERENCES \`users\`(\`id\`) ON DELETE set null,
   \`metadata\` text,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (\`thread_id\`) REFERENCES \`chat_threads\`(\`id\`) ON DELETE cascade
+);
+CREATE TABLE IF NOT EXISTS \`item_usage_history\` (
+  \`id\` text PRIMARY KEY NOT NULL,
+  \`home_id\` text NOT NULL,
+  \`item_id\` text,
+  \`item_name\` text NOT NULL,
+  \`marked_by\` text,
+  \`action\` text NOT NULL,
+  \`quantity\` integer,
+  \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade,
+  FOREIGN KEY (\`marked_by\`) REFERENCES \`users\`(\`id\`) ON DELETE set null
+);
+CREATE TABLE IF NOT EXISTS \`notifications\` (
+  \`id\` text PRIMARY KEY NOT NULL,
+  \`home_id\` text NOT NULL,
+  \`user_id\` text,
+  \`type\` text NOT NULL,
+  \`title\` text NOT NULL,
+  \`body\` text,
+  \`ref_id\` text,
+  \`is_read\` integer DEFAULT 0 NOT NULL,
+  \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade,
+  FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE cascade
 );
 `);
 }

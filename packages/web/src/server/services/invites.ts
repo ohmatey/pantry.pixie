@@ -10,6 +10,7 @@ import {
   usersTable,
 } from "@pantry-pixie/core";
 import { randomBytes } from "crypto";
+import { notifyPartners } from "./notifications";
 
 interface InviteEntry {
   code: string;
@@ -51,7 +52,7 @@ export function createInvite(
 export async function acceptInvite(
   code: string,
   userId: string,
-): Promise<{ homeId: string; homeName: string }> {
+): Promise<{ homeId: string; homeName: string; needsOnboarding: boolean }> {
   cleanExpired();
 
   const entry = invites.get(code);
@@ -69,12 +70,16 @@ export async function acceptInvite(
     where: eq(homeMembersTable.userId, userId),
   });
 
-  // If they're already in this home, just return it
+  // If they're already in this home, just return it (no onboarding needed).
   if (existing?.homeId === entry.homeId) {
     const home = await db.query.homesTable.findFirst({
       where: eq(homesTable.id, entry.homeId),
     });
-    return { homeId: entry.homeId, homeName: home?.name || "Kitchen" };
+    return {
+      homeId: entry.homeId,
+      homeName: home?.name || "Kitchen",
+      needsOnboarding: false,
+    };
   }
 
   // Add user as member
@@ -91,7 +96,25 @@ export async function acceptInvite(
     where: eq(homesTable.id, entry.homeId),
   });
 
-  return { homeId: entry.homeId, homeName: home?.name || "Kitchen" };
+  // Let the existing partner know someone joined their shared home.
+  const joiner = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, userId),
+  });
+  await notifyPartners(entry.homeId, userId, {
+    type: "partner_activity",
+    title: `${joiner?.name || "Your partner"} joined your home`,
+    body: "You're now sharing this pantry together.",
+  }).catch(() => {
+    /* non-critical */
+  });
+
+  // New member → the client should run them through a short preferences setup
+  // so the second partner isn't a blank slate.
+  return {
+    homeId: entry.homeId,
+    homeName: home?.name || "Kitchen",
+    needsOnboarding: true,
+  };
 }
 
 export async function getInviteInfo(

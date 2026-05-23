@@ -14,7 +14,16 @@ export {
 } from "./home";
 
 // Item (pantry inventory) schema
-export { itemsTable, itemsRelations, type Item, type NewItem } from "./item";
+export {
+  itemsTable,
+  itemsRelations,
+  itemUsageHistoryTable,
+  itemUsageHistoryRelations,
+  type Item,
+  type NewItem,
+  type ItemUsageHistory,
+  type NewItemUsageHistory,
+} from "./item";
 
 // Grocery list schema
 export {
@@ -39,3 +48,11 @@ export {
   type ChatMessage,
   type NewChatMessage,
 } from "./chat";
+
+// Notification schema
+export {
+  notificationsTable,
+  notificationsRelations,
+  type Notification,
+  type NewNotification,
+} from "./notification";

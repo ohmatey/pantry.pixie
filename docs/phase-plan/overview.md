@@ -48,6 +48,9 @@ Pantry Pixie is an open-source domestic AI steward product designed to coordinat
 - OpenClaw integration hooks
 - npm package publishing
 
+**Engineering Docs:**
+- [`docs/engineering/cli-commands-implementation.md`](../engineering/cli-commands-implementation.md) — CLI architecture, config store, subcommand routing, 8-step action plan
+
 ### Phase 3: Intelligence Layer (Weeks 13-18)
 **Goal:** Add predictive and adaptive features based on household patterns
 **Outcome:** Smart suggestions, pattern learning, and enhanced Pixie personality

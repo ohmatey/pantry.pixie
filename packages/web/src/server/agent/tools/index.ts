@@ -6,3 +6,5 @@ export { createSetRecurringTool } from "./set-recurring";
 export { createAddToListTool } from "./add-to-list";
 export { createListGroceryListsTool } from "./list-grocery-lists";
 export { createShowGroceryListEditorTool } from "./show-grocery-list-editor";
+export { createQueryBudgetTool } from "./query-budget";
+export { createSuggestMealsTool } from "./suggest-meals";

@@ -10,9 +10,34 @@ import {
   like,
   asc,
   itemsTable,
+  itemUsageHistoryTable,
   type Item,
 } from "@pantry-pixie/core";
 import { eventBus } from "./events";
+
+/**
+ * Append a row to the durable item activity log. Best-effort: a logging
+ * failure must never break the underlying mutation.
+ */
+async function recordUsage(
+  homeId: string,
+  item: { id: string; name: string; quantity?: number | null },
+  action: "added" | "removed" | "checked" | "unchecked" | "updated",
+  markedBy?: string,
+): Promise<void> {
+  try {
+    await db.insert(itemUsageHistoryTable).values({
+      homeId,
+      itemId: item.id,
+      itemName: item.name,
+      action,
+      quantity: item.quantity ?? undefined,
+      markedBy,
+    });
+  } catch {
+    // non-critical: activity logging must not fail the mutation
+  }
+}
 
 export interface AddItemData {
   name: string;
@@ -48,6 +73,7 @@ export interface ItemFilters {
 export async function addItem(
   homeId: string,
   data: AddItemData,
+  actorId?: string,
 ): Promise<Item> {
   const [item] = await db
     .insert(itemsTable)
@@ -61,10 +87,12 @@ export async function addItem(
       expiresAt: data.expiresAt,
       notes: data.notes,
       price: data.price,
+      addedBy: actorId,
     })
     .returning();
 
-  eventBus.emit("inventory:updated", { action: "added", item, homeId });
+  await recordUsage(homeId, item, "added", actorId);
+  eventBus.emit("inventory:updated", { action: "added", item, homeId, actorId });
   return item;
 }
 
@@ -126,6 +154,7 @@ export async function updateItem(
 export async function removeItem(
   homeId: string,
   itemId: string,
+  actorId?: string,
 ): Promise<Item | undefined> {
   const [item] = await db
     .delete(itemsTable)
@@ -133,7 +162,8 @@ export async function removeItem(
     .returning();
 
   if (item) {
-    eventBus.emit("inventory:updated", { action: "removed", item, homeId });
+    await recordUsage(homeId, item, "removed", actorId);
+    eventBus.emit("inventory:updated", { action: "removed", item, homeId, actorId });
   }
   return item;
 }
@@ -155,6 +185,7 @@ export async function findItemByName(
 export async function toggleItemCheck(
   homeId: string,
   itemId: string,
+  actorId?: string,
 ): Promise<Item | undefined> {
   const existing = await getItem(homeId, itemId);
   if (!existing) return undefined;
@@ -166,7 +197,8 @@ export async function toggleItemCheck(
     .returning();
 
   if (item) {
-    eventBus.emit("inventory:updated", { action: "toggled", item, homeId });
+    await recordUsage(homeId, item, item.isChecked ? "checked" : "unchecked", actorId);
+    eventBus.emit("inventory:updated", { action: "toggled", item, homeId, actorId });
   }
   return item;
 }

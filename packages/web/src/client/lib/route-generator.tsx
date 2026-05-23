@@ -40,8 +40,12 @@ export function generateRoutes() {
   const RegisterPage = lazy(() => import("../pages/register"));
   const OnboardingPage = lazy(() => import("../pages/onboarding"));
   const AcceptInvitePage = lazy(() => import("../pages/invite/[code]"));
+  const ChatsPage = lazy(() => import("../pages/(app)/chats"));
   const ChatPage = lazy(() => import("../pages/(app)/chat"));
+  const PantryPage = lazy(() => import("../pages/(app)/pantry"));
   const ListPage = lazy(() => import("../pages/(app)/list"));
+  const ActivityPage = lazy(() => import("../pages/(app)/activity"));
+  const NotificationsPage = lazy(() => import("../pages/(app)/notifications"));
   const SettingsPage = lazy(() => import("../pages/(app)/settings"));
 
   // Guards
@@ -129,12 +133,28 @@ export function generateRoutes() {
       ),
       children: [
         {
-          path: "chat",
+          path: "chats",
+          element: withSuspense(ChatsPage, <ChatSkeleton />),
+        },
+        {
+          path: "chat/:threadId",
           element: withSuspense(ChatPage, <ChatSkeleton />),
+        },
+        {
+          path: "pantry",
+          element: withSuspense(PantryPage),
         },
         {
           path: "list",
           element: withSuspense(ListPage, <ListSkeleton />),
+        },
+        {
+          path: "activity",
+          element: withSuspense(ActivityPage),
+        },
+        {
+          path: "notifications",
+          element: withSuspense(NotificationsPage),
         },
         {
           path: "settings",
@@ -144,7 +164,7 @@ export function generateRoutes() {
     },
     {
       path: "*",
-      element: <Navigate to="/chat" replace />,
+      element: <Navigate to="/chats" replace />,
     },
   ];
 

@@ -118,6 +118,9 @@ export type PixieIntent =
   | "ask_status"
   | "budget_question"
   | "meal_planning"
+  | "partner_activity"
+  | "household_status"
+  | "remind_us"
   | "clarification_needed"
   | "greeting"
   | "other";

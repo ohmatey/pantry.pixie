@@ -4,8 +4,10 @@
 
 import type { ServerWebSocket } from "bun";
 import * as chatService from "../services/chat";
+import * as notificationsService from "../services/notifications";
 import { eventBus } from "../services/events";
 import { logger, logWebSocket } from "../lib/logger";
+import { db, eq, usersTable } from "@pantry-pixie/core";
 
 export interface GroceryListUI {
   id: string;
@@ -72,11 +74,24 @@ export interface WebSocketMessage {
     | "status"
     | "inventory_update"
     | "list_update"
+    | "partner_activity"
     | "ping"
     | "pong"
     | "error";
   payload: unknown;
   timestamp: string;
+}
+
+export interface PartnerActivityMessage extends WebSocketMessage {
+  type: "partner_activity";
+  payload: {
+    actorName: string | null;
+    actorId: string | null;
+    action: "chat_started" | "chat_continued" | "item_added" | "item_removed";
+    subject: string;
+    threadId?: string;
+    itemId?: string;
+  };
 }
 
 export interface ChatWebSocketMessage extends WebSocketMessage {
@@ -115,12 +130,36 @@ const homeConnections = new Map<string, Set<ServerWebSocket<WSData>>>();
 eventBus.on(
   "inventory:updated",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (data: { action: string; item: any; homeId: string }) => {
+  (data: { action: string; item: any; homeId: string; actorId?: string }) => {
     broadcastToHome(data.homeId, {
       type: "inventory_update",
       payload: { action: data.action, item: data.item, homeId: data.homeId },
       timestamp: new Date().toISOString(),
     });
+
+    // Broadcast partner activity for item mutations triggered by an actor
+    if (data.actorId && (data.action === "added" || data.action === "removed")) {
+      db.query.usersTable.findFirst({ where: eq(usersTable.id, data.actorId) })
+        .then((user) => {
+          const actorName = user?.name || "Your partner";
+          broadcastPartnerActivity(data.homeId, {
+            actorName: user?.name || null,
+            actorId: data.actorId!,
+            action: data.action === "added" ? "item_added" : "item_removed",
+            subject: data.item.name,
+            itemId: data.item.id,
+          });
+          // Persist a notification so an offline partner sees it later.
+          notificationsService
+            .notifyPartners(data.homeId, data.actorId, {
+              type: "partner_activity",
+              title: `${actorName} ${data.action === "added" ? "added" : "used up"} ${data.item.name}`,
+              refId: data.item.id,
+            })
+            .catch(() => {/* non-critical */});
+        })
+        .catch(() => {/* ignore activity broadcast errors */});
+    }
   },
 );
 
@@ -261,6 +300,23 @@ async function handleChatMessage(
       ws, // exclude sender
     );
 
+    // Broadcast partner activity (get actor name from DB)
+    db.query.usersTable.findFirst({ where: eq(usersTable.id, userId) })
+      .then((user) => {
+        broadcastPartnerActivity(
+          homeId,
+          {
+            actorName: user?.name || null,
+            actorId: userId,
+            action: result.isFirstMessage ? "chat_started" : "chat_continued",
+            subject: result.userMessage.content.slice(0, 60),
+            threadId,
+          },
+          ws,
+        );
+      })
+      .catch(() => {/* ignore activity broadcast errors */});
+
     // Start streaming the assistant response
     let accumulatedText = "";
 
@@ -338,4 +394,20 @@ function broadcastToHome(
       ws.send(data);
     }
   }
+}
+
+export function broadcastPartnerActivity(
+  homeId: string,
+  payload: PartnerActivityMessage["payload"],
+  excludeWs?: ServerWebSocket<WSData>,
+): void {
+  broadcastToHome(
+    homeId,
+    {
+      type: "partner_activity",
+      payload,
+      timestamp: new Date().toISOString(),
+    },
+    excludeWs,
+  );
 }

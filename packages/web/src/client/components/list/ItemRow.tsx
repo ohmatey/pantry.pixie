@@ -1,5 +1,5 @@
 import { useState, useRef, memo } from "react";
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Check, Trash2 } from "lucide-react";
 import { ItemDetailsModal } from "./ItemDetailsModal";
@@ -26,6 +26,7 @@ export const ItemRow = memo(function ItemRow({
   const [animating, setAnimating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isPendingDelete, setIsPendingDelete] = useState(false);
   const prevChecked = useRef(item.isChecked);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -53,18 +54,26 @@ export const ItemRow = memo(function ItemRow({
   };
 
   const handleDelete = () => {
-    if (onDelete) {
-      onDelete(item.id);
-      toast.success(`Deleted ${item.name}`, {
-        action: {
-          label: "Undo",
-          onClick: () => {
-            // TODO: Implement undo
-            toast.info("Undo not yet implemented");
-          },
+    if (!onDelete) return;
+    setIsPendingDelete(true);
+    let undone = false;
+
+    toast.success(`Deleted ${item.name}`, {
+      duration: 4000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          undone = true;
+          setIsPendingDelete(false);
         },
-      });
-    }
+      },
+      onAutoClose: () => {
+        if (!undone) onDelete(item.id);
+      },
+      onDismiss: () => {
+        if (!undone) onDelete(item.id);
+      },
+    });
   };
 
   const handlePanStart = () => {
@@ -111,17 +120,24 @@ export const ItemRow = memo(function ItemRow({
 
   return (
     <>
-      <div className="relative overflow-hidden">
-        {/* Delete button (revealed by swipe) */}
-        <motion.div
-          style={{ opacity: deleteButtonOpacity }}
-          className="absolute right-0 top-0 bottom-0 w-20 bg-red-500 dark:bg-red-600 flex items-center justify-center pointer-events-none"
-        >
-          <Trash2 className="w-5 h-5 text-white" />
-        </motion.div>
+      <AnimatePresence>
+        {!isPendingDelete && (
+          <motion.div
+            key={item.id}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="relative overflow-hidden">
+              {/* Delete button (revealed by swipe) */}
+              <motion.div
+                style={{ opacity: deleteButtonOpacity }}
+                className="absolute right-0 top-0 bottom-0 w-20 bg-red-500 dark:bg-red-600 flex items-center justify-center pointer-events-none"
+              >
+                <Trash2 className="w-5 h-5 text-white" />
+              </motion.div>
 
-        {/* Swipeable item row */}
-        <motion.div
+              {/* Swipeable item row */}
+              <motion.div
           style={!selectionMode ? { x, opacity } : {}}
           drag={!selectionMode ? "x" : false}
           dragConstraints={{ left: 0, right: 0 }}
@@ -230,8 +246,11 @@ export const ItemRow = memo(function ItemRow({
               {item.quantity} {item.unit || ""}
             </button>
           )}
-        </motion.div>
-      </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete confirmation toast */}
       {showDeleteConfirm && (

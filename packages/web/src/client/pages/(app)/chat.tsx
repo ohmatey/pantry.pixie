@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { ChatBubbleWithUI } from "@/components/chat/ChatBubbleWithUI";
@@ -7,9 +7,10 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { StarterPrompts } from "@/components/chat/StarterPrompts";
 import { ListSelector } from "@/components/chat/ListSelector";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
+import { useParams, useNavigate } from "react-router-dom";
 import type {
   SerializedUI,
   UIWebSocketMessage,
@@ -28,43 +29,26 @@ interface Message {
 
 export default function ChatPage() {
   const { token, user } = useAuth();
-  const queryClient = useQueryClient();
+  const { threadId } = useParams<{ threadId: string }>();
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
-  // Fetch or create a thread
+  const activeThreadId = threadId ?? null;
+
+  // Fetch thread info for title
   const { data: threadsData } = useQuery({
     queryKey: ["threads", user?.homeId],
     queryFn: () => apiFetch(`/api/homes/${user!.homeId}/chat/threads`, token!),
     enabled: !!token && !!user?.homeId,
   });
 
-  // Create thread mutation
-  const createThread = useMutation({
-    mutationFn: () =>
-      apiFetch(`/api/homes/${user!.homeId}/chat/threads`, token!, {
-        method: "POST",
-        body: JSON.stringify({ title: "Chat" }),
-      }),
-    onSuccess: (data) => {
-      if (data.success && data.data) {
-        setActiveThreadId(data.data.id);
-        queryClient.invalidateQueries({ queryKey: ["threads"] });
-      }
-    },
-  });
-
-  // Set active thread
-  useEffect(() => {
-    if (threadsData?.success && threadsData.data?.length > 0) {
-      setActiveThreadId(threadsData.data[0].id);
-    } else if (threadsData?.success && threadsData.data?.length === 0) {
-      createThread.mutate();
-    }
-  }, [threadsData]);
+  const currentThread = threadsData?.data?.find(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (t: any) => t.id === activeThreadId,
+  );
 
   // Fetch messages for active thread
   const { data: messagesData } = useQuery({
@@ -422,6 +406,19 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Chat header with back button */}
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-pixie-cream-200 dark:border-pixie-dusk-300 bg-white dark:bg-pixie-dusk-100 shrink-0">
+        <button
+          onClick={() => navigate("/chats")}
+          className="p-1.5 -ml-1.5 rounded-lg hover:bg-pixie-cream-100 dark:hover:bg-pixie-dusk-200 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 text-pixie-charcoal-200 dark:text-pixie-mist-200" />
+        </button>
+        <span className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100 truncate">
+          {currentThread?.title || "Chat"}
+        </span>
+      </div>
+
       {/* Messages */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4 max-w-2xl mx-auto">

@@ -3,9 +3,10 @@
  * Tests CRUD operations, filtering, search, and stats
  */
 
-import { describe, it, expect, beforeAll, afterAll, test } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, test, mock } from "bun:test";
 import { seedTestUser } from "@pantry-pixie/core";
-import { db, eq, itemsTable } from "@pantry-pixie/core";
+import { db, eq, itemsTable, itemUsageHistoryTable } from "@pantry-pixie/core";
+import { eventBus } from "../events";
 import {
   addItem,
   listItems,
@@ -28,11 +29,13 @@ if (skipTests) {
 } else {
 
 let testHomeId: string;
+let testUserId: string;
 let createdItemIds: string[] = [];
 
 beforeAll(async () => {
   const seed = await seedTestUser();
   testHomeId = seed.home.id;
+  testUserId = seed.user.id;
 });
 
 afterAll(async () => {
@@ -116,6 +119,61 @@ describe("Items Service - addItem()", () => {
 
     expect(item.name).toBe("Yogurt");
     expect(item.expiresAt).toEqual(expiresAt);
+  });
+
+  it("should include actorId in inventory:updated event when provided", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    const item = await addItem(testHomeId, { name: "Tracked Item" }, testUserId);
+    createdItemIds.push(item.id);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBe(testUserId);
+    expect(emitted.action).toBe("added");
+    expect(emitted.homeId).toBe(testHomeId);
+
+    unsub();
+  });
+
+  it("should emit event without actorId when not provided", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    const item = await addItem(testHomeId, { name: "Untracked Item" });
+    createdItemIds.push(item.id);
+
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBeUndefined();
+
+    unsub();
+  });
+
+  it("should persist addedBy and write a usage-history row", async () => {
+    const item = await addItem(
+      testHomeId,
+      { name: "Attributed Milk", quantity: 2 },
+      testUserId,
+    );
+    createdItemIds.push(item.id);
+
+    const [stored] = await db
+      .select()
+      .from(itemsTable)
+      .where(eq(itemsTable.id, item.id));
+    expect(stored.addedBy).toBe(testUserId);
+
+    const history = await db
+      .select()
+      .from(itemUsageHistoryTable)
+      .where(eq(itemUsageHistoryTable.itemId, item.id));
+    const added = history.find((h) => h.action === "added");
+    expect(added).toBeDefined();
+    expect(added!.markedBy).toBe(testUserId);
+    expect(added!.itemName).toBe("Attributed Milk");
   });
 });
 
@@ -342,6 +400,23 @@ describe("Items Service - removeItem()", () => {
     // Verify it still exists
     const found = await getItem(testHomeId, item.id);
     expect(found).toBeDefined();
+  });
+
+  it("should include actorId in inventory:updated event on remove", async () => {
+    const item = await addItem(testHomeId, { name: "To Remove Tracked" });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handler = mock((data: any) => data);
+    const unsub = eventBus.on("inventory:updated", handler);
+
+    await removeItem(testHomeId, item.id, testUserId);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    const emitted = handler.mock.calls[0][0];
+    expect(emitted.actorId).toBe(testUserId);
+    expect(emitted.action).toBe("removed");
+
+    unsub();
   });
 });
 

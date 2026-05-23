@@ -18,6 +18,70 @@ export interface IntentPattern {
  */
 export const intentPatterns: IntentPattern[] = [
   {
+    intent: "partner_activity",
+    keywords: [
+      "my partner",
+      "did my partner",
+      "what did they add",
+      "what did they buy",
+      "partner been up to",
+    ],
+    patterns: [
+      /\bmy\s+partner('s)?\b.*\b(add|added|buy|bought|get|got|do|did|been|doing)\b/i,
+      /what\s+(did|has)\s+(they|my\s+partner)\s+(add|buy|get|do|been)/i,
+    ],
+    examples: [
+      "What did my partner add?",
+      "Has my partner bought milk?",
+      "What's my partner been up to?",
+    ],
+  },
+  {
+    intent: "household_status",
+    keywords: [
+      "what do we need",
+      "what do we have",
+      "what's left for us",
+      "whats left for us",
+      "our pantry",
+      "our shopping list",
+      "are we low",
+      "are we out",
+      "what should we",
+    ],
+    patterns: [
+      /what\s+do\s+we\s+(need|have|got)/i,
+      /what'?s?\s+left\s+for\s+us/i,
+      /are\s+we\s+(low|out)\s+(on\b|of\b)/i,
+      /what\s+should\s+we\s+(buy|get|cook)/i,
+    ],
+    examples: [
+      "What do we need this week?",
+      "What's left for us?",
+      "Are we low on eggs?",
+    ],
+  },
+  {
+    intent: "remind_us",
+    keywords: [
+      "remind us",
+      "remind both of us",
+      "we need to remember",
+      "don't let us forget",
+      "help us remember",
+    ],
+    patterns: [
+      /remind\s+(us|both)/i,
+      /(we|us)\s+need\s+to\s+remember/i,
+      /don'?t\s+let\s+us\s+forget/i,
+    ],
+    examples: [
+      "Remind us to restock coffee",
+      "We need to remember to buy milk",
+      "Don't let us forget the trash",
+    ],
+  },
+  {
     intent: "add_to_list",
     keywords: [
       "shopping list",
@@ -227,6 +291,21 @@ export function getIntentInfo(intent: PixieIntent): {
       name: "Meal Planning",
       description: "User wants help planning meals",
       category: "query",
+    },
+    partner_activity: {
+      name: "Partner Activity",
+      description: "User asks what their partner has been doing in the home",
+      category: "query",
+    },
+    household_status: {
+      name: "Household Status",
+      description: "User asks about shared household needs or inventory",
+      category: "query",
+    },
+    remind_us: {
+      name: "Remind Us",
+      description: "User wants a shared reminder for the household",
+      category: "action",
     },
     greeting: {
       name: "Greeting",

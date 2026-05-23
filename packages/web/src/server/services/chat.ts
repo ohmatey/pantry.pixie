@@ -8,12 +8,90 @@ import {
   desc,
   chatThreadsTable,
   chatMessagesTable,
+  homesTable,
+  homeMembersTable,
+  itemsTable,
+  itemUsageHistoryTable,
   classifyIntent,
 } from "@pantry-pixie/core";
-import type { ChatMessage } from "@pantry-pixie/core";
-import { createPixieResponse, type AgentMessage } from "../agent";
+import type { ChatMessage, HouseholdContext } from "@pantry-pixie/core";
+import { createPixieResponse, generateThreadTitle, type AgentMessage } from "../agent";
 import type { SerializedUI } from "../ws";
 import { logger } from "../lib/logger";
+
+function timeAgo(date: Date): string {
+  const mins = Math.round((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+const ACTIVITY_VERB: Record<string, string> = {
+  added: "added",
+  removed: "used up",
+  checked: "checked off",
+  unchecked: "unchecked",
+  updated: "updated",
+};
+
+/** Recent things the OTHER partner(s) did, formatted for Pixie to reference. */
+async function buildPartnerActivity(
+  homeId: string,
+  currentUserId: string,
+  nameById: Map<string, string>,
+): Promise<string | undefined> {
+  const since = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const history = await db.query.itemUsageHistoryTable.findMany({
+    where: eq(itemUsageHistoryTable.homeId, homeId),
+    orderBy: [desc(itemUsageHistoryTable.createdAt)],
+    limit: 40,
+  });
+  const partnerEvents = history
+    .filter(
+      (h) => h.markedBy && h.markedBy !== currentUserId && h.createdAt >= since,
+    )
+    .slice(0, 6);
+  if (partnerEvents.length === 0) return undefined;
+  return partnerEvents
+    .map((e) => {
+      const who = (e.markedBy && nameById.get(e.markedBy)) || "Your partner";
+      return `- ${who} ${ACTIVITY_VERB[e.action] ?? e.action} ${e.itemName} (${timeAgo(e.createdAt)})`;
+    })
+    .join("\n");
+}
+
+/** Items expiring within 3 days, formatted for proactive nudges. */
+async function buildExpiringSummary(
+  homeId: string,
+): Promise<string | undefined> {
+  const items = await db.query.itemsTable.findMany({
+    where: eq(itemsTable.homeId, homeId),
+  });
+  const now = Date.now();
+  const soon = items
+    .map((i) => ({
+      name: i.name,
+      days: i.expiresAt
+        ? Math.ceil((i.expiresAt.getTime() - now) / 86400000)
+        : null,
+    }))
+    .filter(
+      (i): i is { name: string; days: number } =>
+        i.days !== null && i.days <= 3,
+    )
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 8);
+  if (soon.length === 0) return undefined;
+  return soon
+    .map((i) => {
+      if (i.days < 0) return `- ${i.name} (expired)`;
+      if (i.days === 0) return `- ${i.name} (expires today)`;
+      return `- ${i.name} (expires in ${i.days}d)`;
+    })
+    .join("\n");
+}
 
 export async function createThread(homeId: string, title?: string) {
   const [thread] = await db
@@ -46,6 +124,7 @@ export async function getMessages(threadId: string, limit = 50) {
 export interface SendMessageResult {
   userMessage: ChatMessage;
   assistantMessageId: string;
+  isFirstMessage: boolean;
   streamHandler: (
     onChunk: (text: string) => void,
     onComplete: (fullText: string, ui?: SerializedUI) => void,
@@ -70,6 +149,7 @@ export async function sendMessage(
       role: "user",
       content,
       intent,
+      userId,
       metadata: { userId },
     })
     .returning();
@@ -80,6 +160,9 @@ export async function sendMessage(
     orderBy: [desc(chatMessagesTable.createdAt)],
     limit: 20,
   });
+
+  // Check if this is the first user message in the thread
+  const isFirstMessage = recentMessages.filter((m) => m.role === "user").length === 0;
 
   // Build conversation for agent
   const agentMessages: AgentMessage[] = recentMessages
@@ -107,17 +190,63 @@ export async function sendMessage(
     .set({ updatedAt: new Date() })
     .where(eq(chatThreadsTable.id, threadId));
 
+  // ---- Build the shared-household context for Pixie ----
+  const homeRecord = await db.query.homesTable.findFirst({
+    where: eq(homesTable.id, homeId),
+  });
+
+  // Everyone who shares this home, with their personal preferences.
+  const memberships = await db.query.homeMembersTable.findMany({
+    where: eq(homeMembersTable.homeId, homeId),
+    with: { user: true },
+  });
+  const nameById = new Map<string, string>();
+  for (const m of memberships) {
+    if (m.user) nameById.set(m.user.id, m.user.name);
+  }
+  const members = memberships
+    .map((m) => m.user)
+    .filter((u): u is NonNullable<typeof u> => !!u)
+    .map((u) => ({
+      name: u.name,
+      dietaryRestrictions: u.dietaryRestrictions
+        ? (JSON.parse(u.dietaryRestrictions) as string[])
+        : undefined,
+      cookingSkillLevel: u.cookingSkillLevel as
+        | "beginner"
+        | "intermediate"
+        | "advanced"
+        | undefined,
+      budgetConsciousness: u.budgetConsciousness as
+        | "low"
+        | "medium"
+        | "high"
+        | undefined,
+    }));
+
+  const household: HouseholdContext = {
+    members,
+    householdSize: homeRecord?.householdSize ?? undefined,
+    sharedDietaryRestrictions: homeRecord?.sharedDietaryRestrictions
+      ? (JSON.parse(homeRecord.sharedDietaryRestrictions) as string[])
+      : undefined,
+    partnerActivity: await buildPartnerActivity(homeId, userId, nameById),
+    expiringSummary: await buildExpiringSummary(homeId),
+  };
+
   return {
     userMessage,
     assistantMessageId: assistantMessage.id,
+    isFirstMessage,
     streamHandler: async (onChunk, onComplete) => {
       try {
         logger.info({ threadId, homeId, listId }, "Creating Pixie response");
         const result = await createPixieResponse(
           homeId,
           agentMessages,
-          undefined,
+          household,
           listId,
+          userId,
         );
 
         // Consume text stream (AI SDK returns ReadableStream<string>)
@@ -203,6 +332,20 @@ export async function sendMessage(
             intent: result.intent,
           })
           .where(eq(chatMessagesTable.id, assistantMessage.id));
+
+        // Auto-generate a descriptive thread title after the first exchange
+        if (isFirstMessage && fullText) {
+          generateThreadTitle(content, fullText)
+            .then((title) => {
+              if (title) {
+                return db
+                  .update(chatThreadsTable)
+                  .set({ title })
+                  .where(eq(chatThreadsTable.id, threadId));
+              }
+            })
+            .catch(() => {/* non-critical, ignore */});
+        }
 
         onComplete(fullText, uiData);
       } catch (err) {

@@ -7,6 +7,7 @@
 // Validate environment variables first
 import { env } from "./config/env";
 import { registerApiRoutes } from "./api";
+import { generateOpenApiDocument } from "./api/openapi";
 import {
   handleWebSocketOpen,
   handleWebSocketMessage,
@@ -14,6 +15,7 @@ import {
   type WSData,
 } from "./ws";
 import { initializeAgent } from "./agent";
+import { startScheduler } from "./scheduler";
 import { jwtVerify } from "jose";
 import path from "path";
 import fs from "fs";
@@ -37,6 +39,9 @@ const STATIC_DIR = path.resolve(import.meta.dir, "../../dist/client");
 // Initialize agent (Bun allows top-level await)
 let agentReady = false;
 initializeAgent().then(ready => { agentReady = ready; });
+
+// Start recurring item scheduler
+startScheduler();
 
 function matchRoute(
   pathname: string,
@@ -183,6 +188,39 @@ const server = Bun.serve<WSData>({
           if (success) return undefined as unknown as Response;
           return new Response("WebSocket upgrade failed", { status: 500 });
         }
+      }
+
+      // OpenAPI spec endpoint
+      if (pathname === "/api/openapi.json" && request.method === "GET") {
+        return addSecurityHeaders(
+          new Response(JSON.stringify(generateOpenApiDocument()), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+
+      // API docs UI (Scalar)
+      if (pathname === "/api/docs" && request.method === "GET") {
+        const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pantry Pixie API Docs</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>body { margin: 0; }</style>
+  </head>
+  <body>
+    <script id="api-reference" data-url="/api/openapi.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>`;
+        return addSecurityHeaders(
+          new Response(html, {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+          }),
+        );
       }
 
       // API routes

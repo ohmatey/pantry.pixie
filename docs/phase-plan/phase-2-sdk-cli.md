@@ -538,6 +538,9 @@ const homes: Home[] = await sdk.homes.list();
 
 ## 2. CLI Tool (Weeks 10-11, 7 days of effort)
 
+> **Implementation doc:** [`docs/engineering/cli-commands-implementation.md`](../engineering/cli-commands-implementation.md)
+> Covers architecture decisions, config store design, subcommand routing pattern, SDK gaps to fill, and an 8-step action plan.
+
 ### Objective
 Create `@pantry-pixie/cli`: a command-line interface for terminal-based grocery management.
 

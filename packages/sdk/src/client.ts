@@ -7,6 +7,7 @@ import type {
   Home,
   Item,
   GroceryList,
+  ListItem,
   ChatMessage,
   ChatThread,
   CreateItemInput,
@@ -17,6 +18,18 @@ import type {
   ApiResponse,
   PaginatedResponse,
 } from "@pantry-pixie/core";
+
+export interface AddListItemInput {
+  itemId: string;
+  quantity?: number;
+  notes?: string;
+  estimatedPrice?: number;
+}
+
+export interface AddListItemByNameInput {
+  name: string;
+  quantity?: number;
+}
 
 export interface PantryPixieClientConfig {
   baseUrl: string;
@@ -255,6 +268,30 @@ export class GroceryListClient {
     return this.client.request(
       "DELETE",
       `/api/homes/${homeId}/lists/${listId}`,
+    );
+  }
+
+  async addItem(
+    homeId: string,
+    listId: string,
+    data: AddListItemInput,
+  ): Promise<ApiResponse<ListItem>> {
+    return this.client.request(
+      "POST",
+      `/api/homes/${homeId}/lists/${listId}/items`,
+      data,
+    );
+  }
+
+  async addItemByName(
+    homeId: string,
+    listId: string,
+    data: AddListItemByNameInput,
+  ): Promise<ApiResponse<{ listItem: ListItem; item: Item }>> {
+    return this.client.request(
+      "POST",
+      `/api/homes/${homeId}/lists/${listId}/items/by-name`,
+      data,
     );
   }
 }

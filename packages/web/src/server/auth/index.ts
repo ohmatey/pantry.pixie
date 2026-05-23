@@ -6,13 +6,16 @@ import { SignJWT, jwtVerify } from "jose";
 import {
   db,
   eq,
+  and,
   usersTable,
   homesTable,
   homeMembersTable,
   chatThreadsTable,
   chatMessagesTable,
   getWelcomeMessage,
+  type HomeMember,
 } from "@pantry-pixie/core";
+import { createError } from "../middleware/error-handler";
 
 // JWT_SECRET is validated in config/env.ts (required, min 32 chars)
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -165,6 +168,40 @@ async function createToken(payload: AuthPayload): Promise<string> {
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRY)
     .sign(JWT_SECRET);
+}
+
+/**
+ * Assert that a user is an active member of a home.
+ * Throws a 403 AppError if not a member.
+ * If requiredRole is "admin", owner and admin roles are both accepted.
+ * If requiredRole is "owner", only owner is accepted.
+ * Returns the membership row on success.
+ */
+export async function assertHomeMembership(
+  homeId: string,
+  userId: string,
+  requiredRole?: "owner" | "admin",
+): Promise<HomeMember> {
+  const membership = await db.query.homeMembersTable.findFirst({
+    where: and(
+      eq(homeMembersTable.homeId, homeId),
+      eq(homeMembersTable.userId, userId),
+    ),
+  });
+
+  if (!membership) {
+    throw createError("Forbidden: you are not a member of this home", 403, "FORBIDDEN");
+  }
+
+  if (requiredRole === "owner" && membership.role !== "owner") {
+    throw createError("Forbidden: owner role required", 403, "FORBIDDEN");
+  }
+
+  if (requiredRole === "admin" && membership.role !== "owner" && membership.role !== "admin") {
+    throw createError("Forbidden: admin or owner role required", 403, "FORBIDDEN");
+  }
+
+  return membership;
 }
 
 /**

@@ -7,6 +7,7 @@ import { describe, it, expect } from "bun:test";
 import {
   PIXIE_SYSTEM_PROMPT,
   generateSystemPrompt,
+  generateHouseholdPrompt,
   getWelcomeMessage,
   conversationStarters,
   encouragingMessages,
@@ -179,6 +180,80 @@ describe("generateSystemPrompt() - combined preferences", () => {
     });
 
     expect(prompt.startsWith(PIXIE_SYSTEM_PROMPT)).toBe(true);
+  });
+});
+
+// ============================================================================
+// generateHouseholdPrompt()
+// ============================================================================
+
+describe("generateHouseholdPrompt()", () => {
+  it("degrades to base prompt with no members", () => {
+    expect(generateHouseholdPrompt({})).toBe(PIXIE_SYSTEM_PROMPT);
+  });
+
+  it("uses single-user voice for one member", () => {
+    const prompt = generateHouseholdPrompt({
+      members: [{ name: "Alex", cookingSkillLevel: "beginner" }],
+      householdSize: 1,
+    });
+    expect(prompt).toContain("name is Alex");
+    expect(prompt).toContain("new to cooking");
+    expect(prompt).not.toContain("Coordinating Two People");
+  });
+
+  it("frames two partners as a team and names both", () => {
+    const prompt = generateHouseholdPrompt({
+      members: [{ name: "Alex" }, { name: "Sam" }],
+      householdSize: 2,
+    });
+    expect(prompt).toContain("Alex and Sam");
+    expect(prompt).toContain("Coordinating Two People");
+    expect(prompt).toContain("2 people");
+  });
+
+  it("unions both partners' dietary restrictions and house rules", () => {
+    const prompt = generateHouseholdPrompt({
+      members: [
+        { name: "Alex", dietaryRestrictions: ["vegetarian"] },
+        { name: "Sam", dietaryRestrictions: ["gluten-free"] },
+      ],
+      sharedDietaryRestrictions: ["no pork"],
+    });
+    expect(prompt).toContain("vegetarian");
+    expect(prompt).toContain("gluten-free");
+    expect(prompt).toContain("no pork");
+  });
+
+  it("respects the most cost-conscious budget and most experienced skill", () => {
+    const prompt = generateHouseholdPrompt({
+      members: [
+        {
+          name: "Alex",
+          budgetConsciousness: "low",
+          cookingSkillLevel: "beginner",
+        },
+        {
+          name: "Sam",
+          budgetConsciousness: "high",
+          cookingSkillLevel: "advanced",
+        },
+      ],
+    });
+    expect(prompt).toContain("budget-conscious"); // "high" wins
+    expect(prompt).toContain("experienced cook"); // "advanced" wins
+  });
+
+  it("injects partner activity and expiring summaries when provided", () => {
+    const prompt = generateHouseholdPrompt({
+      members: [{ name: "Alex" }, { name: "Sam" }],
+      partnerActivity: "- Alex added Milk (1h ago)",
+      expiringSummary: "- Spinach (expires in 2d)",
+    });
+    expect(prompt).toContain("Recent Household Activity");
+    expect(prompt).toContain("Alex added Milk");
+    expect(prompt).toContain("Expiring Soon");
+    expect(prompt).toContain("Spinach");
   });
 });
 
