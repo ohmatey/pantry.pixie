@@ -63,11 +63,11 @@ export default function AcceptInvitePage() {
     setError("");
 
     try {
-      const res = await apiPost<{ homeId: string; homeName: string }>(
-        `/api/invites/${code}/accept`,
-        token,
-        {},
-      );
+      const res = await apiPost<{
+        homeId: string;
+        homeName: string;
+        needsOnboarding: boolean;
+      }>(`/api/invites/${code}/accept`, token, {});
 
       if (res.data) {
         // Update auth store with new homeId
@@ -75,7 +75,11 @@ export default function AcceptInvitePage() {
           setAuth(token, { ...user, homeId: res.data.homeId });
         }
         localStorage.setItem("pp_onboarded", "true");
-        navigate("/chat", { replace: true });
+        // A freshly-joined partner sets up their preferences first so Pixie
+        // knows how to help both of you; returning members go to chat.
+        navigate(res.data.needsOnboarding ? "/settings?joined=1" : "/chat", {
+          replace: true,
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to accept invite");

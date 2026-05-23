@@ -1017,22 +1017,30 @@ async function handleSendMessage(
 // ============================================================================
 
 /**
- * Resolve the home a user's shared preferences (e.g. household size) belong to.
- * Prefers a home they own, else their first membership. Returns null if none.
+ * Resolve which home a user's shared preferences (household size, house dietary
+ * rules) belong to. Prefers the caller's ACTIVE home when supplied (verified by
+ * membership) — a partner may belong to both their own auto-created home and
+ * the shared one they joined, so we can't infer it from ownership or join time
+ * (join timestamps are second-precision and can tie). Falls back to the most
+ * recent membership. Returns null if the user has no home.
  */
-async function getUserPrimaryHomeId(userId: string): Promise<string | null> {
-  const owned = await db.query.homesTable.findFirst({
-    where: eq(homesTable.ownerId, userId),
-  });
-  if (owned) return owned.id;
-  const membership = await db.query.homeMembersTable.findFirst({
+async function resolveHomeId(
+  userId: string,
+  requested?: string | null,
+): Promise<string | null> {
+  const memberships = await db.query.homeMembersTable.findMany({
     where: eq(homeMembersTable.userId, userId),
   });
-  return membership?.homeId ?? null;
+  if (requested && memberships.some((m) => m.homeId === requested)) {
+    return requested;
+  }
+  if (memberships.length === 0) return null;
+  memberships.sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime());
+  return memberships[0].homeId;
 }
 
 async function handleGetPreferences(
-  _request: Request,
+  request: Request,
   _params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
@@ -1043,8 +1051,9 @@ async function handleGetPreferences(
     if (!user) {
       return json({ success: false, error: "User not found" }, 404);
     }
-    // Household size is a shared, home-level property.
-    const homeId = await getUserPrimaryHomeId(auth.userId);
+    // Shared (home-level) fields resolve against the caller's active home.
+    const requestedHome = new URL(request.url).searchParams.get("homeId");
+    const homeId = await resolveHomeId(auth.userId, requestedHome);
     const home = homeId
       ? await db.query.homesTable.findFirst({ where: eq(homesTable.id, homeId) })
       : null;
@@ -1057,6 +1066,9 @@ async function handleGetPreferences(
         cookingSkillLevel: user.cookingSkillLevel || null,
         budgetConsciousness: user.budgetConsciousness || null,
         householdSize: home?.householdSize ?? null,
+        sharedDietaryRestrictions: home?.sharedDietaryRestrictions
+          ? JSON.parse(home.sharedDietaryRestrictions)
+          : [],
       },
       timestamp: new Date(),
     });
@@ -1091,14 +1103,25 @@ async function handleUpdatePreferences(
         ? body.budgetConsciousness
         : null;
     }
-    // Household size is shared at the home level, not per-user.
-    let householdSizeUpdate: number | null | undefined;
+    // Home-level (shared) fields — household size and house dietary rules.
+    const homeUpdates: Record<string, string | number | null> = {};
     if ("householdSize" in body) {
       const size = Number(body.householdSize);
-      householdSizeUpdate = !isNaN(size) && size >= 1 && size <= 20 ? size : null;
+      homeUpdates.householdSize =
+        !isNaN(size) && size >= 1 && size <= 20 ? size : null;
+    }
+    if ("sharedDietaryRestrictions" in body) {
+      homeUpdates.sharedDietaryRestrictions = Array.isArray(
+        body.sharedDietaryRestrictions,
+      )
+        ? JSON.stringify(body.sharedDietaryRestrictions)
+        : null;
     }
 
-    if (Object.keys(updates).length === 0 && householdSizeUpdate === undefined) {
+    if (
+      Object.keys(updates).length === 0 &&
+      Object.keys(homeUpdates).length === 0
+    ) {
       return json({ success: false, error: "No valid fields to update" }, 400);
     }
 
@@ -1106,12 +1129,15 @@ async function handleUpdatePreferences(
       await db.update(usersTable).set(updates).where(eq(usersTable.id, auth.userId));
     }
 
-    if (householdSizeUpdate !== undefined) {
-      const homeId = await getUserPrimaryHomeId(auth.userId);
+    if (Object.keys(homeUpdates).length > 0) {
+      const homeId = await resolveHomeId(
+        auth.userId,
+        typeof body.homeId === "string" ? body.homeId : null,
+      );
       if (homeId) {
         await db
           .update(homesTable)
-          .set({ householdSize: householdSizeUpdate })
+          .set(homeUpdates)
           .where(eq(homesTable.id, homeId));
       }
     }

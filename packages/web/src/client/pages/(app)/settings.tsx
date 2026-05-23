@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiGet, apiPut, apiPatch } from "@/lib/api";
@@ -43,6 +43,8 @@ const DIETARY_OPTIONS = [
 export default function SettingsPage() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const justJoined = searchParams.get("joined") === "1";
   const queryClient = useQueryClient();
   const [editingName, setEditingName] = useState(false);
   const [homeName, setHomeName] = useState("");
@@ -62,18 +64,21 @@ export default function SettingsPage() {
   const { data: prefsData } = useQuery({
     queryKey: ["preferences", user?.id],
     queryFn: () =>
-      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null; householdSize: number | null }>(
-        "/api/users/me/preferences",
+      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null; householdSize: number | null; sharedDietaryRestrictions: string[] }>(
+        `/api/users/me/preferences?homeId=${user!.homeId}`,
         token!,
       ),
-    enabled: !!token,
+    enabled: !!token && !!user?.homeId,
   });
 
   const prefs = prefsData?.data;
 
   const updatePref = useMutation({
     mutationFn: (updates: Record<string, unknown>) =>
-      apiPatch("/api/users/me/preferences", token!, updates),
+      apiPatch("/api/users/me/preferences", token!, {
+        ...updates,
+        homeId: user?.homeId,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preferences"] });
       toast.success("Preferences saved");
@@ -97,6 +102,21 @@ export default function SettingsPage() {
       <h2 className="text-xl font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
         Settings
       </h2>
+
+      {justJoined && (
+        <div className="rounded-2xl border border-pixie-sage-200 bg-pixie-sage-50 dark:border-pixie-dusk-300 dark:bg-pixie-dusk-100 p-4 flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-pixie-sage-500 dark:text-pixie-glow-sage shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100">
+              Welcome to {home?.name || "your shared pantry"}!
+            </p>
+            <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300 mt-0.5">
+              Set your cooking and dietary preferences below so Pixie can help
+              both of you — not just whoever set things up.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Your Pantry */}
       <Card>
@@ -329,6 +349,43 @@ export default function SettingsPage() {
                     ? current.filter((x) => x !== opt)
                     : [...current, opt];
                   updatePref.mutate({ dietaryRestrictions: updated });
+                };
+                return (
+                  <button
+                    key={opt}
+                    onClick={toggle}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                      active
+                        ? "bg-pixie-sage-500 text-white border-pixie-sage-500"
+                        : "border-pixie-cream-200 dark:border-pixie-dusk-300 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Household dietary rules (shared by both partners) */}
+          <div>
+            <label className="text-xs font-medium text-pixie-charcoal-100 dark:text-pixie-mist-300 uppercase tracking-wider mb-1 block">
+              Household Dietary Rules
+            </label>
+            <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300 mb-2">
+              Shared by the whole home — Pixie respects these for everyone.
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {DIETARY_OPTIONS.map((opt) => {
+                const active = (prefs?.sharedDietaryRestrictions ?? []).includes(
+                  opt,
+                );
+                const toggle = () => {
+                  const current = prefs?.sharedDietaryRestrictions ?? [];
+                  const updated = active
+                    ? current.filter((x) => x !== opt)
+                    : [...current, opt];
+                  updatePref.mutate({ sharedDietaryRestrictions: updated });
                 };
                 return (
                   <button
