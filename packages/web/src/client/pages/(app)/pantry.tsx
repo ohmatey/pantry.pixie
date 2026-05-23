@@ -4,7 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 import { CategoryGroup } from "@/components/list/CategoryGroup";
 import { Input } from "@/components/ui/input";
-import { Search, Package, MessageSquarePlus, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  Package,
+  MessageSquarePlus,
+  AlertTriangle,
+  TrendingDown,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Item } from "@/hooks/useItems";
 import { toast } from "sonner";
@@ -28,6 +34,16 @@ export default function PantryPage() {
         token!,
       );
     },
+    enabled: !!token && !!user?.homeId,
+  });
+
+  const { data: predData } = useQuery({
+    queryKey: ["predictions", user?.homeId],
+    queryFn: () =>
+      apiFetch<{ predictions: { itemName: string; confidence: number }[] }>(
+        `/api/homes/${user!.homeId}/predictions?period=7`,
+        token!,
+      ),
     enabled: !!token && !!user?.homeId,
   });
 
@@ -82,6 +98,13 @@ export default function PantryPage() {
       return expiresAt - now <= warningMs && expiresAt > now;
     });
   }, [items]);
+
+  // Items predicted to run out soon (confidence-gated to keep it trustworthy)
+  const runningLow = useMemo(
+    () =>
+      (predData?.data?.predictions ?? []).filter((p) => p.confidence >= 0.5),
+    [predData],
+  );
 
   const categories = [...new Set(items.map((i) => i.category || "other"))].sort();
 
@@ -150,6 +173,25 @@ export default function PantryPage() {
             {expiringSoon.map((i) => i.name).join(", ")}
           </div>
         </div>
+      )}
+
+      {/* Running low soon (learned from purchase cadence) */}
+      {runningLow.length > 0 && (
+        <button
+          onClick={() => navigate("/list")}
+          className="mx-4 mt-3 w-[calc(100%-2rem)] p-3 rounded-lg bg-pixie-sage-50 dark:bg-pixie-dusk-100 border border-pixie-sage-200 dark:border-pixie-dusk-300 flex items-start gap-2 shrink-0 text-left hover:bg-pixie-sage-100 dark:hover:bg-pixie-dusk-200 transition-colors"
+        >
+          <TrendingDown className="w-4 h-4 text-pixie-sage-500 dark:text-pixie-glow-sage shrink-0 mt-0.5" />
+          <div className="text-xs text-pixie-charcoal-200 dark:text-pixie-mist-200">
+            <span className="font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100">
+              Running low soon:{" "}
+            </span>
+            {runningLow.map((p) => p.itemName).join(", ")}
+            <span className="block text-pixie-charcoal-100 dark:text-pixie-mist-300 mt-0.5">
+              Tap to plan your list →
+            </span>
+          </div>
+        </button>
       )}
 
       {/* Content */}
