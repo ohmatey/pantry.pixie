@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, MessageSquare, Sparkles, User, Home, LogOut, Package, Activity } from "lucide-react";
+import { ShoppingCart, MessageSquare, Sparkles, User, Home, LogOut, Package, Activity, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInventorySync } from "@/hooks/useInventorySync";
 import { useAuth } from "@/hooks/useAuth";
@@ -116,6 +116,10 @@ export function AppShell() {
             <DropdownItem onClick={() => navigate("/activity")}>
               <Activity className="w-4 h-4" />
               Activity
+            </DropdownItem>
+            <DropdownItem onClick={() => navigate("/budget")}>
+              <Wallet className="w-4 h-4" />
+              Spending
             </DropdownItem>
 
             <DropdownSeparator />

@@ -1077,6 +1077,7 @@ async function handleGetPreferences(
         sharedDietaryRestrictions: home?.sharedDietaryRestrictions
           ? JSON.parse(home.sharedDietaryRestrictions)
           : [],
+        monthlyBudget: home?.monthlyBudget ?? null,
       },
       timestamp: new Date(),
     });
@@ -1124,6 +1125,10 @@ async function handleUpdatePreferences(
       )
         ? JSON.stringify(body.sharedDietaryRestrictions)
         : null;
+    }
+    if ("monthlyBudget" in body) {
+      const n = Number(body.monthlyBudget);
+      homeUpdates.monthlyBudget = !isNaN(n) && n >= 0 ? Math.round(n) : null;
     }
 
     if (

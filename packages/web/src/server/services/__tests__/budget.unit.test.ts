@@ -1,216 +1,117 @@
 /**
- * Unit tests for budget service
- *
- * NOTE: The budget service (budget.ts) currently has broken imports.
- * It imports `items` and `itemUsageHistory` from `@pantry-pixie/core`,
- * but core only exports `itemsTable` (from schema/item.ts).
- * The `items` table object (from schema/items.ts) is not re-exported.
- * Additionally, `items.estimatedCost` doesn't match `itemsTable.price`.
- *
- * These tests verify the getPeriodStartDate logic (pure function)
- * and document the broken state for future fix.
+ * Unit tests for the budget service — spending windows, period-over-period
+ * comparison, category trend, and budget-vs-actual (non-judgmental insights).
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeAll, test } from "bun:test";
+import { seedTestUser } from "@pantry-pixie/core";
+import { db, itemsTable } from "@pantry-pixie/core";
+import {
+  calculateSpendingBetween,
+  getSpendingInsight,
+  formatMoney,
+} from "../budget";
+import { shouldSkipDatabaseTests } from "../../__tests__/test-helpers";
 
-// ============================================================================
-// getPeriodStartDate logic — inlined since it's not exported
-// ============================================================================
+const DAY_MS = 24 * 60 * 60 * 1000;
+const skipTests = shouldSkipDatabaseTests();
 
-type TimePeriod = "week" | "month" | "all-time";
+if (skipTests) {
+  test.skip("Tests require DATABASE_URL to be set", () => {});
+} else {
+  let homeId: string; // seedTestUser home has monthlyBudget: 500
 
-function getPeriodStartDate(period: TimePeriod): Date | null {
-  const now = new Date();
-
-  switch (period) {
-    case "week": {
-      const weekAgo = new Date(now);
-      weekAgo.setDate(now.getDate() - 7);
-      return weekAgo;
-    }
-    case "month": {
-      const monthAgo = new Date(now);
-      monthAgo.setMonth(now.getMonth() - 1);
-      return monthAgo;
-    }
-    case "all-time":
-      return null;
+  async function seedItem(
+    home: string,
+    name: string,
+    category: string,
+    price: number,
+    daysAgoVal: number,
+  ) {
+    await db.insert(itemsTable).values({
+      homeId: home,
+      name,
+      category,
+      price,
+      quantity: 1,
+      dateAdded: new Date(Date.now() - daysAgoVal * DAY_MS),
+    });
   }
+
+  beforeAll(async () => {
+    const seed = await seedTestUser();
+    homeId = seed.home.id;
+
+    // Current month (last 30d): dairy 120 (3d) + dairy 80 (10d) + produce 50 (12d) = 250
+    await seedItem(homeId, "Milk", "dairy", 120, 3);
+    await seedItem(homeId, "Cheese", "dairy", 80, 10);
+    await seedItem(homeId, "Apples", "produce", 50, 12);
+    // Previous month (30–60d ago): pantry 100 (40d)
+    await seedItem(homeId, "Rice", "pantry", 100, 40);
+  });
+
+  describe("formatMoney", () => {
+    it("formats Thai Baht by default", () => {
+      expect(formatMoney(250)).toBe("฿250.00");
+    });
+  });
+
+  describe("calculateSpendingBetween", () => {
+    it("sums priced items in the current month window by category", async () => {
+      const now = new Date();
+      const start = new Date(now.getTime() - 30 * DAY_MS);
+      const res = await calculateSpendingBetween(homeId, start, now);
+      expect(res.total).toBe(250);
+      expect(res.itemCount).toBe(3);
+      expect(res.byCategory[0].category).toBe("dairy"); // 200, highest
+      expect(res.byCategory[0].total).toBe(200);
+    });
+
+    it("excludes items outside the window (exclusive upper bound)", async () => {
+      const now = new Date();
+      const prevStart = new Date(now.getTime() - 60 * DAY_MS);
+      const prevEnd = new Date(now.getTime() - 30 * DAY_MS);
+      const res = await calculateSpendingBetween(homeId, prevStart, prevEnd);
+      expect(res.total).toBe(100); // only the 40d-ago pantry item
+    });
+  });
+
+  describe("getSpendingInsight - month", () => {
+    it("computes a real period-over-period comparison (up)", async () => {
+      const insight = await getSpendingInsight(homeId, "month");
+      expect(insight.total).toBe(250);
+      expect(insight.comparison).toBeDefined();
+      expect(insight.comparison!.previousTotal).toBe(100);
+      expect(insight.comparison!.changePercent).toBe(150);
+      expect(insight.comparison!.trend).toBe("up");
+    });
+
+    it("reports budget-vs-actual against the home's monthly budget", async () => {
+      const insight = await getSpendingInsight(homeId, "month");
+      expect(insight.budget).toBeDefined();
+      expect(insight.budget!.monthlyBudget).toBe(500);
+      expect(insight.budget!.percentUsed).toBe(50); // 250 / 500
+      expect(insight.budget!.remaining).toBe(250);
+      expect(insight.budget!.status).toBe("on_track");
+    });
+
+    it("surfaces non-judgmental, fact-based insight strings", async () => {
+      const insight = await getSpendingInsight(homeId, "month");
+      expect(insight.insights.length).toBeGreaterThan(0);
+      // top category + budget framing
+      expect(insight.insights.join(" ")).toContain("Dairy");
+      expect(insight.insights.join(" ").toLowerCase()).toContain("budget");
+    });
+  });
+
+  describe("getSpendingInsight - week", () => {
+    it("compares this week to the prior week", async () => {
+      const insight = await getSpendingInsight(homeId, "week");
+      expect(insight.total).toBe(120); // only the 3d-ago item this week
+      // prior week (7–14d ago) had 80 + 50 = 130 → slightly down
+      expect(insight.comparison!.trend).toBe("down");
+      // budget block still reflects month-to-date spend vs monthly budget
+      expect(insight.budget!.percentUsed).toBe(50);
+    });
+  });
 }
-
-describe("Budget Service - getPeriodStartDate logic", () => {
-  it("should return null for all-time period", () => {
-    const result = getPeriodStartDate("all-time");
-    expect(result).toBeNull();
-  });
-
-  it("should return ~7 days ago for week period", () => {
-    const before = new Date();
-    const result = getPeriodStartDate("week");
-    const after = new Date();
-
-    expect(result).toBeInstanceOf(Date);
-
-    const expectedMin = before.getTime() - 7 * 24 * 60 * 60 * 1000 - 1000;
-    const expectedMax = after.getTime() - 7 * 24 * 60 * 60 * 1000 + 1000;
-
-    expect(result!.getTime()).toBeGreaterThanOrEqual(expectedMin);
-    expect(result!.getTime()).toBeLessThanOrEqual(expectedMax);
-  });
-
-  it("should return ~1 month ago for month period", () => {
-    const now = new Date();
-    const result = getPeriodStartDate("month");
-
-    expect(result).toBeInstanceOf(Date);
-
-    // Should be approximately 28-31 days ago
-    const diffMs = now.getTime() - result!.getTime();
-    const diffDays = diffMs / (24 * 60 * 60 * 1000);
-
-    expect(diffDays).toBeGreaterThanOrEqual(27);
-    expect(diffDays).toBeLessThanOrEqual(32);
-  });
-
-  it("should handle month boundary correctly for Jan->Dec", () => {
-    // This tests Date.setMonth(-1) behavior
-    const jan = new Date(2026, 0, 15); // January 15, 2026
-    const prevMonth = new Date(jan);
-    prevMonth.setMonth(jan.getMonth() - 1);
-
-    expect(prevMonth.getMonth()).toBe(11); // December
-    expect(prevMonth.getFullYear()).toBe(2025);
-  });
-});
-
-// ============================================================================
-// Budget type contracts
-// ============================================================================
-
-describe("Budget Service - type contracts", () => {
-  it("should define valid TimePeriod values", () => {
-    const validPeriods: TimePeriod[] = ["week", "month", "all-time"];
-    expect(validPeriods.length).toBe(3);
-  });
-
-  it("should define CategorySpending shape", () => {
-    const spending = {
-      category: "dairy",
-      total: 15.5,
-      itemCount: 3,
-      averagePerItem: 5.17,
-    };
-
-    expect(spending.category).toBeString();
-    expect(spending.total).toBeNumber();
-    expect(spending.itemCount).toBeNumber();
-    expect(spending.averagePerItem).toBeNumber();
-  });
-
-  it("should define BudgetSummary shape", () => {
-    const summary = {
-      total: 100.0,
-      period: "month" as TimePeriod,
-      byCategory: [] as Array<{
-        category: string;
-        total: number;
-        itemCount: number;
-        averagePerItem: number;
-      }>,
-      itemCount: 10,
-      averagePerItem: 10.0,
-      endDate: new Date(),
-    };
-
-    expect(summary.total).toBeNumber();
-    expect(summary.period).toBe("month");
-    expect(Array.isArray(summary.byCategory)).toBe(true);
-    expect(summary.endDate).toBeInstanceOf(Date);
-  });
-});
-
-// ============================================================================
-// Budget calculation logic — unit tests for pure math
-// ============================================================================
-
-describe("Budget Service - calculation logic", () => {
-  it("should calculate average per item correctly", () => {
-    const total = 50.0;
-    const itemCount = 10;
-    const avg = itemCount > 0 ? total / itemCount : 0;
-
-    expect(avg).toBe(5.0);
-  });
-
-  it("should return 0 average when no items", () => {
-    const total = 0;
-    const itemCount = 0;
-    const avg = itemCount > 0 ? total / itemCount : 0;
-
-    expect(avg).toBe(0);
-  });
-
-  it("should sort categories by total (highest first)", () => {
-    const categories = [
-      { category: "dairy", total: 10 },
-      { category: "produce", total: 25 },
-      { category: "bakery", total: 5 },
-    ];
-
-    const sorted = categories.sort((a, b) => b.total - a.total);
-
-    expect(sorted[0].category).toBe("produce");
-    expect(sorted[1].category).toBe("dairy");
-    expect(sorted[2].category).toBe("bakery");
-  });
-
-  it("should determine trend as increasing when current > previous * 1.1", () => {
-    const current = 120;
-    const previous = 100;
-    let trend: "increasing" | "decreasing" | "stable" = "stable";
-
-    if (current > previous * 1.1) trend = "increasing";
-    else if (current < previous * 0.9) trend = "decreasing";
-
-    expect(trend).toBe("increasing");
-  });
-
-  it("should determine trend as decreasing when current < previous * 0.9", () => {
-    const current = 80;
-    const previous = 100;
-    let trend: "increasing" | "decreasing" | "stable" = "stable";
-
-    if (current > previous * 1.1) trend = "increasing";
-    else if (current < previous * 0.9) trend = "decreasing";
-
-    expect(trend).toBe("decreasing");
-  });
-
-  it("should determine trend as stable when within 10% band", () => {
-    const current = 95;
-    const previous = 100;
-    let trend: "increasing" | "decreasing" | "stable" = "stable";
-
-    if (current > previous * 1.1) trend = "increasing";
-    else if (current < previous * 0.9) trend = "decreasing";
-
-    expect(trend).toBe("stable");
-  });
-
-  it("should parse decimal cost strings correctly", () => {
-    const costs = ["3.50", "5.00", "0.99", "12.45"];
-    const parsed = costs.map((c) => parseFloat(c));
-
-    expect(parsed[0]).toBe(3.5);
-    expect(parsed[1]).toBe(5.0);
-    expect(parsed[2]).toBe(0.99);
-    expect(parsed[3]).toBe(12.45);
-  });
-
-  it("should handle null/undefined cost gracefully", () => {
-    const cost: string | null = null;
-    const value = cost ? parseFloat(cost) : 0;
-
-    expect(value).toBe(0);
-  });
-});
