@@ -15,6 +15,7 @@ import * as groceryListsService from "../services/grocery-lists";
 import * as budgetService from "../services/budget";
 import * as notificationsService from "../services/notifications";
 import * as predictionsService from "../services/predictions";
+import * as receiptsService from "../services/receipts";
 import {
   db,
   eq,
@@ -287,6 +288,18 @@ export function registerApiRoutes(): Route[] {
       method: "GET",
       path: "/api/homes/:homeId/predictions",
       handler: withAuth(handleGetPredictions),
+    },
+
+    // Receipt routes
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/receipts/scan",
+      handler: withAuth(handleScanReceipt),
+    },
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/receipts/confirm",
+      handler: withAuth(handleConfirmReceipt),
     },
   ];
 }
@@ -1365,6 +1378,76 @@ async function handleGetPredictions(
       data: { predictions, period, generatedAt: new Date() },
       timestamp: new Date(),
     });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Receipt handlers
+// ============================================================================
+
+// Parse a receipt image into line items for review (nothing is saved here).
+async function handleScanReceipt(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const body = await request.json();
+    const image = typeof body.image === "string" ? body.image : null;
+    if (!image) {
+      return json({ success: false, error: "image is required" }, 400);
+    }
+    const parsed = await receiptsService.parseReceipt(image);
+    return json({ success: true, data: parsed, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// Confirm the reviewed items and add them to the pantry (with store + price).
+async function handleConfirmReceipt(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const body = await request.json();
+    const store =
+      typeof body.store === "string" && body.store.trim()
+        ? body.store.trim()
+        : undefined;
+    const rawItems = Array.isArray(body.items) ? body.items : [];
+    const items = rawItems
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((it: any) => it && typeof it.name === "string" && it.name.trim())
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((it: any) => ({
+        name: String(it.name).trim(),
+        quantity: Number(it.quantity) > 0 ? Number(it.quantity) : 1,
+        unit: typeof it.unit === "string" ? it.unit : undefined,
+        category: typeof it.category === "string" ? it.category : undefined,
+        price:
+          Number.isFinite(Number(it.price)) && Number(it.price) >= 0
+            ? Number(it.price)
+            : undefined,
+        store,
+      }));
+    if (items.length === 0) {
+      return json({ success: false, error: "No items to add" }, 400);
+    }
+    const created = await itemsService.addItems(
+      params.homeId,
+      items,
+      auth.userId,
+    );
+    return json(
+      { success: true, data: { added: created.length, items: created }, timestamp: new Date() },
+      201,
+    );
   } catch (err) {
     return handleError(err);
   }

@@ -28,6 +28,7 @@ export const itemsTable = sqliteTable("items", {
   recurringLastNotified: integer("recurring_last_notified", { mode: "timestamp" }),
   barcode: text("barcode"),
   price: real("price"),
+  store: text("store"), // where it was purchased (from a scanned receipt's merchant)
   notes: text("notes"),
   isChecked: integer("is_checked", { mode: "boolean" }).default(false).notNull(),
   // Which household member added this item. Nullable: existing rows + system adds

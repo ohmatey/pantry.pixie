@@ -17,9 +17,16 @@ export interface CategorySpending {
   averagePerItem: number;
 }
 
+export interface StoreSpending {
+  store: string;
+  total: number;
+  itemCount: number;
+}
+
 interface SpendingBase {
   total: number;
   byCategory: CategorySpending[];
+  byStore: StoreSpending[];
   itemCount: number;
   averagePerItem: number;
 }
@@ -90,6 +97,7 @@ export async function calculateSpendingBetween(
   const rows = await db
     .select({
       category: itemsTable.category,
+      store: itemsTable.store,
       price: itemsTable.price,
       dateAdded: itemsTable.dateAdded,
     })
@@ -99,6 +107,7 @@ export async function calculateSpendingBetween(
   let total = 0;
   let itemCount = 0;
   const categoryMap = new Map<string, CategorySpending>();
+  const storeMap = new Map<string, StoreSpending>();
 
   for (const item of rows) {
     if (item.dateAdded >= end) continue; // exclusive upper bound
@@ -120,15 +129,32 @@ export async function calculateSpendingBetween(
         averagePerItem: cost,
       });
     }
+
+    // Spend-by-store: only items with a known purchase source (from receipts).
+    if (item.store && item.store.trim()) {
+      const store = item.store.trim();
+      const s = storeMap.get(store);
+      if (s) {
+        s.total += cost;
+        s.itemCount += 1;
+      } else {
+        storeMap.set(store, { store, total: cost, itemCount: 1 });
+      }
+    }
   }
 
   const byCategory = Array.from(categoryMap.values())
     .map((c) => ({ ...c, averagePerItem: c.total / c.itemCount }))
     .sort((a, b) => b.total - a.total);
 
+  const byStore = Array.from(storeMap.values()).sort(
+    (a, b) => b.total - a.total,
+  );
+
   return {
     total,
     byCategory,
+    byStore,
     itemCount,
     averagePerItem: itemCount > 0 ? total / itemCount : 0,
   };
@@ -182,6 +208,13 @@ function buildInsights(
   if (top) {
     out.push(
       `${cap(top.category)} was your biggest category this ${period} (${Math.round((top.total / current.total) * 100)}%).`,
+    );
+  }
+
+  const topStore = current.byStore[0];
+  if (topStore) {
+    out.push(
+      `Most of this ${period}'s spend was at ${topStore.store} (${Math.round((topStore.total / current.total) * 100)}%).`,
     );
   }
 
@@ -280,6 +313,7 @@ export async function getSpendingInsight(
     period,
     total: current.total,
     byCategory: current.byCategory,
+    byStore: current.byStore,
     itemCount: current.itemCount,
     averagePerItem: current.averagePerItem,
     comparison,

@@ -1,19 +1,43 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, type ChangeEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiPost } from "@/lib/api";
 import { CategoryGroup } from "@/components/list/CategoryGroup";
+import {
+  AddItemsSheet,
+  type ReviewItem,
+} from "@/components/pantry/AddItemsSheet";
 import { Input } from "@/components/ui/input";
 import {
   Search,
   Package,
-  MessageSquarePlus,
   AlertTriangle,
   TrendingDown,
+  ScanLine,
+  Plus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Item } from "@/hooks/useItems";
 import { toast } from "sonner";
+
+// Downscale a captured photo to keep the upload small and parsing fast.
+async function fileToDataUrl(
+  file: File,
+  maxDim = 1280,
+  quality = 0.7,
+): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas unavailable");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
 
 export default function PantryPage() {
   const { token, user } = useAuth();
@@ -21,6 +45,12 @@ export default function PantryPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
+  const [reviewStore, setReviewStore] = useState<string | undefined>(undefined);
+  const [receiptTotal, setReceiptTotal] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["items", user?.homeId, search, categoryFilter],
@@ -74,6 +104,43 @@ export default function PantryPage() {
     onError: () => toast.error("Failed to remove item"),
   });
 
+  const openManualAdd = () => {
+    setReviewItems([{ name: "", quantity: 1 }]);
+    setReviewStore(undefined);
+    setReceiptTotal(null);
+    setSheetOpen(true);
+  };
+
+  const handleReceiptFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file || !user?.homeId || !token) return;
+    setScanning(true);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const res = await apiPost<{
+        merchant: string | null;
+        total: number | null;
+        items: ReviewItem[];
+      }>(`/api/homes/${user.homeId}/receipts/scan`, token, { image: dataUrl });
+      const parsed = res.data;
+      if (!parsed || parsed.items.length === 0) {
+        toast.error(
+          "Couldn't read items from that receipt — try a clearer photo or add manually",
+        );
+        return;
+      }
+      setReviewItems(parsed.items);
+      setReviewStore(parsed.merchant ?? undefined);
+      setReceiptTotal(parsed.total ?? null);
+      setSheetOpen(true);
+    } catch {
+      toast.error("Receipt scan failed — please try again");
+    } finally {
+      setScanning(false);
+    }
+  };
+
   const items: Item[] = data?.data ?? [];
 
   // Group items by category
@@ -116,12 +183,36 @@ export default function PantryPage() {
           <h2 className="text-xl font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100">
             Pantry
           </h2>
-          {items.length > 0 && (
-            <span className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
-              {items.length} item{items.length !== 1 ? "s" : ""}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={scanning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pixie-sage-500 hover:bg-pixie-sage-600 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+            >
+              {scanning ? (
+                <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <ScanLine className="w-4 h-4" />
+              )}
+              {scanning ? "Reading…" : "Scan"}
+            </button>
+            <button
+              onClick={openManualAdd}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pixie-cream-200 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:bg-pixie-cream-300 dark:hover:bg-pixie-dusk-300 text-sm font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+          </div>
         </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleReceiptFile}
+        />
 
         {/* Search */}
         <div className="relative">
@@ -210,16 +301,27 @@ export default function PantryPage() {
                 Your pantry is empty
               </p>
               <p className="text-sm text-pixie-charcoal-100 dark:text-pixie-mist-300">
-                Ask Pixie to add items to your pantry
+                Scan a receipt to add everything at once — or add an item
+                manually.
               </p>
             </div>
-            <button
-              onClick={() => navigate("/chats")}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-pixie-sage-500 text-white text-sm font-medium"
-            >
-              <MessageSquarePlus className="w-4 h-4" />
-              Chat with Pixie
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={scanning}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-pixie-sage-500 disabled:opacity-60 text-white text-sm font-medium"
+              >
+                <ScanLine className="w-4 h-4" />
+                Scan receipt
+              </button>
+              <button
+                onClick={openManualAdd}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-pixie-cream-200 dark:bg-pixie-dusk-200 text-pixie-charcoal-200 dark:text-pixie-mist-200 text-sm font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                Add item
+              </button>
+            </div>
           </div>
         ) : (
           <div className="pb-4">
@@ -235,6 +337,17 @@ export default function PantryPage() {
           </div>
         )}
       </div>
+
+      <AddItemsSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        homeId={user?.homeId ?? ""}
+        token={token ?? ""}
+        initialItems={reviewItems}
+        initialStore={reviewStore}
+        receiptTotal={receiptTotal}
+        onConfirmed={() => {}}
+      />
     </div>
   );
 }

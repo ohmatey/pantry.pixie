@@ -52,6 +52,7 @@ export function createQueryBudgetTool(homeId: string) {
           itemCount: data.itemCount,
           averagePerItem: data.averagePerItem,
           topCategories: data.byCategory.slice(0, 5),
+          topStores: data.byStore.slice(0, 5),
           comparison: data.comparison,
           budget: data.budget,
           insights: data.insights,

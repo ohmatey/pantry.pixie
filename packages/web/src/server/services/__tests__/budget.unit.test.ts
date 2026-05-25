@@ -27,12 +27,14 @@ if (skipTests) {
     category: string,
     price: number,
     daysAgoVal: number,
+    store?: string,
   ) {
     await db.insert(itemsTable).values({
       homeId: home,
       name,
       category,
       price,
+      store,
       quantity: 1,
       dateAdded: new Date(Date.now() - daysAgoVal * DAY_MS),
     });
@@ -43,9 +45,9 @@ if (skipTests) {
     homeId = seed.home.id;
 
     // Current month (last 30d): dairy 120 (3d) + dairy 80 (10d) + produce 50 (12d) = 250
-    await seedItem(homeId, "Milk", "dairy", 120, 3);
-    await seedItem(homeId, "Cheese", "dairy", 80, 10);
-    await seedItem(homeId, "Apples", "produce", 50, 12);
+    await seedItem(homeId, "Milk", "dairy", 120, 3, "Big C");
+    await seedItem(homeId, "Cheese", "dairy", 80, 10, "Big C");
+    await seedItem(homeId, "Apples", "produce", 50, 12, "Wet Market");
     // Previous month (30–60d ago): pantry 100 (40d)
     await seedItem(homeId, "Rice", "pantry", 100, 40);
   });
@@ -101,6 +103,14 @@ if (skipTests) {
       // top category + budget framing
       expect(insight.insights.join(" ")).toContain("Dairy");
       expect(insight.insights.join(" ").toLowerCase()).toContain("budget");
+    });
+
+    it("breaks spending down by store", async () => {
+      const insight = await getSpendingInsight(homeId, "month");
+      const bigC = insight.byStore.find((s) => s.store === "Big C");
+      expect(bigC).toBeDefined();
+      expect(bigC!.total).toBe(200); // Milk 120 + Cheese 80
+      expect(insight.byStore.map((s) => s.store)).toContain("Wet Market");
     });
   });
 

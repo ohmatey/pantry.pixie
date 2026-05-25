@@ -21,6 +21,7 @@ interface SpendingInsight {
   itemCount: number;
   averagePerItem: number;
   byCategory: CategorySpending[];
+  byStore: { store: string; total: number; itemCount: number }[];
   comparison?: {
     previousTotal: number;
     changePercent: number;
@@ -232,6 +233,38 @@ export default function BudgetPage() {
                         </span>
                         <span className="text-pixie-charcoal-100 dark:text-pixie-mist-300">
                           {baht(c.total)}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-pixie-cream-200 dark:bg-pixie-dusk-300 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-pixie-sage-400 dark:bg-pixie-glow-sage"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* By store */}
+          {month && month.byStore.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Where you shopped</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2.5">
+                {month.byStore.slice(0, 8).map((s) => {
+                  const pct = month.total > 0 ? (s.total / month.total) * 100 : 0;
+                  return (
+                    <div key={s.store}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-pixie-charcoal-200 dark:text-pixie-mist-200">
+                          {s.store}
+                        </span>
+                        <span className="text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                          {baht(s.total)}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-pixie-cream-200 dark:bg-pixie-dusk-300 overflow-hidden">
