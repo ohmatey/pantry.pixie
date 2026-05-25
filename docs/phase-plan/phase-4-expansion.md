@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 4 expands Pantry Pixie from a grocery-focused tool into a broader household steward. This phase introduces related domains (subscriptions, bills, utilities), integrates with major Thai platforms (LINE, GrabMart, Shopee), supports multiple languages, and establishes the monetization layer through premium features.
+Phase 4 expands Pantry Pixie from a grocery-focused tool into a broader household steward. This phase introduces related domains (subscriptions, bills, utilities), integrates with major Thai platforms (GrabMart, Shopee), supports multiple languages, and establishes the monetization layer through premium features.
 
 **Duration:** 8 weeks
 **Goal:** Transform Pantry Pixie from a niche grocery app into a platform for household management
@@ -400,10 +400,11 @@ async function pixieBillReminder(homeId: string) {
 
 ---
 
-## 3. LINE Integration (Weeks 21-23, 8 days of effort)
+## 3. LINE Integration — REMOVED FROM SCOPE
 
-### Objective
-Enable Pantry Pixie to work via LINE, Thailand's most popular messaging app.
+> LINE integration has been removed from the Pantry Pixie roadmap. The detailed
+> design that follows in this section is obsolete and should be disregarded
+> (kept only until this section is pruned).
 
 ### Architecture
 
