@@ -3,6 +3,8 @@
  * Provides deterministic responses without calling OpenAI API
  */
 
+import type { ParsedReceipt } from "../../services/receipts";
+
 export interface AgentMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -89,7 +91,30 @@ export async function createPixieResponse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _userPreferences?: any,
   _listId?: string | null,
+  receipt?: ParsedReceipt,
 ): Promise<StreamedResponse> {
+  // Receipt scanned in chat: acknowledge + return a receipt-review UI tool result.
+  if (receipt) {
+    const ackText = `Got your receipt${
+      receipt.merchant ? ` from ${receipt.merchant}` : ""
+    }! Here's what I read.`;
+    return {
+      textStream: createMockTextStream(ackText),
+      intent: "add_item",
+      fullText: Promise.resolve(ackText),
+      toolResults: Promise.resolve([
+        {
+          toolName: "presentReceiptReview",
+          result: {
+            success: true,
+            message: "Here's what I read.",
+            uiData: { type: "receipt-review", data: receipt },
+          },
+        },
+      ]),
+    };
+  }
+
   const responseText = getMockResponse(messages);
   const lastMessage = messages[messages.length - 1];
   const intent = lastMessage?.content.toLowerCase().includes("add")

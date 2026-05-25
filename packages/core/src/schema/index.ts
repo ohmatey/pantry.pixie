@@ -56,3 +56,19 @@ export {
   type Notification,
   type NewNotification,
 } from "./notification";
+
+// Receipt schema
+export {
+  receiptsTable,
+  receiptsRelations,
+  type Receipt,
+  type NewReceipt,
+} from "./receipt";
+
+// Invite code schema
+export {
+  inviteCodesTable,
+  inviteCodesRelations,
+  type InviteCode,
+  type NewInviteCode,
+} from "./invite-codes";

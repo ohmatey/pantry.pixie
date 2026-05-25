@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useAuth } from "./useAuth";
+import type { ReceiptReviewUI } from "../types/websocket";
 
 interface WSMessage {
   type: string;
@@ -100,10 +101,15 @@ export function useWebSocket({
   }, []);
 
   const sendChatMessage = useCallback(
-    (threadId: string, content: string, listId?: string | null) => {
+    (
+      threadId: string,
+      content: string,
+      listId?: string | null,
+      receipt?: ReceiptReviewUI,
+    ) => {
       send({
         type: "message",
-        payload: { threadId, role: "user", content, listId },
+        payload: { threadId, role: "user", content, listId, receipt },
         timestamp: new Date().toISOString(),
       });
     },

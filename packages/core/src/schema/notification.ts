@@ -23,7 +23,13 @@ export const notificationsTable = sqliteTable("notifications", {
   body: text("body"),
   refId: text("ref_id"), // related entity id (itemId, threadId, …)
   isRead: integer("is_read", { mode: "boolean" }).default(false).notNull(),
+  // Number of coalesced events this row represents (partner-activity digest). 1 = single.
+  count: integer("count").default(1).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  // Bumped on each coalesce-merge; drives the coalescing window. createdAt stays first-seen.
+  updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
 });

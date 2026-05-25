@@ -17,6 +17,7 @@ import {
 import type { ChatMessage, HouseholdContext } from "@pantry-pixie/core";
 import { createPixieResponse, generateThreadTitle, type AgentMessage } from "../agent";
 import type { SerializedUI } from "../ws";
+import type { ParsedReceipt } from "./receipts";
 import { logger } from "../lib/logger";
 
 function timeAgo(date: Date): string {
@@ -137,6 +138,7 @@ export async function sendMessage(
   userId: string,
   content: string,
   listId?: string | null,
+  receipt?: ParsedReceipt,
 ): Promise<SendMessageResult> {
   // Classify intent for metadata
   const intent = classifyIntent(content);
@@ -172,6 +174,21 @@ export async function sendMessage(
       role: m.role as "user" | "assistant",
       content: m.content,
     }));
+
+  // When a receipt was scanned in chat, hand Pixie the parsed result for THIS turn
+  // only (it's appended after the persisted-history map above, so it's never stored
+  // or replayed) and ask her to acknowledge it and show the inline review card.
+  if (receipt) {
+    agentMessages.push({
+      role: "system",
+      content:
+        "The user just scanned a grocery receipt. Parsed result (JSON):\n" +
+        JSON.stringify(receipt) +
+        "\nAcknowledge it warmly in one short sentence (mention the merchant and " +
+        "total if present), then call the presentReceiptReview tool with these exact " +
+        "items so they can confirm. Do not invent items.",
+    });
+  }
 
   // Create placeholder assistant message
   const [assistantMessage] = await db
@@ -247,6 +264,7 @@ export async function sendMessage(
           household,
           listId,
           userId,
+          receipt,
         );
 
         // Consume text stream (AI SDK returns ReadableStream<string>)

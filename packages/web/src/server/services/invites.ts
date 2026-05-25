@@ -1,10 +1,13 @@
 /**
- * Invite service — in-memory invite code management for MVP
+ * Invite service — database-backed home invite codes. Codes persist across
+ * server restarts (single-use, deleted on accept; 24h expiry swept on each op).
  */
 
 import {
   db,
   eq,
+  lte,
+  inviteCodesTable,
   homesTable,
   homeMembersTable,
   usersTable,
@@ -12,39 +15,29 @@ import {
 import { randomBytes } from "crypto";
 import { notifyPartners } from "./notifications";
 
-interface InviteEntry {
-  code: string;
-  homeId: string;
-  inviterId: string;
-  expiresAt: Date;
-}
-
-// In-memory store with 24hr expiry
-const invites = new Map<string, InviteEntry>();
-
 function generateCode(): string {
   return randomBytes(6).toString("hex"); // 12-char hex code
 }
 
-function cleanExpired() {
-  const now = new Date();
-  for (const [code, entry] of invites) {
-    if (entry.expiresAt < now) {
-      invites.delete(code);
-    }
-  }
+/** Sweep expired codes. Called at the start of each invite operation. */
+async function cleanExpired(): Promise<void> {
+  await db
+    .delete(inviteCodesTable)
+    .where(lte(inviteCodesTable.expiresAt, new Date()));
 }
 
-export function createInvite(
+export async function createInvite(
   homeId: string,
   inviterId: string,
-): { code: string; expiresAt: Date } {
-  cleanExpired();
+): Promise<{ code: string; expiresAt: Date }> {
+  await cleanExpired();
 
   const code = generateCode();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  invites.set(code, { code, homeId, inviterId, expiresAt });
+  await db
+    .insert(inviteCodesTable)
+    .values({ code, homeId, inviterId, expiresAt });
 
   return { code, expiresAt };
 }
@@ -53,15 +46,17 @@ export async function acceptInvite(
   code: string,
   userId: string,
 ): Promise<{ homeId: string; homeName: string; needsOnboarding: boolean }> {
-  cleanExpired();
+  await cleanExpired();
 
-  const entry = invites.get(code);
+  const entry = await db.query.inviteCodesTable.findFirst({
+    where: eq(inviteCodesTable.code, code),
+  });
   if (!entry) {
     throw new Error("Invalid or expired invite code");
   }
 
   if (entry.expiresAt < new Date()) {
-    invites.delete(code);
+    await db.delete(inviteCodesTable).where(eq(inviteCodesTable.code, code));
     throw new Error("Invite has expired");
   }
 
@@ -90,7 +85,7 @@ export async function acceptInvite(
   });
 
   // Consume the invite
-  invites.delete(code);
+  await db.delete(inviteCodesTable).where(eq(inviteCodesTable.code, code));
 
   const home = await db.query.homesTable.findFirst({
     where: eq(homesTable.id, entry.homeId),
@@ -120,9 +115,11 @@ export async function acceptInvite(
 export async function getInviteInfo(
   code: string,
 ): Promise<{ homeName: string; inviterName: string; expiresAt: Date } | null> {
-  cleanExpired();
+  await cleanExpired();
 
-  const entry = invites.get(code);
+  const entry = await db.query.inviteCodesTable.findFirst({
+    where: eq(inviteCodesTable.code, code),
+  });
   if (!entry || entry.expiresAt < new Date()) {
     return null;
   }

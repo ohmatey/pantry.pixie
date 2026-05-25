@@ -5,6 +5,7 @@
 import {
   register,
   login,
+  createToken,
   withAuth,
   assertHomeMembership,
   type AuthPayload,
@@ -306,6 +307,16 @@ export function registerApiRoutes(): Route[] {
       path: "/api/homes/:homeId/receipts/confirm",
       handler: withAuth(handleConfirmReceipt),
     },
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/receipts",
+      handler: withAuth(handleListReceipts),
+    },
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/receipts/:id",
+      handler: withAuth(handleGetReceipt),
+    },
   ];
 }
 
@@ -498,7 +509,7 @@ async function handleCreateInvite(
 ): Promise<Response> {
   try {
     await assertHomeMembership(params.homeId, auth.userId, "admin");
-    const invite = createInvite(params.homeId, auth.userId);
+    const invite = await createInvite(params.homeId, auth.userId);
     return json({ success: true, data: invite, timestamp: new Date() }, 201);
   } catch (err) {
     return handleError(err);
@@ -512,7 +523,18 @@ async function handleAcceptInvite(
 ): Promise<Response> {
   try {
     const result = await acceptInvite(params.code, auth.userId);
-    return json({ success: true, data: result, timestamp: new Date() });
+    // Re-issue the JWT so its homeId matches the home they just joined (the old
+    // token still points at their original auto-created home).
+    const token = await createToken({
+      userId: auth.userId,
+      homeId: result.homeId,
+      email: auth.email,
+    });
+    return json({
+      success: true,
+      data: { ...result, token },
+      timestamp: new Date(),
+    });
   } catch (err) {
     const appErr = err as AppError;
     if (appErr?.status !== undefined && appErr.status >= 400 && appErr.status < 500) {
@@ -1042,31 +1064,8 @@ async function handleSendMessage(
 // User preference handlers
 // ============================================================================
 
-/**
- * Resolve which home a user's shared preferences (household size, house dietary
- * rules) belong to. Prefers the caller's ACTIVE home when supplied (verified by
- * membership) — a partner may belong to both their own auto-created home and
- * the shared one they joined, so we can't infer it from ownership or join time
- * (join timestamps are second-precision and can tie). Falls back to the most
- * recent membership. Returns null if the user has no home.
- */
-async function resolveHomeId(
-  userId: string,
-  requested?: string | null,
-): Promise<string | null> {
-  const memberships = await db.query.homeMembersTable.findMany({
-    where: eq(homeMembersTable.userId, userId),
-  });
-  if (requested && memberships.some((m) => m.homeId === requested)) {
-    return requested;
-  }
-  if (memberships.length === 0) return null;
-  memberships.sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime());
-  return memberships[0].homeId;
-}
-
 async function handleGetPreferences(
-  request: Request,
+  _request: Request,
   _params: Record<string, string>,
   auth: AuthPayload,
 ): Promise<Response> {
@@ -1077,9 +1076,10 @@ async function handleGetPreferences(
     if (!user) {
       return json({ success: false, error: "User not found" }, 404);
     }
-    // Shared (home-level) fields resolve against the caller's active home.
-    const requestedHome = new URL(request.url).searchParams.get("homeId");
-    const homeId = await resolveHomeId(auth.userId, requestedHome);
+    // Shared (home-level) fields belong to the caller's active home. The JWT's
+    // homeId is authoritative — it's re-issued on invite-accept and login picks
+    // the most-recent membership — so we trust it directly.
+    const homeId = auth.homeId;
     const home = homeId
       ? await db.query.homesTable.findFirst({ where: eq(homesTable.id, homeId) })
       : null;
@@ -1091,6 +1091,9 @@ async function handleGetPreferences(
           : [],
         cookingSkillLevel: user.cookingSkillLevel || null,
         budgetConsciousness: user.budgetConsciousness || null,
+        mutedNotificationTypes: user.mutedNotificationTypes
+          ? JSON.parse(user.mutedNotificationTypes)
+          : [],
         householdSize: home?.householdSize ?? null,
         sharedDietaryRestrictions: home?.sharedDietaryRestrictions
           ? JSON.parse(home.sharedDietaryRestrictions)
@@ -1130,6 +1133,20 @@ async function handleUpdatePreferences(
         ? body.budgetConsciousness
         : null;
     }
+    if ("mutedNotificationTypes" in body) {
+      const valid = [
+        "recurring_due",
+        "expiring_soon",
+        "partner_activity",
+        "sunday_sync",
+        "running_low",
+      ];
+      updates.mutedNotificationTypes = Array.isArray(body.mutedNotificationTypes)
+        ? JSON.stringify(
+            body.mutedNotificationTypes.filter((t: string) => valid.includes(t)),
+          )
+        : null;
+    }
     // Home-level (shared) fields — household size and house dietary rules.
     const homeUpdates: Record<string, string | number | null> = {};
     if ("householdSize" in body) {
@@ -1161,16 +1178,12 @@ async function handleUpdatePreferences(
     }
 
     if (Object.keys(homeUpdates).length > 0) {
-      const homeId = await resolveHomeId(
-        auth.userId,
-        typeof body.homeId === "string" ? body.homeId : null,
-      );
-      if (homeId) {
-        await db
-          .update(homesTable)
-          .set(homeUpdates)
-          .where(eq(homesTable.id, homeId));
-      }
+      // The JWT's homeId is authoritative (re-issued on accept, deterministic on
+      // login). The client may still send body.homeId; we ignore it.
+      await db
+        .update(homesTable)
+        .set(homeUpdates)
+        .where(eq(homesTable.id, auth.homeId));
     }
 
     return json({ success: true, timestamp: new Date() });
@@ -1461,7 +1474,9 @@ async function handleScanReceipt(
   }
 }
 
-// Confirm the reviewed items and add them to the pantry (with store + price).
+// Confirm the reviewed items: persist a receipt record, then add the items to the
+// pantry (with store + price, each linked back via receiptId). This is the single
+// funnel for BOTH the Pantry scan button and the in-chat receipt scan.
 async function handleConfirmReceipt(
   request: Request,
   params: Record<string, string>,
@@ -1493,15 +1508,82 @@ async function handleConfirmReceipt(
     if (items.length === 0) {
       return json({ success: false, error: "No items to add" }, 400);
     }
+
+    // Receipt header — defaults merchant to the store name when not sent separately.
+    const merchant =
+      typeof body.merchant === "string" && body.merchant.trim()
+        ? body.merchant.trim()
+        : (store ?? null);
+    const purchasedAtRaw =
+      typeof body.purchasedAt === "string" ? new Date(body.purchasedAt) : null;
+    const purchasedAt =
+      purchasedAtRaw && !isNaN(purchasedAtRaw.getTime()) ? purchasedAtRaw : null;
+    const total =
+      Number.isFinite(Number(body.total)) && Number(body.total) >= 0
+        ? Number(body.total)
+        : null;
+    const currency =
+      typeof body.currency === "string" && body.currency.trim()
+        ? body.currency.trim()
+        : null;
+
+    const receipt = await receiptsService.createReceipt({
+      homeId: params.homeId,
+      merchant,
+      purchasedAt,
+      currency,
+      total,
+      itemCount: items.length,
+      scannedBy: auth.userId,
+    });
+
     const created = await itemsService.addItems(
       params.homeId,
-      items,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      items.map((it: any) => ({ ...it, receiptId: receipt.id })),
       auth.userId,
     );
     return json(
-      { success: true, data: { added: created.length, items: created }, timestamp: new Date() },
+      {
+        success: true,
+        data: { added: created.length, items: created, receiptId: receipt.id },
+        timestamp: new Date(),
+      },
       201,
     );
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// List recent receipts for a home (newest first).
+async function handleListReceipts(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const receipts = await receiptsService.listReceipts(params.homeId);
+    return json({ success: true, data: receipts, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// A single receipt plus the items added from it (for "view receipt").
+async function handleGetReceipt(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const result = await receiptsService.getReceipt(params.homeId, params.id);
+    if (!result) {
+      return json({ success: false, error: "Receipt not found" }, 404);
+    }
+    return json({ success: true, data: result, timestamp: new Date() });
   } catch (err) {
     return handleError(err);
   }

@@ -64,15 +64,17 @@ export default function AcceptInvitePage() {
 
     try {
       const res = await apiPost<{
+        token: string;
         homeId: string;
         homeName: string;
         needsOnboarding: boolean;
       }>(`/api/invites/${code}/accept`, token, {});
 
       if (res.data) {
-        // Update auth store with new homeId
+        // Store the re-issued token (its homeId now matches the joined home) so
+        // every subsequent request is scoped to the right home.
         if (user) {
-          setAuth(token, { ...user, homeId: res.data.homeId });
+          setAuth(res.data.token, { ...user, homeId: res.data.homeId });
         }
         localStorage.setItem("pp_onboarded", "true");
         // A freshly-joined partner sets up their preferences first so Pixie

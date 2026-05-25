@@ -21,6 +21,7 @@ import {
   Share,
   CheckCircle,
   Sparkles,
+  Bell,
 } from "lucide-react";
 
 const SKILL_LEVELS = [
@@ -38,6 +39,14 @@ const BUDGET_LEVELS = [
 const DIETARY_OPTIONS = [
   "Vegetarian", "Vegan", "Gluten-free", "Dairy-free",
   "Nut-free", "Halal", "Kosher", "Low-carb", "Keto",
+];
+
+const NOTIFICATION_TYPES = [
+  { value: "partner_activity", label: "Partner activity" },
+  { value: "expiring_soon", label: "Expiring soon" },
+  { value: "running_low", label: "Running low" },
+  { value: "recurring_due", label: "Restock reminders" },
+  { value: "sunday_sync", label: "Sunday Sync" },
 ];
 
 export default function SettingsPage() {
@@ -64,7 +73,7 @@ export default function SettingsPage() {
   const { data: prefsData } = useQuery({
     queryKey: ["preferences", user?.id],
     queryFn: () =>
-      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null; householdSize: number | null; sharedDietaryRestrictions: string[] }>(
+      apiGet<{ dietaryRestrictions: string[]; cookingSkillLevel: string | null; budgetConsciousness: string | null; householdSize: number | null; sharedDietaryRestrictions: string[]; mutedNotificationTypes: string[] }>(
         `/api/users/me/preferences?homeId=${user!.homeId}`,
         token!,
       ),
@@ -402,6 +411,50 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
+            <CardTitle className="text-lg">Notifications</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300 mb-3">
+            Tap to mute a kind of notification just for you — your partner's
+            settings are separate.
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {NOTIFICATION_TYPES.map((t) => {
+              const muted = (prefs?.mutedNotificationTypes ?? []).includes(
+                t.value,
+              );
+              const toggle = () => {
+                const current = prefs?.mutedNotificationTypes ?? [];
+                const updated = muted
+                  ? current.filter((x) => x !== t.value)
+                  : [...current, t.value];
+                updatePref.mutate({ mutedNotificationTypes: updated });
+              };
+              return (
+                <button
+                  key={t.value}
+                  onClick={toggle}
+                  aria-pressed={!muted}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                    !muted
+                      ? "bg-pixie-sage-500 text-white border-pixie-sage-500"
+                      : "border-pixie-cream-200 dark:border-pixie-dusk-300 text-pixie-charcoal-200 dark:text-pixie-mist-200 hover:border-pixie-sage-300"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

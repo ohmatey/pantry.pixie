@@ -18,26 +18,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Item } from "@/hooks/useItems";
+import { fileToDataUrl } from "@/lib/image";
 import { toast } from "sonner";
-
-// Downscale a captured photo to keep the upload small and parsing fast.
-async function fileToDataUrl(
-  file: File,
-  maxDim = 1280,
-  quality = 0.7,
-): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
-  const w = Math.round(bitmap.width * scale);
-  const h = Math.round(bitmap.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas unavailable");
-  ctx.drawImage(bitmap, 0, 0, w, h);
-  return canvas.toDataURL("image/jpeg", quality);
-}
 
 export default function PantryPage() {
   const { token, user } = useAuth();
@@ -51,6 +33,10 @@ export default function PantryPage() {
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
   const [reviewStore, setReviewStore] = useState<string | undefined>(undefined);
   const [receiptTotal, setReceiptTotal] = useState<number | null>(null);
+  const [receiptPurchasedAt, setReceiptPurchasedAt] = useState<string | null>(
+    null,
+  );
+  const [receiptCurrency, setReceiptCurrency] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["items", user?.homeId, search, categoryFilter],
@@ -108,6 +94,8 @@ export default function PantryPage() {
     setReviewItems([{ name: "", quantity: 1 }]);
     setReviewStore(undefined);
     setReceiptTotal(null);
+    setReceiptPurchasedAt(null);
+    setReceiptCurrency(null);
     setSheetOpen(true);
   };
 
@@ -121,6 +109,8 @@ export default function PantryPage() {
       const res = await apiPost<{
         merchant: string | null;
         total: number | null;
+        purchasedAt: string | null;
+        currency: string | null;
         items: ReviewItem[];
       }>(`/api/homes/${user.homeId}/receipts/scan`, token, { image: dataUrl });
       const parsed = res.data;
@@ -133,6 +123,8 @@ export default function PantryPage() {
       setReviewItems(parsed.items);
       setReviewStore(parsed.merchant ?? undefined);
       setReceiptTotal(parsed.total ?? null);
+      setReceiptPurchasedAt(parsed.purchasedAt ?? null);
+      setReceiptCurrency(parsed.currency ?? null);
       setSheetOpen(true);
     } catch {
       toast.error("Receipt scan failed — please try again");
@@ -346,6 +338,8 @@ export default function PantryPage() {
         initialItems={reviewItems}
         initialStore={reviewStore}
         receiptTotal={receiptTotal}
+        receiptPurchasedAt={receiptPurchasedAt}
+        receiptCurrency={receiptCurrency}
         onConfirmed={() => {}}
       />
     </div>

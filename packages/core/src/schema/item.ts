@@ -8,6 +8,7 @@ import { relations } from "drizzle-orm";
 import { homesTable } from "./home";
 import { usersTable } from "./user";
 import { listItemsTable } from "./grocery-list";
+import { receiptsTable } from "./receipt";
 
 export const itemsTable = sqliteTable("items", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -29,6 +30,10 @@ export const itemsTable = sqliteTable("items", {
   barcode: text("barcode"),
   price: real("price"),
   store: text("store"), // where it was purchased (from a scanned receipt's merchant)
+  // Links the item to the receipt it was added from (if scanned). Nullable: manual adds.
+  receiptId: text("receipt_id").references(() => receiptsTable.id, {
+    onDelete: "set null",
+  }),
   notes: text("notes"),
   isChecked: integer("is_checked", { mode: "boolean" }).default(false).notNull(),
   // Which household member added this item. Nullable: existing rows + system adds
@@ -44,6 +49,10 @@ export const itemsRelations = relations(itemsTable, ({ one, many }) => ({
   addedByUser: one(usersTable, {
     fields: [itemsTable.addedBy],
     references: [usersTable.id],
+  }),
+  receipt: one(receiptsTable, {
+    fields: [itemsTable.receiptId],
+    references: [receiptsTable.id],
   }),
   listItems: many(listItemsTable),
 }));

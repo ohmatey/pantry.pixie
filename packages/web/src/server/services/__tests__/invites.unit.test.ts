@@ -11,6 +11,7 @@ import {
   usersTable,
   homesTable,
   homeMembersTable,
+  inviteCodesTable,
 } from "@pantry-pixie/core";
 import { register } from "../../auth";
 import {
@@ -53,17 +54,17 @@ afterAll(async () => {
 });
 
 describe("Invite Service - createInvite()", () => {
-  it("should create invite with 12-character code", () => {
-    const invite = createInvite(testHomeId, testUserId);
+  it("should create invite with 12-character code", async () => {
+    const invite = await createInvite(testHomeId, testUserId);
 
     expect(invite.code).toBeString();
     expect(invite.code.length).toBe(12);
     expect(invite.code).toMatch(/^[a-f0-9]{12}$/); // hex format
   });
 
-  it("should set expiration to 24 hours from now", () => {
+  it("should set expiration to 24 hours from now", async () => {
     const beforeCreate = Date.now();
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
     const afterCreate = Date.now();
 
     const expectedExpiry = beforeCreate + 24 * 60 * 60 * 1000;
@@ -76,27 +77,37 @@ describe("Invite Service - createInvite()", () => {
     );
   });
 
-  it("should generate unique codes", () => {
-    const invite1 = createInvite(testHomeId, testUserId);
-    const invite2 = createInvite(testHomeId, testUserId);
+  it("should generate unique codes", async () => {
+    const invite1 = await createInvite(testHomeId, testUserId);
+    const invite2 = await createInvite(testHomeId, testUserId);
 
     expect(invite1.code).not.toBe(invite2.code);
   });
 
-  it("should return invite object with code and expiry", () => {
-    const invite = createInvite(testHomeId, testUserId);
+  it("should return invite object with code and expiry", async () => {
+    const invite = await createInvite(testHomeId, testUserId);
 
     expect(invite).toHaveProperty("code");
     expect(invite).toHaveProperty("expiresAt");
     expect(invite.expiresAt).toBeInstanceOf(Date);
+  });
+
+  it("should persist the code to the database", async () => {
+    const invite = await createInvite(testHomeId, testUserId);
+    const row = await db.query.inviteCodesTable.findFirst({
+      where: eq(inviteCodesTable.code, invite.code),
+    });
+    expect(row).toBeDefined();
+    expect(row!.homeId).toBe(testHomeId);
+    expect(row!.inviterId).toBe(testUserId);
   });
 });
 
 describe("Invite Service - getInviteInfo()", () => {
   let inviteCode: string;
 
-  beforeAll(() => {
-    const invite = createInvite(testHomeId, testUserId);
+  beforeAll(async () => {
+    const invite = await createInvite(testHomeId, testUserId);
     inviteCode = invite.code;
   });
 
@@ -139,7 +150,7 @@ describe("Invite Service - getInviteInfo()", () => {
 
 describe("Invite Service - acceptInvite()", () => {
   it("should add user to home and return home info", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     // Create new user to accept invite
     const newUser = await register(
@@ -158,7 +169,7 @@ describe("Invite Service - acceptInvite()", () => {
   });
 
   it("should add user as member role", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     const newUser = await register(
       `member-${Date.now()}@test.com`,
@@ -184,7 +195,7 @@ describe("Invite Service - acceptInvite()", () => {
   });
 
   it("should consume invite code after acceptance", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     const newUser = await register(
       `consumer-${Date.now()}@test.com`,
@@ -223,7 +234,7 @@ describe("Invite Service - acceptInvite()", () => {
   });
 
   it("should handle user already in home gracefully", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     // Accept invite
     const newUser = await register(
@@ -236,14 +247,14 @@ describe("Invite Service - acceptInvite()", () => {
     await acceptInvite(invite.code, newUser.user.id);
 
     // Create another invite and try to accept again
-    const invite2 = createInvite(testHomeId, testUserId);
+    const invite2 = await createInvite(testHomeId, testUserId);
     const result = await acceptInvite(invite2.code, newUser.user.id);
 
     expect(result.homeId).toBe(testHomeId);
   });
 
   it("should return home name after acceptance", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     const newUser = await register(
       `homename-${Date.now()}@test.com`,
@@ -264,7 +275,7 @@ describe("Invite Service - getHomeMembers()", () => {
 
   beforeAll(async () => {
     // Add a member to the test home
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
     const newUser = await register(
       `getmembers-${Date.now()}@test.com`,
       "password",
@@ -335,25 +346,25 @@ describe("Invite Service - getHomeMembers()", () => {
 
 describe("Invite Service - Expired Invite Handling", () => {
   it("should clean up expired invites automatically", async () => {
-    const invite = createInvite(testHomeId, testUserId);
+    const invite = await createInvite(testHomeId, testUserId);
 
     // Verify invite exists
     const infoBefore = await getInviteInfo(invite.code);
     expect(infoBefore).toBeDefined();
 
     // Create another invite (triggers cleanup)
-    createInvite(testHomeId, testUserId);
+    await createInvite(testHomeId, testUserId);
 
     // Original invite should still exist (not expired yet)
     const infoAfter = await getInviteInfo(invite.code);
     expect(infoAfter).toBeDefined();
   });
 
-  it("should create new invites after cleanup", () => {
+  it("should create new invites after cleanup", async () => {
     // Create multiple invites to trigger cleanup
-    const invite1 = createInvite(testHomeId, testUserId);
-    const invite2 = createInvite(testHomeId, testUserId);
-    const invite3 = createInvite(testHomeId, testUserId);
+    const invite1 = await createInvite(testHomeId, testUserId);
+    const invite2 = await createInvite(testHomeId, testUserId);
+    const invite3 = await createInvite(testHomeId, testUserId);
 
     expect(invite1.code).toBeString();
     expect(invite2.code).toBeString();

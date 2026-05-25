@@ -38,6 +38,8 @@ interface AddItemsSheetProps {
   initialItems: ReviewItem[];
   initialStore?: string;
   receiptTotal?: number | null;
+  receiptPurchasedAt?: string | null;
+  receiptCurrency?: string | null;
   onConfirmed: () => void;
 }
 
@@ -51,6 +53,8 @@ export function AddItemsSheet({
   initialItems,
   initialStore,
   receiptTotal,
+  receiptPurchasedAt,
+  receiptCurrency,
   onConfirmed,
 }: AddItemsSheetProps) {
   const queryClient = useQueryClient();
@@ -79,6 +83,9 @@ export function AddItemsSheet({
       apiPost(`/api/homes/${homeId}/receipts/confirm`, token, {
         store: store.trim() || undefined,
         items: validItems,
+        total: receiptTotal ?? undefined,
+        purchasedAt: receiptPurchasedAt ?? undefined,
+        currency: receiptCurrency ?? undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items", homeId] });

@@ -8,6 +8,7 @@ import * as notificationsService from "../services/notifications";
 import { eventBus } from "../services/events";
 import { logger, logWebSocket } from "../lib/logger";
 import { db, eq, usersTable } from "@pantry-pixie/core";
+import type { ParsedReceipt } from "../services/receipts";
 
 export interface GroceryListUI {
   id: string;
@@ -65,7 +66,8 @@ export interface ListEditorUI {
 export type SerializedUI =
   | { type: "grocery-list"; data: GroceryListUI }
   | { type: "grocery-lists-overview"; data: GroceryListsOverviewUI }
-  | { type: "list-editor"; data: ListEditorUI };
+  | { type: "list-editor"; data: ListEditorUI }
+  | { type: "receipt-review"; data: ParsedReceipt };
 
 export interface WebSocketMessage {
   type:
@@ -103,6 +105,8 @@ export interface ChatWebSocketMessage extends WebSocketMessage {
     intent?: string;
     messageId?: string;
     listId?: string | null;
+    // Pre-parsed receipt from an in-chat photo scan (image stays off the socket).
+    receipt?: ParsedReceipt;
   };
 }
 
@@ -149,12 +153,16 @@ eventBus.on(
             subject: data.item.name,
             itemId: data.item.id,
           });
-          // Persist a notification so an offline partner sees it later.
+          // Persist a notification so an offline partner sees it later. Rapid
+          // adds/removes coalesce into one calm digest (see notifyPartners).
+          const verb: "added" | "removed" =
+            data.action === "added" ? "added" : "removed";
           notificationsService
             .notifyPartners(data.homeId, data.actorId, {
               type: "partner_activity",
-              title: `${actorName} ${data.action === "added" ? "added" : "used up"} ${data.item.name}`,
+              title: `${actorName} ${verb === "added" ? "added" : "used up"} ${data.item.name}`,
               refId: data.item.id,
+              coalesce: { verb, actorName },
             })
             .catch(() => {/* non-critical */});
         })
@@ -254,7 +262,7 @@ async function handleChatMessage(
   msg: ChatWebSocketMessage,
 ): Promise<void> {
   const { userId, homeId } = ws.data;
-  const { threadId, content, listId } = msg.payload;
+  const { threadId, content, listId, receipt } = msg.payload;
 
   if (!threadId || !content) {
     ws.send(
@@ -281,6 +289,7 @@ async function handleChatMessage(
       userId,
       content,
       listId,
+      receipt,
     );
 
     // Broadcast the user message to other clients

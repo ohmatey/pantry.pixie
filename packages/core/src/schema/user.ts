@@ -13,6 +13,9 @@ export const usersTable = sqliteTable("users", {
   dietaryRestrictions: text("dietary_restrictions"), // JSON array stored as text
   cookingSkillLevel: text("cooking_skill_level"), // "beginner" | "intermediate" | "advanced"
   budgetConsciousness: text("budget_consciousness"), // "low" | "medium" | "high"
+  // Per-user muted notification types (JSON array of NotificationType as text).
+  // null/absent = nothing muted. Mirrors dietaryRestrictions storage.
+  mutedNotificationTypes: text("muted_notification_types"),
   // NOTE: household size is a property of the HOME (shared by both partners),
   // not the user — see homesTable.householdSize.
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),

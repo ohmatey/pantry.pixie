@@ -6,7 +6,15 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { TrendingUp, TrendingDown, Minus, Sparkles, Wallet } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Sparkles,
+  Wallet,
+  Receipt,
+  X,
+} from "lucide-react";
 
 interface CategorySpending {
   category: string;
@@ -38,6 +46,36 @@ interface SpendingInsight {
 
 const baht = (n: number) => `฿${n.toFixed(2)}`;
 
+const fmtDate = (iso: string | null | undefined) =>
+  iso
+    ? new Date(iso).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
+
+interface ReceiptRow {
+  id: string;
+  merchant: string | null;
+  purchasedAt: string | null;
+  currency: string | null;
+  total: number | null;
+  itemCount: number;
+  createdAt: string;
+}
+
+interface ReceiptDetail {
+  receipt: ReceiptRow;
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    price: number | null;
+    category: string | null;
+  }[];
+}
+
 function TrendChip({ comparison }: { comparison: NonNullable<SpendingInsight["comparison"]> }) {
   const pct = Math.abs(Math.round(comparison.changePercent));
   const { trend } = comparison;
@@ -61,6 +99,7 @@ export default function BudgetPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [budgetInput, setBudgetInput] = useState("");
+  const [openReceiptId, setOpenReceiptId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["budget", user?.homeId],
@@ -81,6 +120,32 @@ export default function BudgetPage() {
       ),
     enabled: !!token && !!user?.homeId,
   });
+
+  const { data: receiptsData } = useQuery({
+    queryKey: ["receipts", user?.homeId],
+    queryFn: () =>
+      apiGet<ReceiptRow[]>(`/api/homes/${user!.homeId}/receipts`, token!),
+    enabled: !!token && !!user?.homeId,
+  });
+  const receipts = receiptsData?.data ?? [];
+
+  const { data: receiptDetailData } = useQuery({
+    queryKey: ["receipt", user?.homeId, openReceiptId],
+    queryFn: () =>
+      apiGet<ReceiptDetail>(
+        `/api/homes/${user!.homeId}/receipts/${openReceiptId}`,
+        token!,
+      ),
+    enabled: !!token && !!user?.homeId && !!openReceiptId,
+  });
+  const receiptDetail = receiptDetailData?.data;
+  const receiptItemsSum = (receiptDetail?.items ?? []).reduce(
+    (s, it) => s + (it.price ?? 0),
+    0,
+  );
+  const receiptMismatch =
+    receiptDetail?.receipt.total != null &&
+    Math.abs(receiptItemsSum - receiptDetail.receipt.total) > 1;
 
   const monthlyBudget = prefsData?.data?.monthlyBudget ?? null;
 
@@ -280,6 +345,42 @@ export default function BudgetPage() {
             </Card>
           )}
 
+          {/* Recent receipts */}
+          {receipts.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-pixie-sage-500 dark:text-pixie-glow-sage" />
+                  <CardTitle className="text-lg">Recent receipts</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="divide-y divide-pixie-cream-200 dark:divide-pixie-dusk-300">
+                  {receipts.slice(0, 10).map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => setOpenReceiptId(r.id)}
+                      className="flex w-full items-center justify-between gap-3 py-2.5 text-left"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-pixie-charcoal-200 dark:text-pixie-mist-200">
+                          {r.merchant || "Receipt"}
+                        </p>
+                        <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                          {fmtDate(r.purchasedAt ?? r.createdAt)} · {r.itemCount}{" "}
+                          item{r.itemCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100 shrink-0">
+                        {r.total != null ? baht(r.total) : "—"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Pixie insights */}
           {month && month.insights.length > 0 && (
             <Card>
@@ -297,6 +398,81 @@ export default function BudgetPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* Receipt detail */}
+      {openReceiptId && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40"
+          onClick={() => setOpenReceiptId(null)}
+        >
+          <div
+            className="bg-pixie-cream-50 dark:bg-pixie-dusk-50 rounded-t-3xl max-h-[85dvh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-pixie-cream-200 dark:border-pixie-dusk-300 shrink-0">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold font-display text-pixie-charcoal-300 dark:text-pixie-mist-100 truncate">
+                  {receiptDetail?.receipt.merchant || "Receipt"}
+                </h2>
+                <p className="text-xs text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                  {fmtDate(
+                    receiptDetail?.receipt.purchasedAt ??
+                      receiptDetail?.receipt.createdAt,
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => setOpenReceiptId(null)}
+                className="p-1 hover:bg-pixie-cream-200 dark:hover:bg-pixie-dusk-300 rounded-lg transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-pixie-charcoal-200 dark:text-pixie-mist-200" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {(receiptDetail?.items ?? []).map((it) => (
+                <div key={it.id} className="flex justify-between gap-3 text-sm">
+                  <span className="text-pixie-charcoal-200 dark:text-pixie-mist-200">
+                    {it.quantity > 1 ? `${it.quantity}× ` : ""}
+                    {it.name}
+                  </span>
+                  <span className="text-pixie-charcoal-100 dark:text-pixie-mist-300 shrink-0">
+                    {it.price != null ? baht(it.price) : "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-pixie-cream-200 dark:border-pixie-dusk-300 bg-white dark:bg-pixie-dusk-100 shrink-0 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                  Items total
+                </span>
+                <span className="text-pixie-charcoal-300 dark:text-pixie-mist-100 font-medium">
+                  {baht(receiptItemsSum)}
+                </span>
+              </div>
+              {receiptDetail?.receipt.total != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-pixie-charcoal-100 dark:text-pixie-mist-300">
+                    Receipt total
+                  </span>
+                  <span className="text-pixie-charcoal-300 dark:text-pixie-mist-100 font-medium">
+                    {baht(receiptDetail.receipt.total)}
+                  </span>
+                </div>
+              )}
+              {receiptMismatch && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 pt-1">
+                  These don't quite match — a price may be off or a line was
+                  missed.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

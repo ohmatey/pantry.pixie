@@ -4,6 +4,7 @@ import { ChatBubble } from "./ChatBubble";
 import { GroceryListInChat } from "./GroceryListInChat";
 import { GroceryListsOverview } from "./GroceryListsOverview";
 import { ListEditor } from "./ListEditor";
+import { ReceiptReviewInChat } from "./ReceiptReviewInChat";
 import type { SerializedUI } from "@/types/websocket";
 
 interface ChatBubbleWithUIProps {
@@ -99,6 +100,10 @@ export const ChatBubbleWithUI = memo(function ChatBubbleWithUI({
                     }}
                   />
                 );
+              }
+
+              if (ui.type === "receipt-review") {
+                return <ReceiptReviewInChat data={ui.data} />;
               }
 
               console.warn("[ChatBubbleWithUI] Unknown UI type:", ui.type);

@@ -8,13 +8,15 @@ import { StarterPrompts } from "@/components/chat/StarterPrompts";
 import { ListSelector } from "@/components/chat/ListSelector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiPost } from "@/lib/api";
+import { fileToDataUrl } from "@/lib/image";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import type {
   SerializedUI,
   UIWebSocketMessage,
   ListUpdateWebSocketMessage,
+  ReceiptReviewUI,
 } from "@/types/websocket";
 
 interface Message {
@@ -35,6 +37,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   const activeThreadId = threadId ?? null;
 
@@ -258,6 +261,45 @@ export default function ChatPage() {
     sendChatMessage(activeThreadId, content, selectedListId);
   };
 
+  // Scan a receipt photo right inside chat: parse over HTTP (image never hits the
+  // socket), then send a short summary + the parsed payload so Pixie can present
+  // an inline review card.
+  const handleAttachReceipt = useCallback(
+    async (file: File) => {
+      if (!activeThreadId || !user?.homeId || !token) return;
+      setScanning(true);
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        const res = await apiPost<ReceiptReviewUI>(
+          `/api/homes/${user.homeId}/receipts/scan`,
+          token,
+          { image: dataUrl },
+        );
+        const parsed = res.data;
+        if (!parsed || parsed.items.length === 0) {
+          toast.error(
+            "Couldn't read that receipt — try a clearer photo, or add items from the Pantry tab.",
+          );
+          return;
+        }
+        const summary = `I scanned a receipt${
+          parsed.merchant ? ` from ${parsed.merchant}` : ""
+        }${parsed.total != null ? ` totaling ฿${parsed.total.toFixed(2)}` : ""}.`;
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", content: summary, timestamp: new Date().toISOString() },
+        ]);
+        setIsTyping(true);
+        sendChatMessage(activeThreadId, summary, selectedListId, parsed);
+      } catch {
+        toast.error("Receipt scan failed — please try again");
+      } finally {
+        setScanning(false);
+      }
+    },
+    [activeThreadId, user?.homeId, token, selectedListId, sendChatMessage],
+  );
+
   // Mutation for toggling list items
   const toggleListItem = useMutation({
     mutationFn: async ({
@@ -466,6 +508,8 @@ export default function ChatPage() {
       {/* Input */}
       <ChatInput
         onSend={handleSend}
+        onAttachReceipt={handleAttachReceipt}
+        scanning={scanning}
         disabled={!isConnected || !activeThreadId}
       />
     </div>

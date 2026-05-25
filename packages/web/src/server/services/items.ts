@@ -49,6 +49,7 @@ export interface AddItemData {
   notes?: string;
   price?: number;
   store?: string;
+  receiptId?: string;
 }
 
 export interface UpdateItemData {
@@ -89,6 +90,7 @@ export async function addItem(
       notes: data.notes,
       price: data.price,
       store: data.store,
+      receiptId: data.receiptId,
       addedBy: actorId,
     })
     .returning();

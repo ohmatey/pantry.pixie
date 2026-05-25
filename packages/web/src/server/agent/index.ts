@@ -23,7 +23,9 @@ import {
   createQueryBudgetTool,
   createSuggestMealsTool,
   createCheckPredictionsTool,
+  createPresentReceiptReviewTool,
 } from "./tools";
+import type { ParsedReceipt } from "../services/receipts";
 
 // Use mock in test mode
 const USE_MOCK = process.env.NODE_ENV === "test" && !process.env.OPENAI_API_KEY;
@@ -46,13 +48,14 @@ export async function createPixieResponse(
   household?: HouseholdContext,
   listId?: string | null,
   actorId?: string,
+  receipt?: ParsedReceipt,
 ): Promise<StreamedResponse> {
   // Use mock in test mode
   if (USE_MOCK) {
     const { createPixieResponse: mockResponse } = await import(
       "./__mocks__/index"
     );
-    return mockResponse(homeId, messages, household, listId);
+    return mockResponse(homeId, messages, household, listId, receipt);
   }
 
   const systemPrompt = generateHouseholdPrompt(household ?? {});
@@ -83,6 +86,10 @@ export async function createPixieResponse(
     queryBudget: createQueryBudgetTool(homeId),
     suggestMeals: createSuggestMealsTool(homeId, [...dietary]),
     checkPredictions: createCheckPredictionsTool(homeId),
+    // Only offered when the user just scanned a receipt in chat.
+    ...(receipt
+      ? { presentReceiptReview: createPresentReceiptReviewTool(receipt) }
+      : {}),
   };
 
   const result = await streamText({

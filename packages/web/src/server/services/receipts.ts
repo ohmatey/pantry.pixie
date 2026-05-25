@@ -7,7 +7,17 @@
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import { ItemCategory } from "@pantry-pixie/core";
+import {
+  ItemCategory,
+  db,
+  eq,
+  and,
+  desc,
+  receiptsTable,
+  itemsTable,
+  type Receipt,
+  type Item,
+} from "@pantry-pixie/core";
 
 const USE_MOCK =
   process.env.NODE_ENV === "test" && !process.env.OPENAI_API_KEY;
@@ -104,4 +114,60 @@ Ignore non-product lines: subtotals, tax/VAT, totals, change, rounding, loyalty 
     total: object.total,
     items,
   };
+}
+
+export interface CreateReceiptInput {
+  homeId: string;
+  merchant?: string | null;
+  purchasedAt?: Date | null;
+  currency?: string | null;
+  total?: number | null;
+  itemCount: number;
+  scannedBy?: string;
+}
+
+/** Persist a receipt header so the purchase is auditable (merchant/date/total). */
+export async function createReceipt(
+  input: CreateReceiptInput,
+): Promise<Receipt> {
+  const [receipt] = await db
+    .insert(receiptsTable)
+    .values({
+      homeId: input.homeId,
+      merchant: input.merchant ?? null,
+      purchasedAt: input.purchasedAt ?? null,
+      currency: input.currency ?? null,
+      total: input.total ?? null,
+      itemCount: input.itemCount,
+      scannedBy: input.scannedBy,
+    })
+    .returning();
+  return receipt;
+}
+
+/** Recent receipts for a home, newest first. */
+export async function listReceipts(
+  homeId: string,
+  limit = 50,
+): Promise<Receipt[]> {
+  return db.query.receiptsTable.findMany({
+    where: eq(receiptsTable.homeId, homeId),
+    orderBy: [desc(receiptsTable.createdAt)],
+    limit,
+  });
+}
+
+/** A single receipt plus the items that were added from it. */
+export async function getReceipt(
+  homeId: string,
+  id: string,
+): Promise<{ receipt: Receipt; items: Item[] } | undefined> {
+  const receipt = await db.query.receiptsTable.findFirst({
+    where: and(eq(receiptsTable.id, id), eq(receiptsTable.homeId, homeId)),
+  });
+  if (!receipt) return undefined;
+  const items = await db.query.itemsTable.findMany({
+    where: eq(itemsTable.receiptId, id),
+  });
+  return { receipt, items };
 }

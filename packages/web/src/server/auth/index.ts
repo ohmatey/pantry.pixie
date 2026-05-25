@@ -7,6 +7,7 @@ import {
   db,
   eq,
   and,
+  desc,
   usersTable,
   homesTable,
   homeMembersTable,
@@ -115,10 +116,16 @@ export async function login(
     throw new Error("Invalid email or password");
   }
 
-  // Get user's home (first owned home)
-  const membership = await db.query.homeMembersTable.findFirst({
+  // Pick the user's active home deterministically. Prefer a home they JOINED
+  // (role "member") over their own auto-created (role "owner") home — in the
+  // couples model the joined home is the shared, active one — then most-recent.
+  // This is stable even when second-precision joinedAt timestamps tie.
+  const memberships = await db.query.homeMembersTable.findMany({
     where: eq(homeMembersTable.userId, user.id),
+    orderBy: [desc(homeMembersTable.joinedAt)],
   });
+  const membership =
+    memberships.find((m) => m.role !== "owner") ?? memberships[0];
 
   if (!membership) {
     throw new Error("No home found for user");
@@ -162,7 +169,7 @@ export async function verifyToken(token: string): Promise<AuthPayload> {
   };
 }
 
-async function createToken(payload: AuthPayload): Promise<string> {
+export async function createToken(payload: AuthPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

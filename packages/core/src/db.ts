@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS \`users\` (
   \`dietary_restrictions\` text,
   \`cooking_skill_level\` text,
   \`budget_consciousness\` text,
+  \`muted_notification_types\` text,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
   \`updated_at\` integer NOT NULL DEFAULT (unixepoch())
 );
@@ -101,6 +102,18 @@ CREATE TABLE IF NOT EXISTS \`home_members\` (
   FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade,
   FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE cascade
 );
+CREATE TABLE IF NOT EXISTS \`receipts\` (
+  \`id\` text PRIMARY KEY NOT NULL,
+  \`home_id\` text NOT NULL,
+  \`merchant\` text,
+  \`purchased_at\` integer,
+  \`currency\` text,
+  \`total\` real,
+  \`item_count\` integer DEFAULT 0 NOT NULL,
+  \`scanned_by\` text REFERENCES \`users\`(\`id\`) ON DELETE set null,
+  \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade
+);
 CREATE TABLE IF NOT EXISTS \`items\` (
   \`id\` text PRIMARY KEY NOT NULL,
   \`home_id\` text NOT NULL,
@@ -119,6 +132,7 @@ CREATE TABLE IF NOT EXISTS \`items\` (
   \`barcode\` text,
   \`price\` real,
   \`store\` text,
+  \`receipt_id\` text REFERENCES \`receipts\`(\`id\`) ON DELETE set null,
   \`notes\` text,
   \`is_checked\` integer DEFAULT 0 NOT NULL,
   \`added_by\` text REFERENCES \`users\`(\`id\`) ON DELETE set null,
@@ -196,9 +210,21 @@ CREATE TABLE IF NOT EXISTS \`notifications\` (
   \`body\` text,
   \`ref_id\` text,
   \`is_read\` integer DEFAULT 0 NOT NULL,
+  \`count\` integer DEFAULT 1 NOT NULL,
   \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
+  \`updated_at\` integer NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade,
   FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE cascade
+);
+CREATE TABLE IF NOT EXISTS \`invite_codes\` (
+  \`id\` text PRIMARY KEY NOT NULL,
+  \`code\` text NOT NULL UNIQUE,
+  \`home_id\` text NOT NULL,
+  \`inviter_id\` text NOT NULL,
+  \`expires_at\` integer NOT NULL,
+  \`created_at\` integer NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (\`home_id\`) REFERENCES \`homes\`(\`id\`) ON DELETE cascade,
+  FOREIGN KEY (\`inviter_id\`) REFERENCES \`users\`(\`id\`) ON DELETE cascade
 );
 `);
 }

@@ -48,6 +48,7 @@ export function generateRoutes() {
   const NotificationsPage = lazy(() => import("../pages/(app)/notifications"));
   const SettingsPage = lazy(() => import("../pages/(app)/settings"));
   const BudgetPage = lazy(() => import("../pages/(app)/budget"));
+  const MorePage = lazy(() => import("../pages/(app)/more"));
 
   // Guards
   const AuthGuard = lazy(() =>
@@ -164,6 +165,10 @@ export function generateRoutes() {
         {
           path: "budget",
           element: withSuspense(BudgetPage),
+        },
+        {
+          path: "more",
+          element: withSuspense(MorePage),
         },
       ],
     },

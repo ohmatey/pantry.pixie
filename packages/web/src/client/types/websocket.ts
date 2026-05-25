@@ -56,10 +56,27 @@ export interface ListEditorUI {
   };
 }
 
+export interface ReceiptReviewItem {
+  name: string;
+  quantity: number;
+  unit?: string;
+  category?: string;
+  price?: number;
+}
+
+export interface ReceiptReviewUI {
+  merchant: string | null;
+  purchasedAt: string | null;
+  currency: string | null;
+  total: number | null;
+  items: ReceiptReviewItem[];
+}
+
 export type SerializedUI =
   | { type: "grocery-list"; data: GroceryListUI }
   | { type: "grocery-lists-overview"; data: GroceryListsOverviewUI }
-  | { type: "list-editor"; data: ListEditorUI };
+  | { type: "list-editor"; data: ListEditorUI }
+  | { type: "receipt-review"; data: ReceiptReviewUI };
 
 export interface WebSocketMessage {
   type:
@@ -84,6 +101,9 @@ export interface ChatWebSocketMessage extends WebSocketMessage {
     intent?: string;
     messageId?: string;
     listId?: string | null;
+    // Optional pre-parsed receipt (from scanning a photo in the composer). The
+    // image itself never travels over the socket — only this small payload.
+    receipt?: ReceiptReviewUI;
   };
 }
 
