@@ -80,6 +80,19 @@ export async function markNotificationRead(
   return notification;
 }
 
+/** Fetch a single notification scoped to a home. */
+export async function getNotification(
+  homeId: string,
+  id: string,
+): Promise<Notification | undefined> {
+  return db.query.notificationsTable.findFirst({
+    where: and(
+      eq(notificationsTable.id, id),
+      eq(notificationsTable.homeId, homeId),
+    ),
+  });
+}
+
 /**
  * Idempotency guard: is there already an unread notification of this type for
  * this entity? Used by the scheduler to avoid re-notifying every tick.

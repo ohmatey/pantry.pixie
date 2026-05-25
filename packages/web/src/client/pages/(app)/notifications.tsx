@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   Repeat,
@@ -8,9 +9,13 @@ import {
   CalendarCheck,
   CheckCheck,
   TrendingDown,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { apiPost } from "@/lib/api";
+import { toast } from "sonner";
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -52,20 +57,24 @@ const LOADING_SPINNER = (
 const NotificationRow = memo(function NotificationRow({
   notification,
   onClick,
+  onAddToList,
+  isAdding,
 }: {
   notification: NotificationItem;
   onClick: () => void;
+  onAddToList?: () => void;
+  isAdding?: boolean;
 }) {
   const meta = TYPE_META[notification.type] ?? {
     icon: Bell,
     tint: "bg-pixie-cream-200 text-pixie-charcoal-200 dark:bg-pixie-dusk-200 dark:text-pixie-mist-200",
   };
   const Icon = meta.icon;
+  const canAddToList = notification.type === "running_low" && !!onAddToList;
 
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-pixie-cream-100 dark:hover:bg-pixie-dusk-200 ${
+    <div
+      className={`w-full flex items-start gap-3 px-4 py-3 transition-colors hover:bg-pixie-cream-100 dark:hover:bg-pixie-dusk-200 ${
         notification.isRead ? "" : "bg-pixie-sage-50/60 dark:bg-pixie-dusk-200/40"
       }`}
     >
@@ -74,7 +83,7 @@ const NotificationRow = memo(function NotificationRow({
       >
         <Icon className="w-4 h-4" />
       </div>
-      <div className="flex-1 min-w-0">
+      <button onClick={onClick} className="flex-1 min-w-0 text-left">
         <p className="text-sm font-medium text-pixie-charcoal-300 dark:text-pixie-mist-100 leading-snug">
           {notification.title}
         </p>
@@ -88,18 +97,50 @@ const NotificationRow = memo(function NotificationRow({
             addSuffix: true,
           })}
         </p>
+      </button>
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        {!notification.isRead && (
+          <span className="w-2 h-2 rounded-full bg-pixie-sage-500 dark:bg-pixie-glow-sage mt-1.5" />
+        )}
+        {canAddToList && (
+          <button
+            onClick={onAddToList}
+            disabled={isAdding}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-pixie-sage-500 hover:bg-pixie-sage-600 disabled:opacity-60 text-white text-xs font-medium transition-colors"
+          >
+            {isAdding ? (
+              <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Plus className="w-3 h-3" />
+            )}
+            Add to list
+          </button>
+        )}
       </div>
-      {!notification.isRead && (
-        <span className="w-2 h-2 rounded-full bg-pixie-sage-500 dark:bg-pixie-glow-sage shrink-0 mt-1.5" />
-      )}
-    </button>
+    </div>
   );
 });
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const { user, token } = useAuth();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
+
+  const addToList = useMutation({
+    mutationFn: (id: string) =>
+      apiPost(
+        `/api/homes/${user!.homeId}/notifications/${id}/add-to-list`,
+        token!,
+        {},
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Added to your list");
+    },
+    onError: () => toast.error("Couldn't add to the list — try again"),
+  });
 
   const notifications = data ?? [];
   const unread = notifications.filter((n) => !n.isRead);
@@ -174,6 +215,12 @@ export default function NotificationsPage() {
                 key={n.id}
                 notification={n}
                 onClick={() => handleClick(n)}
+                onAddToList={
+                  n.type === "running_low"
+                    ? () => addToList.mutate(n.id)
+                    : undefined
+                }
+                isAdding={addToList.isPending && addToList.variables === n.id}
               />
             ))}
           </div>

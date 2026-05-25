@@ -282,6 +282,11 @@ export function registerApiRoutes(): Route[] {
       path: "/api/homes/:homeId/notifications/:id/read",
       handler: withAuth(handleMarkNotificationRead),
     },
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/notifications/:id/add-to-list",
+      handler: withAuth(handleAddNotificationToList),
+    },
 
     // Prediction routes
     {
@@ -1350,6 +1355,55 @@ async function handleMarkNotificationRead(
       return json({ success: false, error: "Notification not found" }, 404);
     }
     return json({ success: true, data: notification, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// Act on a notification: add its referenced item to the default grocery list.
+async function handleAddNotificationToList(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const notif = await notificationsService.getNotification(
+      params.homeId,
+      params.id,
+    );
+    if (!notif) {
+      return json({ success: false, error: "Notification not found" }, 404);
+    }
+    if (notif.type !== "running_low") {
+      return json(
+        { success: false, error: "This notification has no add-to-list action" },
+        400,
+      );
+    }
+    // running_low title is "Running low on {name}".
+    const name = notif.title.replace(/^running low on /i, "").trim();
+    if (!name) {
+      return json({ success: false, error: "Couldn't determine the item" }, 400);
+    }
+    const list = await groceryListsService.getOrCreateDefaultList(
+      params.homeId,
+    );
+    const item = await groceryListsService.findOrCreateItem(params.homeId, name);
+    const listItem = await groceryListsService.addListItem(
+      params.homeId,
+      list.id,
+      { itemId: item.id, quantity: 1 },
+    );
+    await notificationsService.markNotificationRead(params.homeId, params.id);
+    return json(
+      {
+        success: true,
+        data: { listId: list.id, item: { id: item.id, name: item.name }, listItem },
+        timestamp: new Date(),
+      },
+      201,
+    );
   } catch (err) {
     return handleError(err);
   }
