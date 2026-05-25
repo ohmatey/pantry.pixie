@@ -9,6 +9,7 @@ import { db, eq, itemsTable, itemUsageHistoryTable } from "@pantry-pixie/core";
 import { eventBus } from "../events";
 import {
   addItem,
+  addItems,
   listItems,
   getItem,
   updateItem,
@@ -174,6 +175,29 @@ describe("Items Service - addItem()", () => {
     expect(added).toBeDefined();
     expect(added!.markedBy).toBe(testUserId);
     expect(added!.itemName).toBe("Attributed Milk");
+  });
+});
+
+describe("Items Service - addItems() bulk", () => {
+  it("bulk-adds items with store + price (receipt confirm path)", async () => {
+    const created = await addItems(
+      testHomeId,
+      [
+        { name: "Receipt Milk", price: 60, store: "Big C", category: "dairy" },
+        { name: "Receipt Eggs", price: 45, store: "Big C", category: "dairy" },
+      ],
+      testUserId,
+    );
+    expect(created.length).toBe(2);
+    for (const i of created) createdItemIds.push(i.id);
+
+    const [stored] = await db
+      .select()
+      .from(itemsTable)
+      .where(eq(itemsTable.id, created[0].id));
+    expect(stored.store).toBe("Big C");
+    expect(stored.price).toBe(60);
+    expect(stored.addedBy).toBe(testUserId);
   });
 });
 

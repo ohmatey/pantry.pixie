@@ -48,6 +48,7 @@ export interface AddItemData {
   expiresAt?: Date;
   notes?: string;
   price?: number;
+  store?: string;
 }
 
 export interface UpdateItemData {
@@ -87,6 +88,7 @@ export async function addItem(
       expiresAt: data.expiresAt,
       notes: data.notes,
       price: data.price,
+      store: data.store,
       addedBy: actorId,
     })
     .returning();
@@ -94,6 +96,22 @@ export async function addItem(
   await recordUsage(homeId, item, "added", actorId);
   eventBus.emit("inventory:updated", { action: "added", item, homeId, actorId });
   return item;
+}
+
+/**
+ * Bulk-add items (e.g. from a scanned receipt). Each item flows through addItem
+ * so attribution, usage history, and inventory events stay consistent.
+ */
+export async function addItems(
+  homeId: string,
+  items: AddItemData[],
+  actorId?: string,
+): Promise<Item[]> {
+  const created: Item[] = [];
+  for (const data of items) {
+    created.push(await addItem(homeId, data, actorId));
+  }
+  return created;
 }
 
 export async function listItems(

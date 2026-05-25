@@ -22,6 +22,13 @@
       "when": 1779542375350,
       "tag": "0002_curly_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1779679454012,
+      "tag": "0003_bouncy_toxin",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,8 @@ import * as itemsService from "../services/items";
 import * as groceryListsService from "../services/grocery-lists";
 import * as budgetService from "../services/budget";
 import * as notificationsService from "../services/notifications";
+import * as predictionsService from "../services/predictions";
+import * as receiptsService from "../services/receipts";
 import {
   db,
   eq,
@@ -279,6 +281,30 @@ export function registerApiRoutes(): Route[] {
       method: "PATCH",
       path: "/api/homes/:homeId/notifications/:id/read",
       handler: withAuth(handleMarkNotificationRead),
+    },
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/notifications/:id/add-to-list",
+      handler: withAuth(handleAddNotificationToList),
+    },
+
+    // Prediction routes
+    {
+      method: "GET",
+      path: "/api/homes/:homeId/predictions",
+      handler: withAuth(handleGetPredictions),
+    },
+
+    // Receipt routes
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/receipts/scan",
+      handler: withAuth(handleScanReceipt),
+    },
+    {
+      method: "POST",
+      path: "/api/homes/:homeId/receipts/confirm",
+      handler: withAuth(handleConfirmReceipt),
     },
   ];
 }
@@ -1069,6 +1095,7 @@ async function handleGetPreferences(
         sharedDietaryRestrictions: home?.sharedDietaryRestrictions
           ? JSON.parse(home.sharedDietaryRestrictions)
           : [],
+        monthlyBudget: home?.monthlyBudget ?? null,
       },
       timestamp: new Date(),
     });
@@ -1116,6 +1143,10 @@ async function handleUpdatePreferences(
       )
         ? JSON.stringify(body.sharedDietaryRestrictions)
         : null;
+    }
+    if ("monthlyBudget" in body) {
+      const n = Number(body.monthlyBudget);
+      homeUpdates.monthlyBudget = !isNaN(n) && n >= 0 ? Math.round(n) : null;
     }
 
     if (
@@ -1324,6 +1355,153 @@ async function handleMarkNotificationRead(
       return json({ success: false, error: "Notification not found" }, 404);
     }
     return json({ success: true, data: notification, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// Act on a notification: add its referenced item to the default grocery list.
+async function handleAddNotificationToList(
+  _request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const notif = await notificationsService.getNotification(
+      params.homeId,
+      params.id,
+    );
+    if (!notif) {
+      return json({ success: false, error: "Notification not found" }, 404);
+    }
+    if (notif.type !== "running_low") {
+      return json(
+        { success: false, error: "This notification has no add-to-list action" },
+        400,
+      );
+    }
+    // running_low title is "Running low on {name}".
+    const name = notif.title.replace(/^running low on /i, "").trim();
+    if (!name) {
+      return json({ success: false, error: "Couldn't determine the item" }, 400);
+    }
+    const list = await groceryListsService.getOrCreateDefaultList(
+      params.homeId,
+    );
+    const item = await groceryListsService.findOrCreateItem(params.homeId, name);
+    const listItem = await groceryListsService.addListItem(
+      params.homeId,
+      list.id,
+      { itemId: item.id, quantity: 1 },
+    );
+    await notificationsService.markNotificationRead(params.homeId, params.id);
+    return json(
+      {
+        success: true,
+        data: { listId: list.id, item: { id: item.id, name: item.name }, listItem },
+        timestamp: new Date(),
+      },
+      201,
+    );
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Prediction handlers
+// ============================================================================
+
+async function handleGetPredictions(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const period =
+      Number(new URL(request.url).searchParams.get("period")) || 7;
+    const all = await predictionsService.predictAllDepletions(params.homeId);
+    const cutoff = Date.now() + period * 24 * 60 * 60 * 1000;
+    const predictions = all.filter(
+      (p) => p.predictedDepletionDate.getTime() <= cutoff,
+    );
+    return json({
+      success: true,
+      data: { predictions, period, generatedAt: new Date() },
+      timestamp: new Date(),
+    });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// ============================================================================
+// Receipt handlers
+// ============================================================================
+
+// Parse a receipt image into line items for review (nothing is saved here).
+async function handleScanReceipt(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const body = await request.json();
+    const image = typeof body.image === "string" ? body.image : null;
+    if (!image) {
+      return json({ success: false, error: "image is required" }, 400);
+    }
+    const parsed = await receiptsService.parseReceipt(image);
+    return json({ success: true, data: parsed, timestamp: new Date() });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// Confirm the reviewed items and add them to the pantry (with store + price).
+async function handleConfirmReceipt(
+  request: Request,
+  params: Record<string, string>,
+  auth: AuthPayload,
+): Promise<Response> {
+  try {
+    await assertHomeMembership(params.homeId, auth.userId);
+    const body = await request.json();
+    const store =
+      typeof body.store === "string" && body.store.trim()
+        ? body.store.trim()
+        : undefined;
+    const rawItems = Array.isArray(body.items) ? body.items : [];
+    const items = rawItems
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((it: any) => it && typeof it.name === "string" && it.name.trim())
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((it: any) => ({
+        name: String(it.name).trim(),
+        quantity: Number(it.quantity) > 0 ? Number(it.quantity) : 1,
+        unit: typeof it.unit === "string" ? it.unit : undefined,
+        category: typeof it.category === "string" ? it.category : undefined,
+        price:
+          Number.isFinite(Number(it.price)) && Number(it.price) >= 0
+            ? Number(it.price)
+            : undefined,
+        store,
+      }));
+    if (items.length === 0) {
+      return json({ success: false, error: "No items to add" }, 400);
+    }
+    const created = await itemsService.addItems(
+      params.homeId,
+      items,
+      auth.userId,
+    );
+    return json(
+      { success: true, data: { added: created.length, items: created }, timestamp: new Date() },
+      201,
+    );
   } catch (err) {
     return handleError(err);
   }

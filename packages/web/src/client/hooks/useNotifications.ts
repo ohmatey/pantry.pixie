@@ -6,7 +6,12 @@ export interface NotificationItem {
   id: string;
   homeId: string;
   userId: string | null;
-  type: "recurring_due" | "expiring_soon" | "partner_activity" | "sunday_sync";
+  type:
+    | "recurring_due"
+    | "expiring_soon"
+    | "partner_activity"
+    | "sunday_sync"
+    | "running_low";
   title: string;
   body: string | null;
   refId: string | null;

@@ -47,6 +47,7 @@ export function generateRoutes() {
   const ActivityPage = lazy(() => import("../pages/(app)/activity"));
   const NotificationsPage = lazy(() => import("../pages/(app)/notifications"));
   const SettingsPage = lazy(() => import("../pages/(app)/settings"));
+  const BudgetPage = lazy(() => import("../pages/(app)/budget"));
 
   // Guards
   const AuthGuard = lazy(() =>
@@ -159,6 +160,10 @@ export function generateRoutes() {
         {
           path: "settings",
           element: withSuspense(SettingsPage),
+        },
+        {
+          path: "budget",
+          element: withSuspense(BudgetPage),
         },
       ],
     },

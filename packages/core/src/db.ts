@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS \`items\` (
   \`recurring_last_notified\` integer,
   \`barcode\` text,
   \`price\` real,
+  \`store\` text,
   \`notes\` text,
   \`is_checked\` integer DEFAULT 0 NOT NULL,
   \`added_by\` text REFERENCES \`users\`(\`id\`) ON DELETE set null,

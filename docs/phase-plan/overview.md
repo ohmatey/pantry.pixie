@@ -69,8 +69,7 @@ Pantry Pixie is an open-source domestic AI steward product designed to coordinat
 **Key Deliverables:**
 - Subscriptions + home supplies tracking
 - Bill/utility reminders
-- LINE integration (Thailand-focused)
-- E-commerce integrations (GrabMart, Shopee, LINE MAN)
+- E-commerce integrations (GrabMart, Shopee)
 - Multi-language support (Thai + English)
 - Community and plugin ecosystem
 - Value-add tier design
@@ -162,7 +161,7 @@ Phase 4 (Expansion)
 - **Community Manager**: Open source coordination, documentation
 
 ### Phase 4+ (Expansion)
-- **Integration Engineer**: LINE, GrabMart, Shopee APIs
+- **Integration Engineer**: GrabMart, Shopee APIs
 - **Product Manager**: Freemium model, premium features
 - **Localization Lead**: Thai language support, cultural adaptation
 
@@ -252,7 +251,6 @@ Phase 4 (Expansion)
 ### End of Phase 4
 **Go Criteria:**
 - [ ] Bill/utility tracking validates >$5K potential TAM
-- [ ] LINE integration captures >30% Thai user base
 - [ ] Plugin ecosystem: ≥3 third-party extensions
 - [ ] Premium revenue: >2x operating costs
 
@@ -309,7 +307,6 @@ Phase 4 (Expansion)
 - **Auth0 / Clerk**: OAuth (Phase 2+, if pursuing that path)
 
 ### Phase 4
-- **LINE Developers**: LINE integration (Thailand)
 - **GrabMart / Shopee API**: E-commerce integrations
 - **OpenClaw**: Agent-to-agent protocol (if applicable)
 

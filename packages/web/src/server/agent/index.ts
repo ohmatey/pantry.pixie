@@ -22,6 +22,7 @@ import {
   createShowGroceryListEditorTool,
   createQueryBudgetTool,
   createSuggestMealsTool,
+  createCheckPredictionsTool,
 } from "./tools";
 
 // Use mock in test mode
@@ -81,6 +82,7 @@ export async function createPixieResponse(
     showGroceryListEditor: createShowGroceryListEditorTool(homeId, listId),
     queryBudget: createQueryBudgetTool(homeId),
     suggestMeals: createSuggestMealsTool(homeId, [...dietary]),
+    checkPredictions: createCheckPredictionsTool(homeId),
   };
 
   const result = await streamText({

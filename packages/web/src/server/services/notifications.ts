@@ -18,7 +18,8 @@ export type NotificationType =
   | "recurring_due"
   | "expiring_soon"
   | "partner_activity"
-  | "sunday_sync";
+  | "sunday_sync"
+  | "running_low";
 
 export interface NewNotificationInput {
   homeId: string;
@@ -77,6 +78,19 @@ export async function markNotificationRead(
     )
     .returning();
   return notification;
+}
+
+/** Fetch a single notification scoped to a home. */
+export async function getNotification(
+  homeId: string,
+  id: string,
+): Promise<Notification | undefined> {
+  return db.query.notificationsTable.findFirst({
+    where: and(
+      eq(notificationsTable.id, id),
+      eq(notificationsTable.homeId, homeId),
+    ),
+  });
 }
 
 /**

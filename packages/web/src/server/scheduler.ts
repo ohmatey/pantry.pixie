@@ -23,6 +23,7 @@ import {
   hasRecentOfType,
 } from "./services/notifications";
 import { generateSundaySyncDigest } from "./agent";
+import { predictAllDepletions } from "./services/predictions";
 import { logger } from "./lib/logger";
 
 const INTERVAL_MS = 60_000; // 1 minute
@@ -273,9 +274,48 @@ async function processSundaySync(): Promise<void> {
   }
 }
 
+const LOW_STOCK_WINDOW_MS = 3 * DAY_MS;
+const LOW_STOCK_MIN_CONFIDENCE = 0.5;
+
+/**
+ * Proactively warn when a well-established item is predicted to run out soon.
+ * Gated on confidence to keep noise low; idempotent per item via the unread
+ * guard (refId keyed by item name, since each add creates a new item id).
+ */
+async function processLowStock(): Promise<void> {
+  try {
+    const homes = await db.query.homesTable.findMany();
+    const now = Date.now();
+    for (const home of homes) {
+      const predictions = await predictAllDepletions(home.id);
+      for (const p of predictions) {
+        if (p.confidence < LOW_STOCK_MIN_CONFIDENCE) continue;
+        const dueInMs = p.predictedDepletionDate.getTime() - now;
+        if (dueInMs > LOW_STOCK_WINDOW_MS) continue;
+        const refId = `low:${p.itemName.trim().toLowerCase()}`;
+        if (await hasUnreadOfType(home.id, "running_low", refId)) continue;
+        const when =
+          dueInMs <= 0
+            ? "now"
+            : `in about ${Math.ceil(dueInMs / DAY_MS)} day(s)`;
+        await createNotification({
+          homeId: home.id,
+          type: "running_low",
+          title: `Running low on ${p.itemName}`,
+          body: `Based on your usual cadence, you'll likely need more ${when}.`,
+          refId,
+        });
+      }
+    }
+  } catch (err) {
+    logger.error({ err }, "Low-stock scheduler error");
+  }
+}
+
 async function processTick(): Promise<void> {
   await processRecurringItems();
   await processExpiringItems();
+  await processLowStock();
   await processSundaySync();
 }
 
